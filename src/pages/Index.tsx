@@ -21,10 +21,10 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/dashboard">Log In</Link>
+              <Link to="/auth">Log In</Link>
             </Button>
             <Button size="sm" className="bg-gradient-primary hover:shadow-glow transition-all duration-300" asChild>
-              <Link to="/dashboard">Sign Up</Link>
+              <Link to="/auth">Sign Up</Link>
             </Button>
           </div>
         </div>
@@ -52,7 +52,7 @@ const Index = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button size="lg" className="bg-gradient-primary hover:shadow-glow transition-all duration-300" asChild>
-                  <Link to="/dashboard">Get Started Free</Link>
+                  <Link to="/auth">Get Started Free</Link>
                 </Button>
                 <Button variant="outline" size="lg">
                   Watch Demo
@@ -159,7 +159,7 @@ const Index = () => {
             Connect with millions of users and discover a new way to share your world.
           </p>
           <Button size="lg" className="bg-gradient-primary hover:shadow-glow transition-all duration-300" asChild>
-            <Link to="/dashboard">Start Your Journey</Link>
+            <Link to="/auth">Start Your Journey</Link>
           </Button>
         </div>
       </section>
