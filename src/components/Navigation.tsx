@@ -10,12 +10,28 @@ import {
   MessageCircle, 
   Bell, 
   Settings,
-  Menu
+  Menu,
+  User
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { useNotifications } from "@/hooks/useNotifications";
+import { Link, useNavigate } from "react-router-dom";
+import NotificationCenter from "./NotificationCenter";
 
 const Navigation = () => {
+  const { user, signOut } = useAuth();
+  const { profile } = useProfile();
+  const { unreadCount } = useNotifications();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/90 backdrop-blur-lg">
@@ -46,35 +62,63 @@ const Navigation = () => {
           <div className="flex items-center space-x-2">
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
-                <Home className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
-                <Users className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-10 w-10 p-0 relative">
-                <MessageCircle className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-destructive">
-                  3
-                </Badge>
-              </Button>
-              <Button variant="ghost" size="sm" className="h-10 w-10 p-0 relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-primary">
-                  7
-                </Badge>
-              </Button>
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+                  <Home className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/friends">
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+                  <Users className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/messages">
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0 relative">
+                  <MessageCircle className="h-5 w-5" />
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-destructive">
+                    3
+                  </Badge>
+                </Button>
+              </Link>
+              <div className="relative">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-10 w-10 p-0 relative"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-primary">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+                <NotificationCenter 
+                  isOpen={showNotifications}
+                  onClose={() => setShowNotifications(false)}
+                />
+              </div>
             </div>
 
             {/* User Avatar */}
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-10 w-10 p-0"
+                onClick={handleSignOut}
+              >
                 <Settings className="h-4 w-4" />
               </Button>
-              <Avatar className="h-8 w-8 ring-2 ring-primary/20 cursor-pointer hover:ring-primary/40 transition-all">
-                <AvatarImage src="/placeholder.svg" />
-                <AvatarFallback className="text-xs bg-gradient-primary text-white">JD</AvatarFallback>
-              </Avatar>
+              <Link to="/profile">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/20 cursor-pointer hover:ring-primary/40 transition-all">
+                  <AvatarImage src={profile?.avatar_url} />
+                  <AvatarFallback className="text-xs bg-gradient-primary text-white">
+                    {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -103,24 +147,46 @@ const Navigation = () => {
               </div>
               
               {/* Mobile Navigation */}
-              <Button variant="ghost" className="w-full justify-start">
-                <Home className="h-5 w-5 mr-3" />
-                Home
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Users className="h-5 w-5 mr-3" />
-                Friends
-                <Badge className="ml-auto bg-primary">12</Badge>
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <MessageCircle className="h-5 w-5 mr-3" />
-                Messages
-                <Badge className="ml-auto bg-destructive">3</Badge>
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
+              <Link to="/dashboard">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Home className="h-5 w-5 mr-3" />
+                  Home
+                </Button>
+              </Link>
+              <Link to="/friends">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Users className="h-5 w-5 mr-3" />
+                  Friends
+                  <Badge className="ml-auto bg-primary">12</Badge>
+                </Button>
+              </Link>
+              <Link to="/messages">
+                <Button variant="ghost" className="w-full justify-start">
+                  <MessageCircle className="h-5 w-5 mr-3" />
+                  Messages
+                  <Badge className="ml-auto bg-destructive">3</Badge>
+                </Button>
+              </Link>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => setShowNotifications(true)}
+              >
                 <Bell className="h-5 w-5 mr-3" />
                 Notifications
-                <Badge className="ml-auto bg-warning">7</Badge>
+                {unreadCount > 0 && (
+                  <Badge className="ml-auto bg-warning">{unreadCount}</Badge>
+                )}
+              </Button>
+              <Link to="/profile">
+                <Button variant="ghost" className="w-full justify-start">
+                  <User className="h-5 w-5 mr-3" />
+                  Profile
+                </Button>
+              </Link>
+              <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
+                <Settings className="h-5 w-5 mr-3" />
+                Sign Out
               </Button>
             </div>
           </div>

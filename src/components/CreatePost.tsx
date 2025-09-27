@@ -11,15 +11,26 @@ import {
   X
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { usePosts } from "@/hooks/usePosts";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const CreatePost = () => {
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const { createPost } = usePosts();
   const [postContent, setPostContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         setSelectedImage(e.target?.result as string);
@@ -30,6 +41,69 @@ const CreatePost = () => {
 
   const removeImage = () => {
     setSelectedImage(null);
+    setSelectedFile(null);
+  };
+
+  const uploadPostMedia = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('posts')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to upload image',
+        variant: 'destructive'
+      });
+      return null;
+    }
+  };
+
+  const handlePost = async () => {
+    if (!postContent.trim() && !selectedFile) return;
+
+    setIsPosting(true);
+    try {
+      let mediaUrl = null;
+      if (selectedFile) {
+        mediaUrl = await uploadPostMedia(selectedFile);
+        if (!mediaUrl) {
+          setIsPosting(false);
+          return;
+        }
+      }
+
+      await createPost({
+        content: postContent.trim(),
+        media_urls: mediaUrl ? [mediaUrl] : undefined,
+        media_type: selectedFile ? (selectedFile.type.startsWith('image/') ? 'image' : 'video') : undefined
+      });
+
+      // Reset form
+      setPostContent("");
+      setSelectedImage(null);
+      setSelectedFile(null);
+      setIsExpanded(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create post',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
@@ -38,12 +112,14 @@ const CreatePost = () => {
         {/* Header */}
         <div className="flex items-center space-x-3 mb-4">
           <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-            <AvatarImage src="/placeholder.svg" />
-            <AvatarFallback className="bg-gradient-primary text-white text-sm">JD</AvatarFallback>
+            <AvatarImage src={profile?.avatar_url} />
+            <AvatarFallback className="bg-gradient-primary text-white text-sm">
+              {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <Textarea
-              placeholder="What's on your mind, John?"
+              placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`}
               value={postContent}
               onChange={(e) => setPostContent(e.target.value)}
               onFocus={() => setIsExpanded(true)}
@@ -121,9 +197,10 @@ const CreatePost = () => {
           <Button 
             size="sm" 
             className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-            disabled={!postContent.trim() && !selectedImage}
+            disabled={(!postContent.trim() && !selectedImage) || isPosting}
+            onClick={handlePost}
           >
-            Post
+            {isPosting ? 'Posting...' : 'Post'}
           </Button>
         </div>
       </div>

@@ -13,49 +13,18 @@ import {
   Plus,
   Camera
 } from "lucide-react";
-
-const mockPosts = [
-  {
-    author: {
-      name: "Sarah Johnson",
-      username: "sarahj",
-      avatar: "/placeholder.svg",
-      verified: true
-    },
-    content: "Just launched my new portfolio website! So excited to share my latest projects with everyone. The design process was challenging but incredibly rewarding. Check it out and let me know what you think! 🚀",
-    image: "/placeholder.svg",
-    timestamp: "2 hours ago",
-    likes: 127,
-    comments: 23,
-    shares: 8
-  },
-  {
-    author: {
-      name: "Mike Chen",
-      username: "mikechen",
-      verified: false
-    },
-    content: "Beautiful sunset from my evening run today. There's something magical about golden hour that makes everything feel peaceful. Nature never fails to amaze me! 🌅",
-    timestamp: "4 hours ago",
-    likes: 89,
-    comments: 12,
-    shares: 3
-  },
-  {
-    author: {
-      name: "Emma Wilson",
-      username: "emmaw",
-      verified: true
-    },
-    content: "Excited to announce that I'll be speaking at the upcoming Tech Conference 2024! Will be sharing insights about the future of AI and its impact on creative industries. Who else is attending?",
-    timestamp: "6 hours ago",
-    likes: 234,
-    comments: 45,
-    shares: 19
-  }
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
+import { usePosts } from "@/hooks/usePosts";
+import { useFriends } from "@/hooks/useFriends";
+import { useEffect } from "react";
+import { formatDistanceToNow } from "date-fns";
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const { posts, loading: postsLoading } = usePosts();
+  const { friends } = useFriends();
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -69,22 +38,24 @@ const Dashboard = () => {
               <div className="text-center">
                 <div className="relative inline-block">
                   <Avatar className="h-20 w-20 ring-4 ring-primary/20">
-                    <AvatarImage src="/placeholder.svg" />
-                    <AvatarFallback className="bg-gradient-primary text-white text-lg">JD</AvatarFallback>
+                    <AvatarImage src={profile?.avatar_url} />
+                    <AvatarFallback className="bg-gradient-primary text-white text-lg">
+                      {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                    </AvatarFallback>
                   </Avatar>
                   <Button size="sm" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-primary hover:bg-primary/90">
                     <Camera className="h-4 w-4 text-white" />
                   </Button>
                 </div>
-                <h3 className="font-semibold mt-3">John Doe</h3>
-                <p className="text-sm text-muted-foreground">@johndoe</p>
+                <h3 className="font-semibold mt-3">{profile?.display_name || 'Loading...'}</h3>
+                <p className="text-sm text-muted-foreground">@{profile?.username || 'username'}</p>
                 <div className="flex items-center justify-center space-x-4 mt-4 text-sm">
                   <div className="text-center">
-                    <div className="font-semibold">1,234</div>
+                    <div className="font-semibold">{friends.length}</div>
                     <div className="text-muted-foreground">Friends</div>
                   </div>
                   <div className="text-center">
-                    <div className="font-semibold">567</div>
+                    <div className="font-semibold">{posts.length}</div>
                     <div className="text-muted-foreground">Posts</div>
                   </div>
                 </div>
@@ -152,9 +123,32 @@ const Dashboard = () => {
 
             {/* Posts Feed */}
             <div className="space-y-6">
-              {mockPosts.map((post, index) => (
-                <PostCard key={index} {...post} />
-              ))}
+              {postsLoading ? (
+                <div className="text-center py-8">Loading posts...</div>
+              ) : posts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No posts yet. Create your first post above!
+                </div>
+              ) : (
+                posts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    id={post.id}
+                    author={{
+                      name: post.profiles.display_name,
+                      username: post.profiles.username,
+                      avatar: post.profiles.avatar_url,
+                      verified: post.profiles.is_verified
+                    }}
+                    content={post.content || ''}
+                    image={post.media_urls?.[0]}
+                    timestamp={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                    likes={post.likes_count}
+                    comments={post.comments_count}
+                    shares={post.shares_count}
+                  />
+                ))
+              )}
             </div>
           </div>
 

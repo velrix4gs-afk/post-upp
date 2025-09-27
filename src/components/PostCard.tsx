@@ -12,8 +12,11 @@ import {
   ThumbsUp
 } from "lucide-react";
 import { useState } from "react";
+import { usePosts } from "@/hooks/usePosts";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PostCardProps {
+  id: string;
   author: {
     name: string;
     username: string;
@@ -29,6 +32,7 @@ interface PostCardProps {
 }
 
 const PostCard = ({ 
+  id,
   author, 
   content, 
   image, 
@@ -37,9 +41,26 @@ const PostCard = ({
   comments, 
   shares 
 }: PostCardProps) => {
+  const { user } = useAuth();
+  const { toggleReaction } = usePosts();
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
+  const [likesCount, setLikesCount] = useState(likes);
+
+  const handleLike = async () => {
+    try {
+      await toggleReaction(id, 'like');
+      if (isLiked) {
+        setLikesCount(prev => prev - 1);
+      } else {
+        setLikesCount(prev => prev + 1);
+      }
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
+    }
+  };
 
   return (
     <Card className="bg-gradient-card border-0 hover:shadow-md transition-all duration-300">
@@ -87,7 +108,7 @@ const PostCard = ({
         {/* Post Stats */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-3 px-1">
           <div className="flex items-center space-x-4">
-            <span>{likes.toLocaleString()} likes</span>
+            <span>{likesCount.toLocaleString()} likes</span>
             <span>{comments} comments</span>
           </div>
           <span>{shares} shares</span>
@@ -102,7 +123,7 @@ const PostCard = ({
                 variant="ghost"
                 size="sm"
                 className={`h-9 px-3 ${isLiked ? 'text-destructive hover:text-destructive' : ''}`}
-                onClick={() => setIsLiked(!isLiked)}
+                onClick={handleLike}
                 onMouseEnter={() => setShowReactions(true)}
                 onMouseLeave={() => setShowReactions(false)}
               >
