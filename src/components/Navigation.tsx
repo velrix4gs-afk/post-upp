@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import ThemeToggle from "@/components/ThemeToggle";
 import { 
   Heart, 
   Search, 
@@ -11,7 +12,8 @@ import {
   Bell, 
   Settings,
   Menu,
-  User
+  User,
+  Calendar
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,7 +45,7 @@ const Navigation = () => {
               <Heart className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              SocialHub
+              POST UP
             </span>
           </div>
 
@@ -70,6 +72,11 @@ const Navigation = () => {
               <Link to="/friends">
                 <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
                   <Users className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/events">
+                <Button variant="ghost" size="sm" className="h-10 w-10 p-0">
+                  <Calendar className="h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/messages">
@@ -103,6 +110,7 @@ const Navigation = () => {
 
             {/* User Avatar */}
             <div className="flex items-center space-x-2">
+              <ThemeToggle />
               <Button 
                 variant="ghost" 
                 size="sm" 

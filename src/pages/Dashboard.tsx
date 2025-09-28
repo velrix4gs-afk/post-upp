@@ -2,6 +2,7 @@ import Navigation from "@/components/Navigation";
 import CreatePost from "@/components/CreatePost";
 import PostCard from "@/components/PostCard";
 import MessagesList from "@/components/MessagesList";
+import Stories from "@/components/Stories";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { usePosts } from "@/hooks/usePosts";
 import { useFriends } from "@/hooks/useFriends";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -66,14 +68,18 @@ const Dashboard = () => {
             <Card className="bg-gradient-card border-0 p-4">
               <h3 className="font-semibold mb-3">Quick Actions</h3>
               <div className="space-y-2">
-                <Button variant="ghost" className="w-full justify-start">
-                  <Users className="h-4 w-4 mr-3" />
-                  Find Friends
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Calendar className="h-4 w-4 mr-3" />
-                  Events
-                </Button>
+                <Link to="/friends">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Users className="h-4 w-4 mr-3" />
+                    Find Friends
+                  </Button>
+                </Link>
+                <Link to="/events">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Calendar className="h-4 w-4 mr-3" />
+                    Events
+                  </Button>
+                </Link>
                 <Button variant="ghost" className="w-full justify-start">
                   <TrendingUp className="h-4 w-4 mr-3" />
                   Trending
@@ -89,34 +95,7 @@ const Dashboard = () => {
           {/* Main Feed */}
           <div className="lg:col-span-6 space-y-6">
             {/* Stories */}
-            <Card className="bg-gradient-card border-0 p-4">
-              <div className="flex space-x-3 overflow-x-auto pb-2">
-                {/* Add Story */}
-                <div className="flex-shrink-0 text-center">
-                  <div className="relative">
-                    <Avatar className="h-16 w-16 border-2 border-dashed border-muted-foreground">
-                      <AvatarFallback className="bg-muted">
-                        <Plus className="h-6 w-6 text-muted-foreground" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <p className="text-xs mt-2 text-muted-foreground">Add Story</p>
-                </div>
-
-                {/* Story Items */}
-                {['Sarah', 'Mike', 'Emma', 'Alex', 'Lisa'].map((name) => (
-                  <div key={name} className="flex-shrink-0 text-center">
-                    <Avatar className="h-16 w-16 ring-4 ring-gradient-primary cursor-pointer">
-                      <AvatarImage src="/placeholder.svg" />
-                      <AvatarFallback className="bg-gradient-primary text-white">
-                        {name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <p className="text-xs mt-2">{name}</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            <Stories />
 
             {/* Create Post */}
             <CreatePost />

@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import PhoneAuth from '@/components/PhoneAuth';
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -23,6 +24,7 @@ const signInSchema = z.object({
 });
 
 const Auth = () => {
+  const [authMode, setAuthMode] = useState<'email' | 'phone'>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [signUpData, setSignUpData] = useState({
@@ -161,18 +163,27 @@ const Auth = () => {
         <div className="p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Welcome to Social
+              Welcome to POST UP
             </h1>
             <p className="text-muted-foreground mt-2">
               Connect with friends and share your moments
             </p>
           </div>
 
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+          {authMode === 'phone' ? (
+            <div>
+              <PhoneAuth 
+                onBack={() => setAuthMode('email')}
+                onSuccess={() => navigate('/dashboard')}
+              />
+            </div>
+          ) : (
+            <>
+              <Tabs defaultValue="signin" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
 
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
@@ -302,8 +313,21 @@ const Auth = () => {
                   {loading ? 'Creating account...' : 'Create Account'}
                 </Button>
               </form>
-            </TabsContent>
-          </Tabs>
+                </TabsContent>
+              </Tabs>
+              
+              <div className="mt-6 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setAuthMode('phone')}
+                  className="w-full"
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Continue with Phone
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Card>
     </div>

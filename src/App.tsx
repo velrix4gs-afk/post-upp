@@ -8,6 +8,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import ProfilePage from "./pages/ProfilePage";
+import EventsPage from "./pages/EventsPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +30,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/events" 
+              element={
+                <ProtectedRoute>
+                  <EventsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile/:userId" 
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               } 
             />

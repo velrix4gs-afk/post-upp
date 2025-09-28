@@ -88,10 +88,13 @@ export const useMessages = (chatId?: string) => {
       const { data, error } = await supabase
         .from('chats')
         .select(`
-          *,
-          participants:chat_participants (
+          id,
+          name,
+          avatar_url,
+          type,
+          created_at,
+          chat_participants (
             user_id,
-            role,
             joined_at,
             profiles (
               username,
@@ -100,10 +103,19 @@ export const useMessages = (chatId?: string) => {
             )
           )
         `)
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setChats(data || []);
+      
+      const processedChats = (data || []).map(chat => ({
+        ...chat,
+        is_group: chat.type === 'group',
+        created_by: chat.chat_participants?.[0]?.user_id || '',
+        updated_at: chat.created_at,
+        participants: chat.chat_participants || []
+      }));
+      
+      setChats(processedChats);
     } catch (err: any) {
       toast({
         title: 'Error',

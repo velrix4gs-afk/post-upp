@@ -38,14 +38,20 @@ export const useEvents = () => {
       const { data, error } = await supabase
         .from('events')
         .select(`
-          *,
-          creator:profiles!events_created_by_fkey (
+          id,
+          title,
+          description,
+          start_date,
+          end_date,
+          location,
+          image_url,
+          created_by,
+          created_at,
+          updated_at,
+          profiles!events_created_by_fkey (
             display_name,
             username,
             avatar_url
-          ),
-          event_attendees!left (
-            user_id
           )
         `)
         .gte('start_date', new Date().toISOString())
@@ -53,11 +59,32 @@ export const useEvents = () => {
 
       if (error) throw error;
 
-      const eventsWithAttending = data?.map(event => ({
-        ...event,
-        attendees_count: event.event_attendees?.length || 0,
-        is_attending: event.event_attendees?.some((a: any) => a.user_id === user?.id) || false
-      })) || [];
+      // Get attendance for each event
+      const eventsWithAttending = await Promise.all(
+        (data || []).map(async (event) => {
+          const { data: attendees, error: attendeesError } = await supabase
+            .from('event_attendees')
+            .select('user_id')
+            .eq('event_id', event.id);
+
+          if (attendeesError) {
+            console.error('Error fetching attendees:', attendeesError);
+            return {
+              ...event,
+              creator: event.profiles,
+              attendees_count: 0,
+              is_attending: false
+            };
+          }
+
+          return {
+            ...event,
+            creator: event.profiles,
+            attendees_count: attendees?.length || 0,
+            is_attending: attendees?.some((a: any) => a.user_id === user?.id) || false
+          };
+        })
+      );
 
       setEvents(eventsWithAttending);
     } catch (err: any) {
@@ -104,7 +131,11 @@ export const useEvents = () => {
       const { error } = await supabase
         .from('events')
         .insert({
-          ...eventData,
+          title: eventData.title,
+          description: eventData.description,
+          start_date: eventData.start_date,
+          end_date: eventData.end_date,
+          location: eventData.location,
           image_url,
           created_by: user.id
         });
