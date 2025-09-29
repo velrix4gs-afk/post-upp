@@ -95,6 +95,7 @@ export const useMessages = (chatId?: string) => {
           created_at,
           chat_participants (
             user_id,
+            role,
             joined_at,
             profiles (
               username,
@@ -112,7 +113,11 @@ export const useMessages = (chatId?: string) => {
         is_group: chat.type === 'group',
         created_by: chat.chat_participants?.[0]?.user_id || '',
         updated_at: chat.created_at,
-        participants: chat.chat_participants || []
+        participants: (chat.chat_participants || []).map(participant => ({
+          ...participant,
+          role: participant.role || 'member',
+          profiles: participant.profiles || { username: 'unknown', display_name: 'Unknown User', avatar_url: null }
+        }))
       }));
       
       setChats(processedChats);
