@@ -18,16 +18,19 @@ export type Database = {
         Row: {
           chat_id: string
           joined_at: string | null
+          role: string | null
           user_id: string
         }
         Insert: {
           chat_id: string
           joined_at?: string | null
+          role?: string | null
           user_id: string
         }
         Update: {
           chat_id?: string
           joined_at?: string | null
+          role?: string | null
           user_id?: string
         }
         Relationships: [
@@ -65,13 +68,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "comments_view"
             referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "chat_participants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["author_id"]
           },
           {
             foreignKeyName: "chat_participants_user_id_fkey"
@@ -158,20 +154,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "comments_view"
             referencedColumns: ["comment_id"]
-          },
-          {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["post_id"]
           },
           {
             foreignKeyName: "comments_user_id_fkey"
@@ -313,20 +295,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "likes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "likes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["post_id"]
-          },
-          {
             foreignKeyName: "likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -344,13 +312,6 @@ export type Database = {
             foreignKeyName: "likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["author_id"]
-          },
-          {
-            foreignKeyName: "likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "user_status_view"
             referencedColumns: ["user_id"]
           },
@@ -359,6 +320,66 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          reaction_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -385,6 +406,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "message_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_seen: {
+        Row: {
+          id: string
+          message_id: string
+          seen_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          seen_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          seen_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_seen_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "message_seen_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_seen_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_seen_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_seen_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -460,13 +538,6 @@ export type Database = {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["author_id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
             referencedRelation: "user_status_view"
             referencedColumns: ["user_id"]
           },
@@ -523,20 +594,97 @@ export type Database = {
           },
         ]
       }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reaction_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           comments_count: number | null
           content: string | null
           created_at: string | null
-          hashtags: string[] | null
           id: string
-          likes_count: number | null
-          location: string | null
           media_type: string | null
-          media_urls: string[] | null
+          media_url: string | null
           privacy: string | null
-          shares_count: number | null
-          tagged_users: string[] | null
+          reactions_count: number | null
           updated_at: string | null
           user_id: string
         }
@@ -544,15 +692,11 @@ export type Database = {
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
-          hashtags?: string[] | null
           id?: string
-          likes_count?: number | null
-          location?: string | null
           media_type?: string | null
-          media_urls?: string[] | null
+          media_url?: string | null
           privacy?: string | null
-          shares_count?: number | null
-          tagged_users?: string[] | null
+          reactions_count?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -560,15 +704,11 @@ export type Database = {
           comments_count?: number | null
           content?: string | null
           created_at?: string | null
-          hashtags?: string[] | null
           id?: string
-          likes_count?: number | null
-          location?: string | null
           media_type?: string | null
-          media_urls?: string[] | null
+          media_url?: string | null
           privacy?: string | null
-          shares_count?: number | null
-          tagged_users?: string[] | null
+          reactions_count?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -813,13 +953,6 @@ export type Database = {
             foreignKeyName: "typing_status_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["author_id"]
-          },
-          {
-            foreignKeyName: "typing_status_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "user_status_view"
             referencedColumns: ["user_id"]
           },
@@ -828,6 +961,50 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_friend_requests: boolean | null
+          notification_messages: boolean | null
+          notification_post_reactions: boolean | null
+          privacy_who_can_message: string | null
+          privacy_who_can_view_profile: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_friend_requests?: boolean | null
+          notification_messages?: boolean | null
+          notification_post_reactions?: boolean | null
+          privacy_who_can_message?: string | null
+          privacy_who_can_view_profile?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_friend_requests?: boolean | null
+          notification_messages?: boolean | null
+          notification_post_reactions?: boolean | null
+          privacy_who_can_message?: string | null
+          privacy_who_can_view_profile?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -939,22 +1116,7 @@ export type Database = {
           post_id: string | null
           user_id: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["post_id"]
-          },
-        ]
+        Relationships: []
       }
       message_feed_view: {
         Row: {
@@ -1008,13 +1170,6 @@ export type Database = {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "user_feed_view"
-            referencedColumns: ["author_id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
             referencedRelation: "user_status_view"
             referencedColumns: ["user_id"]
           },
@@ -1047,20 +1202,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_feed_view: {
-        Row: {
-          author_avatar: string | null
-          author_id: string | null
-          author_name: string | null
-          comments_count: number | null
-          content: string | null
-          created_at: string | null
-          likes_count: number | null
-          media_urls: string[] | null
-          post_id: string | null
-        }
-        Relationships: []
       }
       user_status_view: {
         Row: {

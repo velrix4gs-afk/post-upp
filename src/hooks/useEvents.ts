@@ -37,31 +37,23 @@ export const useEvents = () => {
     try {
       const { data, error } = await supabase
         .from('events')
-        .select(`
-          id,
-          title,
-          description,
-          start_date,
-          end_date,
-          location,
-          image_url,
-          created_by,
-          created_at,
-          updated_at,
-          profiles!events_created_by_fkey (
-            display_name,
-            username,
-            avatar_url
-          )
-        `)
+        .select('*')
         .gte('start_date', new Date().toISOString())
         .order('start_date', { ascending: true });
 
       if (error) throw error;
 
-      // Get attendance for each event
-      const eventsWithAttending = await Promise.all(
+      // Get attendance and creator info for each event
+      const eventsWithInfo = await Promise.all(
         (data || []).map(async (event) => {
+          // Get creator info
+          const { data: creator } = await supabase
+            .from('profiles')
+            .select('display_name, username, avatar_url')
+            .eq('id', event.created_by)
+            .single();
+
+          // Get attendance info
           const { data: attendees, error: attendeesError } = await supabase
             .from('event_attendees')
             .select('user_id')
@@ -69,24 +61,18 @@ export const useEvents = () => {
 
           if (attendeesError) {
             console.error('Error fetching attendees:', attendeesError);
-            return {
-              ...event,
-              creator: event.profiles,
-              attendees_count: 0,
-              is_attending: false
-            };
           }
 
           return {
             ...event,
-            creator: event.profiles,
+            creator: creator || { display_name: 'Unknown', username: 'unknown', avatar_url: null },
             attendees_count: attendees?.length || 0,
             is_attending: attendees?.some((a: any) => a.user_id === user?.id) || false
           };
         })
       );
 
-      setEvents(eventsWithAttending);
+      setEvents(eventsWithInfo);
     } catch (err: any) {
       toast({
         title: 'Error',
