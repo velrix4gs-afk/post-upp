@@ -11,6 +11,11 @@ import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import EventsPage from "./pages/EventsPage";
 import Auth from "./pages/Auth";
+import Feed from "./pages/Feed";
+import SearchPage from "./pages/SearchPage";
+import MessagesPage from "./pages/MessagesPage";
+import FriendsPage from "./pages/FriendsPage";
+import GroupsPage from "./pages/GroupsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +35,46 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/feed" 
+              element={
+                <ProtectedRoute>
+                  <Feed />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/search" 
+              element={
+                <ProtectedRoute>
+                  <SearchPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/messages" 
+              element={
+                <ProtectedRoute>
+                  <MessagesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/friends" 
+              element={
+                <ProtectedRoute>
+                  <FriendsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/groups" 
+              element={
+                <ProtectedRoute>
+                  <GroupsPage />
                 </ProtectedRoute>
               } 
             />
