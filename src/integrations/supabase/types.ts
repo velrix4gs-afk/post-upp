@@ -246,6 +246,90 @@ export type Database = {
         }
         Relationships: []
       }
+      friends: {
+        Row: {
+          created_at: string | null
+          id: string
+          receiver_id: string
+          requester_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          receiver_id: string
+          requester_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          receiver_id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friends_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["sender_id"]
+          },
+          {
+            foreignKeyName: "friends_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "comments_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friends_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "user_status_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friends_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friends_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["sender_id"]
+          },
+          {
+            foreignKeyName: "friends_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "comments_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friends_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "user_status_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "friends_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -1278,12 +1362,21 @@ export type Database = {
           chat_created_at: string | null
           chat_id: string | null
           chat_name: string | null
-          last_message: string | null
-          last_message_at: string | null
-          last_message_sender: string | null
-          participants: Json[] | null
           type: string | null
-          unread_count: number | null
+        }
+        Insert: {
+          chat_avatar?: string | null
+          chat_created_at?: string | null
+          chat_id?: string | null
+          chat_name?: string | null
+          type?: string | null
+        }
+        Update: {
+          chat_avatar?: string | null
+          chat_created_at?: string | null
+          chat_id?: string | null
+          chat_name?: string | null
+          type?: string | null
         }
         Relationships: []
       }
