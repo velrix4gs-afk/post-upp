@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
+import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import CreatePost from '@/components/CreatePost';
 import PostCard from '@/components/PostCard';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Users, Hash } from 'lucide-react';
+import { TrendingUp, Users, Hash, UserCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Feed = () => {
@@ -14,18 +15,32 @@ const Feed = () => {
   const { posts, loading, createPost, toggleReaction } = usePosts();
   const [activeTab, setActiveTab] = useState<'friends' | 'trending' | 'all'>('all');
 
-  // CreatePost handles posting internally, no need for this handler
-  // const handleCreatePost = async (content: string, mediaFiles?: File[]) => {
-  //   await createPost({ content, media: mediaFiles?.[0] });
-  // };
+  useEffect(() => {
+    if (user) {
+      // Set up real-time subscription for new posts from authenticated users only
+      const channel = supabase
+        .channel('feed-posts')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'posts'
+          },
+          () => {
+            // Refetch to get updated posts with profile info
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          }
+        )
+        .subscribe();
 
-  const filteredPosts = posts.filter(post => {
-    if (activeTab === 'friends') {
-      // TODO: Filter by friends once friendship data is available
-      return true;
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-    return true;
-  });
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -129,13 +144,22 @@ const Feed = () => {
                   </Card>
                 ))}
               </div>
-            ) : filteredPosts.length === 0 ? (
-              <Card className="p-8 text-center">
-                <p className="text-muted-foreground">No posts yet. Be the first to post!</p>
+            ) : posts.length === 0 ? (
+              <Card className="p-12 text-center">
+                <div className="max-w-md mx-auto">
+                  <UserCheck className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-2">No posts yet from real users</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Be the first to share something! Only authenticated real users can post here.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Start by creating a post, following friends, or joining groups.
+                  </p>
+                </div>
               </Card>
             ) : (
               <div className="space-y-4">
-                {filteredPosts.map(post => (
+                {posts.map(post => (
                   <PostCard
                     key={post.id}
                     id={post.id}
