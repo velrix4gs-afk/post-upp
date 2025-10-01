@@ -8,14 +8,15 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import ProfilePage from "./pages/ProfilePage";
-import EventsPage from "./pages/EventsPage";
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
 import SearchPage from "./pages/SearchPage";
 import MessagesPage from "./pages/MessagesPage";
 import FriendsPage from "./pages/FriendsPage";
 import GroupsPage from "./pages/GroupsPage";
+import EventsPage from "./pages/EventsPage";
+import ProfilePage from "./pages/ProfilePage";
+import BookmarksPage from "./pages/BookmarksPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -91,6 +92,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/bookmarks" 
+              element={
+                <ProtectedRoute>
+                  <BookmarksPage />
                 </ProtectedRoute>
               } 
             />

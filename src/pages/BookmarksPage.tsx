@@ -1,0 +1,107 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import { supabase } from '@/integrations/supabase/client';
+import Navigation from '@/components/Navigation';
+import PostCardModern from '@/components/PostCardModern';
+import { Card } from '@/components/ui/card';
+import { Post } from '@/hooks/usePosts';
+import { Bookmark } from 'lucide-react';
+
+const BookmarksPage = () => {
+  const { user } = useAuth();
+  const { bookmarkedPosts, loading: bookmarksLoading } = useBookmarks();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user && bookmarkedPosts.length > 0) {
+      fetchBookmarkedPosts();
+    } else {
+      setLoading(false);
+    }
+  }, [user, bookmarkedPosts]);
+
+  const fetchBookmarkedPosts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            username,
+            display_name,
+            avatar_url,
+            is_verified
+          ),
+          post_reactions (
+            id,
+            user_id,
+            reaction_type
+          )
+        `)
+        .in('id', bookmarkedPosts)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setPosts(data as any || []);
+    } catch (err: any) {
+      console.error('Failed to fetch bookmarked posts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      
+      <div className="container mx-auto p-4 max-w-2xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Bookmark className="h-6 w-6" />
+            Saved Posts
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Posts you've bookmarked for later
+          </p>
+        </div>
+
+        {loading || bookmarksLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <Card key={i} className="p-6 animate-pulse">
+                <div className="flex gap-4">
+                  <div className="h-12 w-12 rounded-full bg-muted" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-1/4" />
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
+          <Card className="p-8 text-center">
+            <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">No saved posts yet</h3>
+            <p className="text-muted-foreground">
+              Bookmark posts to save them for later
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {posts.map(post => (
+              <PostCardModern key={post.id} post={post} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default BookmarksPage;

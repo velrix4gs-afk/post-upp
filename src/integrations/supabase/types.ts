@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookmarks: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts_view"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_participants: {
         Row: {
           chat_id: string
@@ -245,6 +295,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      followers: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followers_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followers_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followers_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followers_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       friends: {
         Row: {
@@ -926,11 +1029,13 @@ export type Database = {
           cover_url: string | null
           created_at: string | null
           display_name: string
+          gender: string | null
           id: string
           is_private: boolean | null
           is_verified: boolean | null
           last_seen: string | null
           location: string | null
+          phone: string | null
           relationship_status: string | null
           theme_color: string | null
           updated_at: string | null
@@ -944,11 +1049,13 @@ export type Database = {
           cover_url?: string | null
           created_at?: string | null
           display_name: string
+          gender?: string | null
           id: string
           is_private?: boolean | null
           is_verified?: boolean | null
           last_seen?: string | null
           location?: string | null
+          phone?: string | null
           relationship_status?: string | null
           theme_color?: string | null
           updated_at?: string | null
@@ -962,11 +1069,13 @@ export type Database = {
           cover_url?: string | null
           created_at?: string | null
           display_name?: string
+          gender?: string | null
           id?: string
           is_private?: boolean | null
           is_verified?: boolean | null
           last_seen?: string | null
           location?: string | null
+          phone?: string | null
           relationship_status?: string | null
           theme_color?: string | null
           updated_at?: string | null

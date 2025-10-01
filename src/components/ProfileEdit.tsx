@@ -28,6 +28,8 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
     website: profile?.website || '',
     relationship_status: profile?.relationship_status || '',
     birth_date: profile?.birth_date || '',
+    gender: profile?.gender || '',
+    phone: profile?.phone || '',
     is_private: profile?.is_private || false
   });
   
@@ -158,13 +160,39 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="birth_date">Birth Date</Label>
-                <Input
-                  id="birth_date"
-                  type="date"
-                  value={formData.birth_date}
-                  onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-                />
-              </div>
+            <Input
+              id="birth_date"
+              type="date"
+              value={formData.birth_date}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gender">Gender</Label>
+            <select
+              id="gender"
+              value={formData.gender}
+              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background"
+            >
+              <option value="">Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="+1234567890"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+          </div>
               <div>
                 <Label htmlFor="relationship_status">Relationship Status</Label>
                 <Select

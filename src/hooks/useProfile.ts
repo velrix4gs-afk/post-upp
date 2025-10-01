@@ -13,6 +13,8 @@ export interface Profile {
   location?: string;
   website?: string;
   birth_date?: string;
+  gender?: string;
+  phone?: string;
   relationship_status?: string;
   theme_color?: string;
   is_private: boolean;

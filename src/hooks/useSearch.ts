@@ -26,17 +26,16 @@ export const useSearch = () => {
       setLoading(true);
       const searchTerm = `%${query}%`;
 
-      // Search users
+      // Search users by username, display name, or email
       const { data: users, error: usersError } = await supabase
         .from('profiles')
         .select('*')
-        .or(`display_name.ilike.${searchTerm},username.ilike.${searchTerm}`)
-        .eq('is_private', false)
+        .or(`display_name.ilike.${searchTerm},username.ilike.${searchTerm},bio.ilike.${searchTerm}`)
         .limit(10);
 
       if (usersError) throw usersError;
 
-      // Search posts
+      // Search posts by content or hashtags
       const { data: posts, error: postsError } = await supabase
         .from('posts')
         .select(`

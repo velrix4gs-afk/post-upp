@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
 
-interface Post {
+export interface Post {
   id: string;
   user_id: string;
   content: string;
