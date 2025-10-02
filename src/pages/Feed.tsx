@@ -5,12 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import CreatePost from '@/components/CreatePost';
 import PostCard from '@/components/PostCard';
+import Stories from '@/components/Stories';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Users, Hash, UserCheck } from 'lucide-react';
+import { TrendingUp, Users, Hash, UserCheck, Compass } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from 'react-router-dom';
 
 const Feed = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { posts, loading, createPost, toggleReaction } = usePosts();
   const [activeTab, setActiveTab] = useState<'friends' | 'trending' | 'all'>('all');
@@ -102,6 +105,9 @@ const Feed = () => {
 
           {/* Main Feed */}
           <div className="lg:col-span-6 space-y-6">
+            {/* Stories */}
+            <Stories />
+
             <CreatePost />
 
             <Card className="p-2">
@@ -181,21 +187,35 @@ const Feed = () => {
             )}
           </div>
 
-          {/* Right Sidebar - Online Friends */}
+          {/* Right Sidebar - Quick Links */}
           <div className="lg:col-span-3 space-y-4">
             <Card className="p-4">
-              <h3 className="font-semibold mb-4">Online Friends</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 cursor-pointer hover:bg-muted p-2 rounded">
-                  <div className="relative">
-                    <div className="h-8 w-8 rounded-full bg-primary/10" />
-                    <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">Friend Name</p>
-                    <p className="text-xs text-muted-foreground">Online</p>
-                  </div>
-                </div>
+              <h3 className="font-semibold mb-4">Quick Links</h3>
+              <div className="space-y-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => navigate('/explore')}
+                >
+                  <Compass className="h-4 w-4 mr-2" />
+                  Explore
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => navigate('/friends')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Find Friends
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => navigate('/groups')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Browse Groups
+                </Button>
               </div>
             </Card>
           </div>

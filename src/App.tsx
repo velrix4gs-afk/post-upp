@@ -17,6 +17,7 @@ import GroupsPage from "./pages/GroupsPage";
 import EventsPage from "./pages/EventsPage";
 import ProfilePage from "./pages/ProfilePage";
 import BookmarksPage from "./pages/BookmarksPage";
+import ExplorePage from "./pages/ExplorePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -100,6 +101,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <BookmarksPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/explore" 
+              element={
+                <ProtectedRoute>
+                  <ExplorePage />
                 </ProtectedRoute>
               } 
             />

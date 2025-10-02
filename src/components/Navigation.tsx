@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import ThemeToggle from './ThemeToggle';
-import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound } from 'lucide-react';
+import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,6 +89,16 @@ const Navigation = () => {
                   >
                     <Calendar className="h-4 w-4" />
                     Events
+                  </Button>
+                </Link>
+                <Link to="/explore">
+                  <Button 
+                    variant={isActive('/explore') ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="gap-2"
+                  >
+                    <Compass className="h-4 w-4" />
+                    Explore
                   </Button>
                 </Link>
               </div>

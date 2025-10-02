@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import PostCard from '@/components/PostCard';
 import ProfileEdit from '@/components/ProfileEdit';
@@ -7,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Edit, 
   MapPin, 
@@ -15,22 +17,85 @@ import {
   Heart,
   Cake,
   Camera,
-  Settings
+  Settings,
+  UserPlus,
+  UserCheck,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { usePosts } from '@/hooks/usePosts';
 import { useFriends } from '@/hooks/useFriends';
+import { useFollowers } from '@/hooks/useFollowers';
 import { formatDistanceToNow, format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
+  const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useProfile();
-  const { posts } = usePosts();
+  
+  // If no userId in params, show current user's profile
+  const profileUserId = userId || user?.id;
+  const isOwnProfile = profileUserId === user?.id;
+  
+  const { profile, loading: profileLoading } = useProfile(profileUserId);
+  const { posts, loading: postsLoading } = usePosts();
   const { friends } = useFriends();
+  const { followers, following, followUser, unfollowUser } = useFollowers(profileUserId);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
 
-  const userPosts = posts.filter(post => post.user_id === user?.id);
+  const userPosts = posts.filter(post => post.user_id === profileUserId);
+  
+  // Check if current user is following this profile
+  const isFollowing = following.some(f => f.following_id === profileUserId);
+  
+  const handleFollowToggle = async () => {
+    if (!profileUserId) return;
+    
+    if (isFollowing) {
+      await unfollowUser(profileUserId);
+    } else {
+      await followUser(profileUserId, profile?.is_private || false);
+    }
+  };
+  
+  const handleMessage = () => {
+    navigate('/messages');
+  };
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          <Skeleton className="h-48 md:h-64 w-full rounded-lg mb-6" />
+          <div className="flex items-center gap-4 mb-6">
+            <Skeleton className="h-32 w-32 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          <Card className="p-12 text-center">
+            <h2 className="text-2xl font-bold mb-2">Profile not found</h2>
+            <p className="text-muted-foreground">This user doesn't exist or has been removed.</p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const formatJoinDate = (dateString: string) => {
     return format(new Date(dateString), 'MMMM yyyy');
@@ -50,14 +115,40 @@ const ProfilePage = () => {
               <Camera className="h-12 w-12 text-primary opacity-50" />
             </div>
           )}
-          <Button
-            size="sm"
-            className="absolute bottom-4 right-4"
-            onClick={() => setShowProfileEdit(true)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Profile
-          </Button>
+          {isOwnProfile ? (
+            <Button
+              size="sm"
+              className="absolute bottom-4 right-4"
+              onClick={() => setShowProfileEdit(true)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Profile
+            </Button>
+          ) : (
+            <div className="absolute bottom-4 right-4 flex gap-2">
+              <Button
+                size="sm"
+                variant={isFollowing ? "secondary" : "default"}
+                onClick={handleFollowToggle}
+              >
+                {isFollowing ? (
+                  <>
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Following
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Follow
+                  </>
+                )}
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleMessage}>
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Message
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Profile Info */}
@@ -90,9 +181,13 @@ const ProfilePage = () => {
                     <div className="text-2xl font-bold">{userPosts.length}</div>
                     <div className="text-sm text-muted-foreground">Posts</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{friends.length}</div>
-                    <div className="text-sm text-muted-foreground">Friends</div>
+                  <div className="text-center cursor-pointer hover:opacity-80">
+                    <div className="text-2xl font-bold">{followers.length}</div>
+                    <div className="text-sm text-muted-foreground">Followers</div>
+                  </div>
+                  <div className="text-center cursor-pointer hover:opacity-80">
+                    <div className="text-2xl font-bold">{following.length}</div>
+                    <div className="text-sm text-muted-foreground">Following</div>
                   </div>
                 </div>
               </div>

@@ -1,1 +1,19 @@
 project_id = "ccyyxkjpgebjnstevgkw"
+
+[functions.posts]
+verify_jwt = true
+
+[functions.reactions]
+verify_jwt = true
+
+[functions.messages]
+verify_jwt = true
+
+[functions.friendships]
+verify_jwt = true
+
+[functions.profiles]
+verify_jwt = true
+
+[functions.auth-settings]
+verify_jwt = false
