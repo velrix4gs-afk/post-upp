@@ -25,9 +25,10 @@ const signInSchema = z.object({
 });
 
 const Auth = () => {
-  const [authMode, setAuthMode] = useState<'email' | 'phone'>('email');
+  const [authMode, setAuthMode] = useState<'email' | 'phone' | 'magic'>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [magicLinkEmail, setMagicLinkEmail] = useState('');
   const [signUpData, setSignUpData] = useState({
     email: '',
     password: '',
@@ -199,6 +200,36 @@ const Auth = () => {
     }
   };
 
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: magicLinkEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/feed`,
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Magic link sent!',
+        description: 'Check your email for the login link.',
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to send magic link',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-gradient-card border-0 shadow-xl">
@@ -218,6 +249,46 @@ const Auth = () => {
                 onBack={() => setAuthMode('email')}
                 onSuccess={() => navigate('/feed')}
               />
+            </div>
+          ) : authMode === 'magic' ? (
+            <div className="space-y-4">
+              <Button
+                variant="ghost"
+                onClick={() => setAuthMode('email')}
+                className="w-full justify-start"
+              >
+                ← Back to login options
+              </Button>
+              
+              <div className="text-center space-y-2 mb-6">
+                <h3 className="text-xl font-semibold">Magic Link Sign In</h3>
+                <p className="text-sm text-muted-foreground">
+                  We'll send you a secure login link via email
+                </p>
+              </div>
+              
+              <form onSubmit={handleMagicLink} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="magic-email">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="magic-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      className="pl-10"
+                      value={magicLinkEmail}
+                      onChange={(e) => setMagicLinkEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Sending...' : 'Send Magic Link'}
+                </Button>
+              </form>
             </div>
           ) : (
             <>
@@ -251,6 +322,16 @@ const Auth = () => {
                 >
                   <Phone className="h-5 w-5" />
                   Continue with Phone
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => setAuthMode('magic')}
+                >
+                  <Mail className="h-5 w-5" />
+                  Send Magic Link
                 </Button>
               </div>
 
