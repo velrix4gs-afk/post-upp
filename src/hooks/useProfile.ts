@@ -19,6 +19,8 @@ export interface Profile {
   theme_color?: string;
   is_private: boolean;
   is_verified: boolean;
+  online_status?: boolean;
+  status_message?: string;
   created_at: string;
   updated_at: string;
 }
