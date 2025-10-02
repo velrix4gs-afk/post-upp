@@ -30,6 +30,7 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
     birth_date: profile?.birth_date || '',
     gender: profile?.gender || '',
     phone: profile?.phone || '',
+    status_message: profile?.status_message || '',
     is_private: profile?.is_private || false
   });
   
@@ -192,6 +193,21 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status_message">Status Message</Label>
+            <Input
+              id="status_message"
+              type="text"
+              placeholder="What's on your mind?"
+              value={formData.status_message}
+              onChange={(e) => setFormData({ ...formData, status_message: e.target.value })}
+              maxLength={100}
+            />
+            <p className="text-xs text-muted-foreground">
+              {formData.status_message.length}/100 characters
+            </p>
           </div>
               <div>
                 <Label htmlFor="relationship_status">Relationship Status</Label>

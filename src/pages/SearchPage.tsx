@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,41 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, User, FileText, Users as UsersIcon, Hash } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useSearch } from '@/hooks/useSearch';
+import { useFollowers } from '@/hooks/useFollowers';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { results, loading, search } = useSearch();
+  const { followUser, unfollowUser, following } = useFollowers();
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (searchQuery.trim()) {
+        search(searchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  const isFollowing = (userId: string) => {
+    return following.some(f => f.following.id === userId);
+  };
+
+  const handleFollowToggle = async (userId: string, isPrivate: boolean) => {
+    if (isFollowing(userId)) {
+      await unfollowUser(userId);
+    } else {
+      await followUser(userId, isPrivate);
+    }
+  };
+
+  const userResults = results.filter(r => r.type === 'user');
+  const postResults = results.filter(r => r.type === 'post');
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,96 +70,179 @@ const SearchPage = () => {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4 mt-4">
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Users
-              </h3>
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>U{i}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">User Name {i}</p>
-                        <p className="text-sm text-muted-foreground">@username{i}</p>
+            {loading ? (
+              <Card className="p-4">
+                <div className="space-y-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="h-12 w-12 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-24" />
                       </div>
                     </div>
-                    <Button size="sm" variant="outline">Follow</Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Recent Posts
-              </h3>
-              <div className="space-y-3">
-                <div className="p-3 hover:bg-muted rounded cursor-pointer">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                    <p className="text-sm font-medium">User Name</p>
-                  </div>
-                  <p className="text-sm">This is a sample post content that matches your search query...</p>
-                  <p className="text-xs text-muted-foreground mt-2">2 hours ago</p>
+                  ))}
                 </div>
-              </div>
-            </Card>
+              </Card>
+            ) : results.length === 0 && searchQuery ? (
+              <Card className="p-8 text-center">
+                <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No results found</h3>
+                <p className="text-muted-foreground">Try searching with different keywords</p>
+              </Card>
+            ) : (
+              <>
+                {userResults.length > 0 && (
+                  <Card className="p-4">
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Users
+                    </h3>
+                    <div className="space-y-3">
+                      {userResults.slice(0, 3).map(result => (
+                        <div key={result.id} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                          <div 
+                            className="flex items-center gap-3 flex-1 cursor-pointer"
+                            onClick={() => navigate(`/profile/${result.id}`)}
+                          >
+                            <Avatar>
+                              <AvatarImage src={result.avatar} />
+                              <AvatarFallback>{result.title[0]}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{result.title}</p>
+                                {result.verified && (
+                                  <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{result.subtitle}</p>
+                            </div>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant={isFollowing(result.id) ? "outline" : "default"}
+                            onClick={() => handleFollowToggle(result.id, result.data.is_private)}
+                          >
+                            {isFollowing(result.id) ? 'Following' : 'Follow'}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {postResults.length > 0 && (
+                  <Card className="p-4">
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Posts
+                    </h3>
+                    <div className="space-y-3">
+                      {postResults.slice(0, 3).map(result => (
+                        <div key={result.id} className="p-3 hover:bg-muted rounded cursor-pointer">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={result.avatar} />
+                              <AvatarFallback>{result.subtitle?.[0]}</AvatarFallback>
+                            </Avatar>
+                            <p className="text-sm font-medium">{result.subtitle}</p>
+                          </div>
+                          <p className="text-sm">{result.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4 mt-4">
-            <Card className="p-4">
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
-                    onClick={() => navigate(`/profile/${i}`)}>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>U{i}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">User Name {i}</p>
-                        <p className="text-sm text-muted-foreground">@username{i}</p>
-                        <p className="text-xs text-muted-foreground">1.2K followers</p>
+            {loading ? (
+              <Card className="p-4">
+                <div className="space-y-3">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </Card>
+            ) : userResults.length === 0 ? (
+              <Card className="p-8 text-center">
+                <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No users found</p>
+              </Card>
+            ) : (
+              <Card className="p-4">
+                <div className="space-y-3">
+                  {userResults.map(result => (
+                    <div key={result.id} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+                      <div 
+                        className="flex items-center gap-3 flex-1 cursor-pointer"
+                        onClick={() => navigate(`/profile/${result.id}`)}
+                      >
+                        <Avatar>
+                          <AvatarImage src={result.avatar} />
+                          <AvatarFallback>{result.title[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{result.title}</p>
+                            {result.verified && (
+                              <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{result.subtitle}</p>
+                        </div>
                       </div>
+                      <Button 
+                        size="sm" 
+                        variant={isFollowing(result.id) ? "outline" : "default"}
+                        onClick={() => handleFollowToggle(result.id, result.data.is_private)}
+                      >
+                        {isFollowing(result.id) ? 'Following' : 'Follow'}
+                      </Button>
                     </div>
-                    <Button size="sm" variant="outline">Follow</Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
+                  ))}
+                </div>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="posts" className="space-y-4 mt-4">
-            <Card className="p-4">
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="p-3 hover:bg-muted rounded cursor-pointer border-b last:border-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>U</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-sm">User Name</p>
-                        <p className="text-xs text-muted-foreground">@username · 2h ago</p>
+            {loading ? (
+              <Card className="p-4">
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                  ))}
+                </div>
+              </Card>
+            ) : postResults.length === 0 ? (
+              <Card className="p-8 text-center">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No posts found</p>
+              </Card>
+            ) : (
+              <Card className="p-4">
+                <div className="space-y-4">
+                  {postResults.map(result => (
+                    <div key={result.id} className="p-3 hover:bg-muted rounded cursor-pointer border-b last:border-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={result.avatar} />
+                          <AvatarFallback>{result.subtitle?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{result.subtitle}</p>
+                        </div>
                       </div>
+                      <p className="text-sm mb-2">{result.title}</p>
                     </div>
-                    <p className="text-sm mb-2">This is a sample post content that matches your search query. It can contain text, images, and more...</p>
-                    <div className="flex gap-4 text-xs text-muted-foreground">
-                      <span>12 likes</span>
-                      <span>5 comments</span>
-                      <span>2 shares</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+                  ))}
+                </div>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-4 mt-4">

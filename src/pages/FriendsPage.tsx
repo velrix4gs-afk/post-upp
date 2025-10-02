@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,26 +7,48 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, UserMinus, UserCheck, X, Check } from 'lucide-react';
+import { Search, UserPlus, UserMinus, UserCheck, X, Check, MessageSquare } from 'lucide-react';
+import { useFriends } from '@/hooks/useFriends';
+import { useSearch } from '@/hooks/useSearch';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const FriendsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+  const { 
+    friends, 
+    pendingRequests, 
+    sentRequests,
+    loading,
+    acceptFriendRequest,
+    declineFriendRequest,
+    removeFriend,
+    sendFriendRequest
+  } = useFriends();
+  
+  const { results, search } = useSearch();
 
-  const mockFriends = [
-    { id: '1', name: 'John Doe', username: 'johndoe', avatar: '', status: 'online' },
-    { id: '2', name: 'Jane Smith', username: 'janesmith', avatar: '', status: 'offline' },
-    { id: '3', name: 'Mike Johnson', username: 'mikej', avatar: '', status: 'online' },
-  ];
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const debounce = setTimeout(() => {
+        search(searchQuery);
+      }, 300);
+      return () => clearTimeout(debounce);
+    }
+  }, [searchQuery]);
 
-  const mockRequests = [
-    { id: '4', name: 'Sarah Wilson', username: 'sarahw', avatar: '', mutualFriends: 5 },
-    { id: '5', name: 'Tom Brown', username: 'tombrown', avatar: '', mutualFriends: 3 },
-  ];
+  const filteredFriends = friends.filter(friend =>
+    friend.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const mockSuggestions = [
-    { id: '6', name: 'Emily Davis', username: 'emilyd', avatar: '', mutualFriends: 8 },
-    { id: '7', name: 'Chris Lee', username: 'chrisl', avatar: '', mutualFriends: 2 },
-  ];
+  const onlineFriends = filteredFriends; // TODO: Add online status tracking
+  const suggestions = results.filter(r => 
+    r.type === 'user' && 
+    !friends.some(f => f.id === r.id) &&
+    !pendingRequests.some(req => req.requester.id === r.id) &&
+    !sentRequests.some(req => req.addressee.id === r.id)
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,17 +72,17 @@ const FriendsPage = () => {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">
               All Friends
-              <Badge variant="secondary" className="ml-2">{mockFriends.length}</Badge>
+              <Badge variant="secondary" className="ml-2">{friends.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="online">
               Online
-              <Badge variant="secondary" className="ml-2">
-                {mockFriends.filter(f => f.status === 'online').length}
-              </Badge>
+              <Badge variant="secondary" className="ml-2">{onlineFriends.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="requests">
               Requests
-              <Badge variant="destructive" className="ml-2">{mockRequests.length}</Badge>
+              {pendingRequests.length > 0 && (
+                <Badge variant="destructive" className="ml-2">{pendingRequests.length}</Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="suggestions">
               Suggestions
@@ -67,122 +90,254 @@ const FriendsPage = () => {
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockFriends.map(friend => (
-                <Card key={friend.id} className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <Avatar className="h-16 w-16">
-                        <AvatarFallback>{friend.name[0]}</AvatarFallback>
-                      </Avatar>
-                      {friend.status === 'online' && (
-                        <div className="absolute bottom-0 right-0 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{friend.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
-                      <div className="flex gap-2 mt-3">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          Message
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
+            {loading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-16 w-16 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-24" />
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredFriends.length === 0 ? (
+              <Card className="p-12 text-center">
+                <UserCheck className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No friends yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Start connecting with people to build your network!
+                </p>
+                <Button onClick={() => navigate('/search')}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Find Friends
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredFriends.map(friend => (
+                  <Card key={friend.id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="relative">
+                        <Avatar 
+                          className="h-16 w-16 cursor-pointer" 
+                          onClick={() => navigate(`/profile/${friend.id}`)}
+                        >
+                          <AvatarImage src={friend.avatar_url} />
+                          <AvatarFallback>{friend.display_name[0]}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p 
+                            className="font-medium truncate cursor-pointer hover:underline"
+                            onClick={() => navigate(`/profile/${friend.id}`)}
+                          >
+                            {friend.display_name}
+                          </p>
+                          {friend.is_verified && (
+                            <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
+                        <div className="flex gap-2 mt-3">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => navigate('/messages')}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => removeFriend(friend.id)}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="online" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockFriends.filter(f => f.status === 'online').map(friend => (
-                <Card key={friend.id} className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <Avatar className="h-16 w-16">
-                        <AvatarFallback>{friend.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="absolute bottom-0 right-0 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{friend.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
-                      <Badge variant="outline" className="mt-2">Online</Badge>
-                      <div className="flex gap-2 mt-3">
-                        <Button size="sm" className="flex-1">
-                          Message
-                        </Button>
+            {onlineFriends.length === 0 ? (
+              <Card className="p-12 text-center">
+                <UserCheck className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No friends online</h3>
+                <p className="text-muted-foreground">
+                  None of your friends are currently online
+                </p>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {onlineFriends.map(friend => (
+                  <Card key={friend.id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="relative">
+                        <Avatar 
+                          className="h-16 w-16 cursor-pointer"
+                          onClick={() => navigate(`/profile/${friend.id}`)}
+                        >
+                          <AvatarImage src={friend.avatar_url} />
+                          <AvatarFallback>{friend.display_name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute bottom-0 right-0 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p 
+                            className="font-medium truncate cursor-pointer hover:underline"
+                            onClick={() => navigate(`/profile/${friend.id}`)}
+                          >
+                            {friend.display_name}
+                          </p>
+                          {friend.is_verified && (
+                            <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
+                        <Badge variant="outline" className="mt-2">Online</Badge>
+                        <div className="flex gap-2 mt-3">
+                          <Button 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => navigate('/messages')}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="requests" className="mt-6">
-            <div className="space-y-4">
-              {mockRequests.map(request => (
-                <Card key={request.id} className="p-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-14 w-14">
-                      <AvatarFallback>{request.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-medium">{request.name}</p>
-                      <p className="text-sm text-muted-foreground">@{request.username}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {request.mutualFriends} mutual friends
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm">
-                        <Check className="h-4 w-4 mr-1" />
-                        Accept
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <X className="h-4 w-4 mr-1" />
-                        Decline
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="suggestions" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockSuggestions.map(user => (
-                <Card key={user.id} className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-16 w-16">
-                      <AvatarFallback>{user.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{user.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {user.mutualFriends} mutual friends
-                      </p>
-                      <div className="flex gap-2 mt-3">
-                        <Button size="sm" className="flex-1">
-                          <UserPlus className="h-4 w-4 mr-1" />
-                          Add Friend
+            {pendingRequests.length === 0 ? (
+              <Card className="p-12 text-center">
+                <UserPlus className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No pending requests</h3>
+                <p className="text-muted-foreground">
+                  You don't have any friend requests at the moment
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingRequests.map(request => (
+                  <Card key={request.id} className="p-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar 
+                        className="h-14 w-14 cursor-pointer"
+                        onClick={() => navigate(`/profile/${request.requester.id}`)}
+                      >
+                        <AvatarImage src={request.requester.avatar_url} />
+                        <AvatarFallback>{request.requester.display_name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <p 
+                            className="font-medium cursor-pointer hover:underline"
+                            onClick={() => navigate(`/profile/${request.requester.id}`)}
+                          >
+                            {request.requester.display_name}
+                          </p>
+                          {request.requester.is_verified && (
+                            <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">@{request.requester.username}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm"
+                          onClick={() => acceptFriendRequest(request.requester_id)}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Accept
                         </Button>
-                        <Button size="sm" variant="outline">
-                          <X className="h-4 w-4" />
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => declineFriendRequest(request.requester_id)}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Decline
                         </Button>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="suggestions" className="mt-6">
+            {suggestions.length === 0 ? (
+              <Card className="p-12 text-center">
+                <UserPlus className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No suggestions available</h3>
+                <p className="text-muted-foreground mb-6">
+                  Try searching for people you know
+                </p>
+                <Button onClick={() => navigate('/search')}>
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Users
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {suggestions.map(user => (
+                  <Card key={user.id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar 
+                        className="h-16 w-16 cursor-pointer"
+                        onClick={() => navigate(`/profile/${user.id}`)}
+                      >
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.title[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p 
+                            className="font-medium truncate cursor-pointer hover:underline"
+                            onClick={() => navigate(`/profile/${user.id}`)}
+                          >
+                            {user.title}
+                          </p>
+                          {user.verified && (
+                            <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{user.subtitle}</p>
+                        <div className="flex gap-2 mt-3">
+                          <Button 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => sendFriendRequest(user.id)}
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Add Friend
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
