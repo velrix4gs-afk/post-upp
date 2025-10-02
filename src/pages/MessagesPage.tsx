@@ -2,14 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
 import Navigation from '@/components/Navigation';
+import MessageBubble from '@/components/MessageBubble';
+import VoiceRecorder from '@/components/VoiceRecorder';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const MessagesPage = () => {
   const { user } = useAuth();
@@ -17,7 +21,12 @@ const MessagesPage = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -33,12 +42,109 @@ const MessagesPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim() || !selectedChatId) return;
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    await sendMessage(messageText, undefined);
-    setMessageText('');
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if ((!messageText.trim() && !selectedImage) || !selectedChatId) return;
+
+    try {
+      let mediaUrl = null;
+      if (selectedImage) {
+        const fileExt = selectedImage.name.split('.').pop();
+        const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('messages')
+          .upload(fileName, selectedImage);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('messages')
+          .getPublicUrl(fileName);
+
+        mediaUrl = publicUrl;
+      }
+
+      await sendMessage(messageText.trim() || '📷 Photo', replyingTo?.id);
+      
+      if (mediaUrl) {
+        await supabase
+          .from('messages')
+          .update({ media_url: mediaUrl })
+          .eq('chat_id', selectedChatId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+      }
+
+      setMessageText('');
+      setSelectedImage(null);
+      setImagePreview(null);
+      setReplyingTo(null);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to send message',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleVoiceSend = async (audioBlob: Blob, duration: number) => {
+    if (!selectedChatId) return;
+
+    try {
+      const fileName = `${user?.id}/${Date.now()}.webm`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('messages')
+        .upload(fileName, audioBlob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('messages')
+        .getPublicUrl(fileName);
+
+      await supabase
+        .from('messages')
+        .insert({
+          chat_id: selectedChatId,
+          sender_id: user?.id,
+          content: '🎤 Voice message',
+          voice_url: publicUrl,
+          voice_duration: duration,
+          is_voice_message: true
+        });
+
+      setIsRecordingVoice(false);
+      toast({
+        title: 'Success',
+        description: 'Voice message sent'
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to send voice message',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleReact = async (messageId: string, emoji: string) => {
+    // TODO: Implement when types are updated
+    console.log('React with:', emoji, 'to message:', messageId);
   };
 
   const selectedChat = chats.find(c => c.id === selectedChatId);
@@ -127,9 +233,6 @@ const MessagesPage = () => {
                               Last message preview...
                             </p>
                           </div>
-                          {Math.random() > 0.5 && (
-                            <Badge variant="default" className="h-5">3</Badge>
-                          )}
                         </div>
                       </div>
                     );
@@ -169,62 +272,124 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
+                <ScrollArea className="flex-1 p-4 bg-muted/20">
+                  <div className="space-y-1">
                     {messages.map((message) => {
                       const isOwn = message.sender_id === user?.id;
+                      const senderProfile = selectedChat.participants.find(p => p.user_id === message.sender_id)?.profiles;
+                      
                       return (
-                        <div
+                        <MessageBubble
                           key={message.id}
-                          className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}
-                        >
-                          {!isOwn && (
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={message.sender.avatar_url} />
-                              <AvatarFallback>{message.sender.display_name[0]}</AvatarFallback>
-                            </Avatar>
-                          )}
-                          <div className={`max-w-xs ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
-                            <div
-                              className={`px-4 py-2 rounded-2xl ${
-                                isOwn
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-muted'
-                              }`}
-                            >
-                              <p className="text-sm">{message.content}</p>
-                            </div>
-                            <span className="text-xs text-muted-foreground mt-1">
-                              {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                            </span>
-                          </div>
-                        </div>
+                          id={message.id}
+                          content={message.content}
+                          sender={{
+                            id: message.sender_id || '',
+                            name: senderProfile?.display_name || 'Unknown',
+                            avatar: senderProfile?.avatar_url
+                          }}
+                          timestamp={message.created_at}
+                          isSent={isOwn}
+                          mediaUrl={message.media_url}
+                          onReply={() => setReplyingTo(message)}
+                          onReact={(emoji) => handleReact(message.id, emoji)}
+                        />
                       );
                     })}
                     <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
 
-                {/* Message Input */}
-                <form onSubmit={handleSendMessage} className="p-4 border-t">
-                  <div className="flex gap-2">
-                    <Button type="button" size="sm" variant="ghost">
-                      <Paperclip className="h-5 w-5" />
-                    </Button>
-                    <Input
-                      placeholder="Type a message..."
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button type="button" size="sm" variant="ghost">
-                      <Smile className="h-5 w-5" />
-                    </Button>
-                    <Button type="submit" size="sm">
-                      <Send className="h-5 w-5" />
+                {/* Reply Preview */}
+                {replyingTo && (
+                  <div className="px-4 py-2 bg-muted/50 border-t flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Replying to</p>
+                      <p className="text-sm truncate">{replyingTo.content}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setReplyingTo(null)}
+                    >
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
-                </form>
+                )}
+
+                {/* Image Preview */}
+                {imagePreview && (
+                  <div className="px-4 py-2 bg-muted/50 border-t">
+                    <div className="relative inline-block">
+                      <img src={imagePreview} alt="Preview" className="h-20 rounded" />
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setImagePreview(null);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Voice Recorder */}
+                {isRecordingVoice ? (
+                  <VoiceRecorder
+                    onSend={handleVoiceSend}
+                    onCancel={() => setIsRecordingVoice(false)}
+                  />
+                ) : (
+                  <form onSubmit={handleSendMessage} className="p-4 border-t">
+                    <div className="flex gap-2 items-end">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="h-5 w-5" />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => setIsRecordingVoice(true)}
+                      >
+                        <Mic className="h-5 w-5" />
+                      </Button>
+                      <Input
+                        placeholder="Type a message..."
+                        value={messageText}
+                        onChange={(e) => setMessageText(e.target.value)}
+                        className="flex-1"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                      />
+                      <Button type="button" size="sm" variant="ghost">
+                        <Smile className="h-5 w-5" />
+                      </Button>
+                      <Button type="submit" size="sm" disabled={!messageText.trim() && !selectedImage}>
+                        <Send className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
