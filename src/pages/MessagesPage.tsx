@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
@@ -198,9 +198,10 @@ const MessagesPage = () => {
                     ))}
                   </div>
                 ) : filteredChats.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No conversations yet</p>
-                    <Button className="mt-4" size="sm">Start a chat</Button>
+                  <div className="text-center py-12 px-4 text-muted-foreground">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium mb-2">No conversations yet</p>
+                    <p className="text-sm">Visit a friend's profile to start messaging</p>
                   </div>
                 ) : (
                   filteredChats.map(chat => {
@@ -227,10 +228,9 @@ const MessagesPage = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <p className="font-medium truncate">{chatName}</p>
-                              <span className="text-xs text-muted-foreground">2h</span>
                             </div>
                             <p className="text-sm text-muted-foreground truncate">
-                              Last message preview...
+                              {chat.is_group ? `${chat.participants.length} members` : 'Direct message'}
                             </p>
                           </div>
                         </div>
@@ -393,9 +393,15 @@ const MessagesPage = () => {
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <p className="text-lg mb-2">Select a conversation</p>
-                  <p className="text-sm">Choose a chat from the list to start messaging</p>
+                <div className="text-center max-w-md px-6">
+                  <MessageCircle className="h-20 w-20 mx-auto mb-6 opacity-20" />
+                  <h3 className="text-xl font-semibold mb-2 text-foreground">Your Messages</h3>
+                  <p className="text-sm mb-4">
+                    Send private messages to friends and connect with others in your network
+                  </p>
+                  <p className="text-xs">
+                    Select a conversation from the list or visit a profile to start messaging
+                  </p>
                 </div>
               </div>
             )}

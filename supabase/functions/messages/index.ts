@@ -68,9 +68,29 @@ serve(async (req) => {
       const body = await req.json();
       const { chat_id, content, media_url, media_type, reply_to } = body;
 
-      // Validate required fields
-      if (!chat_id || (!content && !media_url)) {
-        throw new Error('Message must have chat_id and either content or media');
+      // Input validation
+      if (!chat_id || typeof chat_id !== 'string') {
+        throw new Error('Invalid chat_id');
+      }
+      
+      if (!content && !media_url) {
+        throw new Error('Message must have either content or media');
+      }
+
+      if (content && typeof content !== 'string') {
+        throw new Error('Content must be a string');
+      }
+
+      if (content && content.length > 5000) {
+        throw new Error('Message too long (max 5000 characters)');
+      }
+
+      if (media_url && typeof media_url !== 'string') {
+        throw new Error('Invalid media_url');
+      }
+
+      if (reply_to && typeof reply_to !== 'string') {
+        throw new Error('Invalid reply_to');
       }
 
       // Verify user is participant in the chat

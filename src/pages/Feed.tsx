@@ -51,42 +51,12 @@ const Feed = () => {
       
       <div className="container mx-auto p-4 max-w-7xl">
         <div className="grid lg:grid-cols-12 gap-6">
-          {/* Left Sidebar - Trending */}
+          {/* Left Sidebar - Quick Actions */}
           <div className="lg:col-span-3 space-y-4">
             <Card className="p-4">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Trending
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer">
-                  <Hash className="h-4 w-4" />
-                  <div>
-                    <p className="font-medium text-sm">#Technology</p>
-                    <p className="text-xs text-muted-foreground">1.2K posts</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer">
-                  <Hash className="h-4 w-4" />
-                  <div>
-                    <p className="font-medium text-sm">#Sports</p>
-                    <p className="text-xs text-muted-foreground">856 posts</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer">
-                  <Hash className="h-4 w-4" />
-                  <div>
-                    <p className="font-medium text-sm">#Music</p>
-                    <p className="text-xs text-muted-foreground">623 posts</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <Compass className="h-5 w-5" />
-                Quick Links
+                Quick Actions
               </h3>
               <div className="space-y-2">
                 <Button 
@@ -104,6 +74,14 @@ const Feed = () => {
                 >
                   <UserCheck className="h-4 w-4 mr-2" />
                   Find Friends
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start"
+                  onClick={() => navigate('/groups')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Browse Groups
                 </Button>
               </div>
             </Card>
@@ -193,36 +171,13 @@ const Feed = () => {
             )}
           </div>
 
-          {/* Right Sidebar - Quick Links */}
+          {/* Right Sidebar - Info */}
           <div className="lg:col-span-3 space-y-4">
             <Card className="p-4">
-              <h3 className="font-semibold mb-4">Quick Links</h3>
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => navigate('/explore')}
-                >
-                  <Compass className="h-4 w-4 mr-2" />
-                  Explore
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => navigate('/friends')}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Find Friends
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => navigate('/groups')}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Browse Groups
-                </Button>
-              </div>
+              <h3 className="font-semibold mb-4">Welcome!</h3>
+              <p className="text-sm text-muted-foreground">
+                Connect with friends, share moments, and discover new content from real users.
+              </p>
             </Card>
           </div>
         </div>

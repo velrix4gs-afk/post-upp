@@ -14,6 +14,26 @@ interface PasswordUpdateRequest {
   new_password: string;
 }
 
+// Rate limiting storage (simple in-memory, resets on function restart)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (ip: string, maxRequests = 5, windowMs = 60000): boolean => {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+  
+  if (record.count >= maxRequests) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -21,6 +41,17 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(ip)) {
+      return new Response(
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -54,6 +85,22 @@ const handler = async (req: Request): Promise<Response> => {
     if (method === 'PUT' && url.pathname.includes('/email')) {
       const body: EmailUpdateRequest = await req.json();
       
+      // Input validation
+      if (!body.new_email || typeof body.new_email !== 'string') {
+        return new Response(
+          JSON.stringify({ error: 'Invalid email' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(body.new_email)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid email format' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+      
       const { data, error } = await supabaseClient.auth.updateUser({
         email: body.new_email,
       });
@@ -76,6 +123,21 @@ const handler = async (req: Request): Promise<Response> => {
     // PUT /auth-settings/password - Update password
     if (method === 'PUT' && url.pathname.includes('/password')) {
       const body: PasswordUpdateRequest = await req.json();
+      
+      // Input validation
+      if (!body.new_password || typeof body.new_password !== 'string') {
+        return new Response(
+          JSON.stringify({ error: 'Invalid password' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
+      if (body.new_password.length < 8) {
+        return new Response(
+          JSON.stringify({ error: 'Password must be at least 8 characters' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
       
       const { data, error } = await supabaseClient.auth.updateUser({
         password: body.new_password,
