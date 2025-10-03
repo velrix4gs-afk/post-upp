@@ -85,20 +85,26 @@ const Feed = () => {
 
             <Card className="p-4">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Suggested Users
+                <Compass className="h-5 w-5" />
+                Quick Links
               </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-primary/10" />
-                    <div>
-                      <p className="font-medium text-sm">User Name</p>
-                      <p className="text-xs text-muted-foreground">@username</p>
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline">Follow</Button>
-                </div>
+              <div className="space-y-2">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start" 
+                  onClick={() => navigate('/explore')}
+                >
+                  <Compass className="h-4 w-4 mr-2" />
+                  Explore
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start"
+                  onClick={() => navigate('/friends')}
+                >
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  Find Friends
+                </Button>
               </div>
             </Card>
           </div>

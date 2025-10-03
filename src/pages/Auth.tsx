@@ -231,16 +231,18 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-gradient-card border-0 shadow-xl">
         <div className="p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Welcome to POST UP
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Connect with real people, share real moments
-            </p>
+            <div className="mb-3">
+              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
+                POST UP
+              </h1>
+              <p className="text-muted-foreground">
+                Connect with real people, share real moments
+              </p>
+            </div>
           </div>
 
           {authMode === 'phone' ? (
@@ -285,19 +287,18 @@ const Auth = () => {
                   </div>
                 </div>
                 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300" disabled={loading}>
                   {loading ? 'Sending...' : 'Send Magic Link'}
                 </Button>
               </form>
             </div>
           ) : (
             <>
-              {/* Social Sign-In Options */}
               <div className="space-y-3 mb-6">
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2"
+                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
                   onClick={handleGoogleSignIn}
                 >
                   <Chrome className="h-5 w-5" />
@@ -307,7 +308,7 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2"
+                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
                   onClick={handleTwitterSignIn}
                 >
                   <Twitter className="h-5 w-5" />
@@ -317,7 +318,7 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2"
+                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
                   onClick={() => setAuthMode('phone')}
                 >
                   <Phone className="h-5 w-5" />
@@ -327,7 +328,7 @@ const Auth = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2"
+                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
                   onClick={() => setAuthMode('magic')}
                 >
                   <Mail className="h-5 w-5" />
@@ -343,9 +344,9 @@ const Auth = () => {
               </div>
 
               <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
+                  <TabsTrigger value="signin" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sign Up</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="signin">
@@ -391,7 +392,7 @@ const Auth = () => {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300" disabled={loading}>
                       {loading ? 'Signing in...' : 'Sign In'}
                     </Button>
                   </form>
@@ -472,7 +473,7 @@ const Auth = () => {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300" disabled={loading}>
                       {loading ? 'Creating account...' : 'Create Account'}
                     </Button>
                   </form>

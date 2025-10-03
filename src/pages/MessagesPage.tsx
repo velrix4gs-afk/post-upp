@@ -17,8 +17,8 @@ import { toast } from '@/hooks/use-toast';
 
 const MessagesPage = () => {
   const { user } = useAuth();
-  const { chats, messages, loading, sendMessage, createChat, refetchChats } = useMessages();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const { chats, messages, loading, sendMessage, createChat, refetchChats } = useMessages(selectedChatId || undefined);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
