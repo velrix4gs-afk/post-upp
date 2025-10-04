@@ -226,24 +226,13 @@ const ExplorePage = () => {
           </TabsContent>
 
           <TabsContent value="hashtags">
-            <div className="grid md:grid-cols-2 gap-4">
-              {['Technology', 'Sports', 'Music', 'Travel', 'Food', 'Fashion', 'Gaming', 'Fitness'].map(tag => (
-                <Card key={tag} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Hash className="h-5 w-5 text-primary" />
-                        <h3 className="font-bold text-lg">{tag}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {Math.floor(Math.random() * 1000) + 100} posts
-                      </p>
-                    </div>
-                    <Button size="sm" variant="ghost">View</Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
+            <Card className="p-12 text-center">
+              <Hash className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">Hashtags coming soon</h3>
+              <p className="text-muted-foreground">
+                Start using hashtags in your posts and they'll appear here
+              </p>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

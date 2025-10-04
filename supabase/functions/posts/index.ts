@@ -46,11 +46,6 @@ serve(async (req) => {
             display_name,
             avatar_url,
             is_verified
-          ),
-          reactions (
-            id,
-            user_id,
-            reaction_type
           )
         `)
         .order('created_at', { ascending: false })
@@ -58,7 +53,25 @@ serve(async (req) => {
 
       if (error) throw error;
 
-      return new Response(JSON.stringify(posts), {
+      // Get reactions for each post
+      const postsWithReactions = await Promise.all(
+        (posts || []).map(async (post) => {
+          const { data: reactions } = await supabaseClient
+            .from('post_reactions')
+            .select('*')
+            .eq('post_id', post.id);
+
+          return {
+            ...post,
+            reactions: reactions || [],
+            likes_count: reactions?.filter(r => r.reaction_type === 'like').length || 0,
+            comments_count: post.comments_count || 0,
+            shares_count: 0
+          };
+        })
+      );
+
+      return new Response(JSON.stringify(postsWithReactions), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

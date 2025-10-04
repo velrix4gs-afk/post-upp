@@ -87,9 +87,9 @@ const MessagingSystem = () => {
   };
 
   return (
-    <div className="flex h-screen max-h-[800px] bg-background">
+    <div className="flex flex-col md:flex-row h-screen max-h-[800px] bg-background">
       {/* Chat List Sidebar */}
-      <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 border-r`}>
+      <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 md:border-r`}>
         <div className="p-4 border-b">
           <h2 className="text-xl font-semibold mb-4">Messages</h2>
           

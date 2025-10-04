@@ -216,3 +216,48 @@ All colors MUST be HSL.
     transform: translateY(-5px);
   }
 }
+
+/* Responsive utilities */
+@layer utilities {
+  .container-mobile {
+    @apply px-4;
+  }
+  
+  .container-desktop {
+    @apply max-w-7xl mx-auto px-6 lg:px-8;
+  }
+  
+  .text-responsive {
+    @apply text-sm md:text-base;
+  }
+  
+  .heading-responsive {
+    @apply text-xl md:text-2xl lg:text-3xl;
+  }
+  
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .bg-gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .shadow-elegant {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  /* Mobile-first responsive grid */
+  .grid-responsive {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+  
+  /* Responsive spacing */
+  .spacing-responsive {
+    @apply space-y-4 md:space-y-6;
+  }
+}

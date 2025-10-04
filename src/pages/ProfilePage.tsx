@@ -48,7 +48,7 @@ const ProfilePage = () => {
   const userPosts = posts.filter(post => post.user_id === profileUserId);
   
   // Check if current user is following this profile
-  const isFollowing = following.some(f => f.following_id === profileUserId);
+  const isFollowing = following.some(f => f.following_id === profileUserId && f.status === 'accepted');
   
   const handleFollowToggle = async () => {
     if (!profileUserId) return;

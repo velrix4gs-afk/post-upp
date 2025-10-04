@@ -91,12 +91,33 @@ export const useProfile = (userId?: string) => {
     if (!user) return;
 
     try {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB');
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('File must be an image');
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       
+      // Delete old avatar if exists
+      if (profile?.avatar_url) {
+        const oldFileName = profile.avatar_url.split('/').pop();
+        if (oldFileName) {
+          await supabase.storage.from('avatars').remove([oldFileName]);
+        }
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
@@ -105,13 +126,21 @@ export const useProfile = (userId?: string) => {
         .getPublicUrl(fileName);
 
       await updateProfile({ avatar_url: publicUrl });
+      
+      toast({
+        title: 'Success',
+        description: 'Avatar updated successfully'
+      });
+      
       return publicUrl;
     } catch (err: any) {
+      console.error('Avatar upload error:', err);
       toast({
         title: 'Error',
-        description: 'Failed to upload avatar',
+        description: err.message || 'Failed to upload avatar',
         variant: 'destructive'
       });
+      throw err;
     }
   };
 

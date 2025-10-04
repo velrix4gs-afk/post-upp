@@ -17,17 +17,6 @@ const GroupsPage = () => {
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [newGroupPrivacy, setNewGroupPrivacy] = useState('public');
 
-  const mockGroups = [
-    { id: '1', name: 'Tech Enthusiasts', members: 1234, type: 'public', role: 'admin' },
-    { id: '2', name: 'Photography Club', members: 567, type: 'private', role: 'member' },
-    { id: '3', name: 'Book Readers', members: 890, type: 'public', role: 'member' },
-  ];
-
-  const mockDiscoverGroups = [
-    { id: '4', name: 'Gaming Community', members: 5432, type: 'public' },
-    { id: '5', name: 'Fitness & Health', members: 3210, type: 'public' },
-    { id: '6', name: 'Music Lovers', members: 2100, type: 'private' },
-  ];
 
   const handleCreateGroup = () => {
     console.log('Creating group:', { newGroupName, newGroupDescription, newGroupPrivacy });
@@ -109,7 +98,7 @@ const GroupsPage = () => {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="my-groups">
               My Groups
-              <Badge variant="secondary" className="ml-2">{mockGroups.length}</Badge>
+              <Badge variant="secondary" className="ml-2">0</Badge>
             </TabsTrigger>
             <TabsTrigger value="discover">
               Discover
@@ -117,70 +106,71 @@ const GroupsPage = () => {
           </TabsList>
 
           <TabsContent value="my-groups" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockGroups.map(group => (
-                <Card key={group.id} className="p-0 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                  <div className="h-32 bg-gradient-to-br from-primary/20 to-secondary/20" />
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{group.name}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          {group.type === 'public' ? (
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Lock className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <span className="text-sm text-muted-foreground capitalize">{group.type}</span>
-                        </div>
-                      </div>
-                      {group.role === 'admin' && (
-                        <Button size="sm" variant="ghost">
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                      )}
+            <Card className="p-12 text-center">
+              <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">No groups yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Create or join groups to connect with people who share your interests
+              </p>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Group
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Group</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="group-name">Group Name</Label>
+                      <Input
+                        id="group-name"
+                        placeholder="Enter group name"
+                        value={newGroupName}
+                        onChange={(e) => setNewGroupName(e.target.value)}
+                      />
                     </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{group.members.toLocaleString()} members</span>
+                    <div className="space-y-2">
+                      <Label htmlFor="group-description">Description</Label>
+                      <Textarea
+                        id="group-description"
+                        placeholder="What's this group about?"
+                        value={newGroupDescription}
+                        onChange={(e) => setNewGroupDescription(e.target.value)}
+                      />
                     </div>
-                    <Button className="w-full" variant="outline">
-                      View Group
+                    <div className="space-y-2">
+                      <Label htmlFor="group-privacy">Privacy</Label>
+                      <Select value={newGroupPrivacy} onValueChange={setNewGroupPrivacy}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="public">Public - Anyone can join</SelectItem>
+                          <SelectItem value="private">Private - Invite only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button className="w-full" onClick={handleCreateGroup}>
+                      Create Group
                     </Button>
                   </div>
-                </Card>
-              ))}
-            </div>
+                </DialogContent>
+              </Dialog>
+            </Card>
           </TabsContent>
 
           <TabsContent value="discover" className="mt-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockDiscoverGroups.map(group => (
-                <Card key={group.id} className="p-0 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                  <div className="h-32 bg-gradient-to-br from-primary/20 to-secondary/20" />
-                  <div className="p-4">
-                    <div className="mb-2">
-                      <h3 className="font-semibold text-lg">{group.name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {group.type === 'public' ? (
-                          <Globe className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Lock className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <span className="text-sm text-muted-foreground capitalize">{group.type}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{group.members.toLocaleString()} members</span>
-                    </div>
-                    <Button className="w-full">
-                      Join Group
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
+            <Card className="p-12 text-center">
+              <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">No groups to discover yet</h3>
+              <p className="text-muted-foreground">
+                Check back later for groups to join
+              </p>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
