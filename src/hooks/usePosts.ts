@@ -73,9 +73,11 @@ export const usePosts = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('posts', {
+        method: 'POST',
         body: postData,
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
         },
       });
 

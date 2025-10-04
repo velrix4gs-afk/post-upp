@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
+import { useFollowers } from '@/hooks/useFollowers';
 import Navigation from '@/components/Navigation';
 import MessageBubble from '@/components/MessageBubble';
 import VoiceRecorder from '@/components/VoiceRecorder';
@@ -12,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -19,12 +21,14 @@ const MessagesPage = () => {
   const { user } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const { chats, messages, loading, sendMessage, createChat, refetchChats } = useMessages(selectedChatId || undefined);
+  const { following } = useFollowers();
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -145,6 +149,15 @@ const MessagesPage = () => {
   const handleReact = async (messageId: string, emoji: string) => {
     // TODO: Implement when types are updated
     console.log('React with:', emoji, 'to message:', messageId);
+  };
+
+  const handleCreateNewChat = async (userId: string) => {
+    const chatId = await createChat([userId], false);
+    if (chatId) {
+      setSelectedChatId(chatId);
+      setShowNewChatDialog(false);
+      await refetchChats();
+    }
   };
 
   const selectedChat = chats.find(c => c.id === selectedChatId);
@@ -408,6 +421,40 @@ const MessagesPage = () => {
           </div>
         </Card>
       </div>
+
+      {/* New Chat Dialog */}
+      <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Message</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input placeholder="Search followers..." />
+            <ScrollArea className="h-64">
+              {following.map((follower) => (
+                <div
+                  key={follower.following.id}
+                  className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg cursor-pointer"
+                  onClick={() => handleCreateNewChat(follower.following.id)}
+                >
+                  <Avatar>
+                    <AvatarImage src={follower.following.avatar_url} />
+                    <AvatarFallback>
+                      {follower.following.display_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{follower.following.display_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      @{follower.following.username}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

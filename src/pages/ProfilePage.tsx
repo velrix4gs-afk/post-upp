@@ -29,6 +29,7 @@ import { useFriends } from '@/hooks/useFriends';
 import { useFollowers } from '@/hooks/useFollowers';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -60,8 +61,50 @@ const ProfilePage = () => {
     }
   };
   
-  const handleMessage = () => {
-    navigate('/messages');
+  const handleMessage = async () => {
+    if (!profileUserId) return;
+    
+    // Create or get existing chat
+    const { data: existingChats } = await supabase
+      .from('chat_participants')
+      .select('chat_id, chats:chat_id(type)')
+      .eq('user_id', user?.id);
+
+    if (existingChats) {
+      for (const ec of existingChats) {
+        if (ec.chats?.type === 'private') {
+          const { data: otherParticipant } = await supabase
+            .from('chat_participants')
+            .select('user_id')
+            .eq('chat_id', ec.chat_id)
+            .neq('user_id', user?.id)
+            .single();
+
+          if (otherParticipant?.user_id === profileUserId) {
+            navigate(`/messages?chat=${ec.chat_id}`);
+            return;
+          }
+        }
+      }
+    }
+
+    // Create new chat
+    const { data: chat } = await supabase
+      .from('chats')
+      .insert({ type: 'private' })
+      .select()
+      .single();
+
+    if (chat) {
+      await supabase
+        .from('chat_participants')
+        .insert([
+          { chat_id: chat.id, user_id: user?.id, role: 'member' },
+          { chat_id: chat.id, user_id: profileUserId, role: 'member' }
+        ]);
+
+      navigate(`/messages?chat=${chat.id}`);
+    }
   };
 
   if (profileLoading) {
@@ -128,7 +171,7 @@ const ProfilePage = () => {
             <div className="absolute bottom-4 right-4 flex gap-2">
               <Button
                 size="sm"
-                variant={isFollowing ? "secondary" : "default"}
+                variant={isFollowing ? "outline" : "default"}
                 onClick={handleFollowToggle}
               >
                 {isFollowing ? (

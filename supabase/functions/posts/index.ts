@@ -77,7 +77,13 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      const body = await req.json();
+      let body;
+      try {
+        const text = await req.text();
+        body = text ? JSON.parse(text) : {};
+      } catch (e) {
+        body = {};
+      }
       const { content, media_urls, media_type, location, tagged_users, hashtags, privacy } = body;
 
       // Validate required fields

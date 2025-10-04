@@ -246,44 +246,16 @@ const SearchPage = () => {
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-4 mt-4">
-            <Card className="p-4">
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="flex items-center justify-between p-3 hover:bg-muted rounded cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <UsersIcon className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Group Name {i}</p>
-                        <p className="text-sm text-muted-foreground">1.5K members · Public</p>
-                      </div>
-                    </div>
-                    <Button size="sm">Join</Button>
-                  </div>
-                ))}
-              </div>
+            <Card className="p-8 text-center">
+              <UsersIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No groups found. Groups will appear here once they're created.</p>
             </Card>
           </TabsContent>
 
           <TabsContent value="hashtags" className="space-y-4 mt-4">
-            <Card className="p-4">
-              <div className="space-y-3">
-                {['Technology', 'Sports', 'Music', 'Gaming', 'Food'].map(tag => (
-                  <div key={tag} className="flex items-center justify-between p-3 hover:bg-muted rounded cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Hash className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium">#{tag}</p>
-                        <p className="text-sm text-muted-foreground">1.2K posts</p>
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline">Follow</Button>
-                  </div>
-                ))}
-              </div>
+            <Card className="p-8 text-center">
+              <Hash className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No hashtags found. Search for hashtags to see trending topics.</p>
             </Card>
           </TabsContent>
         </Tabs>
