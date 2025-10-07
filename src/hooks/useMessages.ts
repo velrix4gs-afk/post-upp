@@ -322,9 +322,8 @@ export const useMessages = (chatId?: string) => {
       const { data: chat, error: chatError } = await supabase
         .from('chats')
         .insert({
-          name,
-          type: isGroup ? 'group' : 'private',
-          created_by: user?.id
+          name: name || null,
+          type: isGroup ? 'group' : 'private'
         })
         .select()
         .single();

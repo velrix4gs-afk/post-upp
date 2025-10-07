@@ -85,9 +85,14 @@ const CreatePost = () => {
       }
 
       await createPost({
-        content: postContent.trim(),
+        content: postContent.trim() || undefined,
         media_url: mediaUrl || undefined,
         media_type: selectedFile ? (selectedFile.type.startsWith('image/') ? 'image' : 'video') : undefined
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Post created successfully!'
       });
 
       // Reset form
@@ -95,10 +100,11 @@ const CreatePost = () => {
       setSelectedImage(null);
       setSelectedFile(null);
       setIsExpanded(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Post creation error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create post',
+        description: error.message || 'Failed to create post',
         variant: 'destructive'
       });
     } finally {

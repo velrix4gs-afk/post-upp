@@ -77,7 +77,15 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      const body = await req.json();
+      let body;
+      try {
+        const text = await req.text();
+        body = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.error('Failed to parse request body:', parseError);
+        throw new Error('Invalid request body');
+      }
+
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
       console.log('Post data received:', { content, media_url, media_type });
