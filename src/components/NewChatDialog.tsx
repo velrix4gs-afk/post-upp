@@ -18,6 +18,7 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredFriends = friends.filter(friend =>
+    !searchQuery.trim() ||
     friend.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );

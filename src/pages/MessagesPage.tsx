@@ -35,6 +35,7 @@ const MessagesPage = () => {
   const { following } = useFollowers();
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [newChatSearch, setNewChatSearch] = useState('');
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -49,7 +50,16 @@ const MessagesPage = () => {
     if (user) {
       refetchChats();
     }
-  }, [user]);
+  }, [user, refetchChats]);
+
+  // Handle chat_id from URL query params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const chatIdFromUrl = params.get('chat');
+    if (chatIdFromUrl) {
+      setSelectedChatId(chatIdFromUrl);
+    }
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -204,12 +214,12 @@ const MessagesPage = () => {
       <Navigation />
       
       <div className="container-mobile md:container-desktop mx-auto p-2 md:p-4 h-[calc(100vh-80px)]">
-        <Card className="h-full flex flex-col md:flex-row">
+        <Card className="h-full flex flex-col md:flex-row overflow-hidden">
           {/* Chat List Sidebar */}
-          <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 md:border-r flex-col`}>
-            <div className="p-4 border-b space-y-3">
+          <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r flex-col`}>
+            <div className="p-3 md:p-4 border-b space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Messages</h2>
+                <h2 className="text-lg md:text-xl font-bold">Messages</h2>
                 <Button 
                   size="sm" 
                   variant="ghost"
@@ -495,9 +505,23 @@ const MessagesPage = () => {
             <DialogTitle>New Message</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Input placeholder="Search followers..." />
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search followers..." 
+                className="pl-9"
+                value={newChatSearch}
+                onChange={(e) => setNewChatSearch(e.target.value)}
+              />
+            </div>
             <ScrollArea className="h-64">
-              {following.map((follower) => (
+              {following
+                .filter(follower => 
+                  !newChatSearch.trim() ||
+                  follower.following.display_name.toLowerCase().includes(newChatSearch.toLowerCase()) ||
+                  follower.following.username.toLowerCase().includes(newChatSearch.toLowerCase())
+                )
+                .map((follower) => (
                 <div
                   key={follower.following.id}
                   className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg cursor-pointer"

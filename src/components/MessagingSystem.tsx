@@ -47,14 +47,21 @@ const MessagingSystem = () => {
   const selectedChat = chats.find(chat => chat.id === selectedChatId);
   
   const filteredChats = chats.filter(chat => {
-    if (!searchQuery) return true;
+    if (!searchQuery.trim()) return true;
     
-    const chatName = chat.name || chat.participants
-      .filter(p => p.user_id !== user?.id)
-      .map(p => p.profiles.display_name)
-      .join(', ');
-      
-    return chatName.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchLower = searchQuery.toLowerCase();
+    
+    // For private chats, search by other user's name
+    if (!chat.is_group) {
+      const otherParticipant = chat.participants.find(p => p.user_id !== user?.id);
+      const name = otherParticipant?.profiles?.display_name || '';
+      const username = otherParticipant?.profiles?.username || '';
+      return name.toLowerCase().includes(searchLower) || 
+             username.toLowerCase().includes(searchLower);
+    }
+    
+    // For group chats, search by chat name
+    return chat.name?.toLowerCase().includes(searchLower) || false;
   });
 
   const handleSendMessage = async () => {
