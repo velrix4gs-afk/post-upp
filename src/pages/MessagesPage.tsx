@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
 import { useFollowers } from '@/hooks/useFollowers';
 import Navigation from '@/components/Navigation';
-import MessageBubble from '@/components/MessageBubble';
+import { MessageBubble } from '@/components/MessageBubble';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,13 +14,23 @@ import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 const MessagesPage = () => {
   const { user } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const { chats, messages, loading, sendMessage, createChat, refetchChats, refetchMessages } = useMessages(selectedChatId || undefined);
+  const { chats, messages, loading, sendMessage, editMessage, deleteMessage, createChat, refetchChats, refetchMessages } = useMessages(selectedChatId || undefined);
   const { following } = useFollowers();
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +39,8 @@ const MessagesPage = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,7 +75,17 @@ const MessagesPage = () => {
     if ((!messageText.trim() && !selectedImage) || !selectedChatId) return;
 
     try {
+      // Handle edit
+      if (editingMessageId) {
+        await editMessage(editingMessageId, messageText);
+        setEditingMessageId(null);
+        setMessageText('');
+        return;
+      }
+
+      // Handle new message
       let mediaUrl = null;
+      let mediaType = null;
       if (selectedImage) {
         const fileExt = selectedImage.name.split('.').pop();
         const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
@@ -79,22 +101,15 @@ const MessagesPage = () => {
           .getPublicUrl(fileName);
 
         mediaUrl = publicUrl;
+        mediaType = `image/${fileExt}`;
       }
 
-      // Send message with media URL via edge function
-      const { error } = await supabase.functions.invoke('messages', {
-        body: {
-          method: 'POST',
-          chat_id: selectedChatId,
-          content: messageText.trim() || '📷 Photo',
-          media_url: mediaUrl,
-          media_type: mediaUrl ? 'image' : null,
-          reply_to: replyingTo?.id
-        }
-      });
-
-      if (error) throw error;
-      await refetchMessages();
+      await sendMessage(
+        messageText.trim() || '📷 Photo',
+        replyingTo?.id,
+        mediaUrl || undefined,
+        mediaType || undefined
+      );
 
       setMessageText('');
       setSelectedImage(null);
@@ -106,6 +121,18 @@ const MessagesPage = () => {
         description: 'Failed to send message',
         variant: 'destructive'
       });
+    }
+  };
+
+  const handleEditMessage = (id: string, content: string) => {
+    setEditingMessageId(id);
+    setMessageText(content);
+  };
+
+  const handleDeleteMessage = async () => {
+    if (deletingMessageId) {
+      await deleteMessage(deletingMessageId);
+      setDeletingMessageId(null);
     }
   };
 
@@ -125,18 +152,7 @@ const MessagesPage = () => {
         .from('messages')
         .getPublicUrl(fileName);
 
-      const { error } = await supabase.functions.invoke('messages', {
-        body: {
-          method: 'POST',
-          chat_id: selectedChatId,
-          content: '🎤 Voice message',
-          media_url: publicUrl,
-          media_type: 'audio'
-        }
-      });
-
-      if (error) throw error;
-      await refetchMessages();
+      await sendMessage('🎤 Voice message', undefined, publicUrl, 'audio/webm');
 
       setIsRecordingVoice(false);
       toast({
@@ -313,17 +329,20 @@ const MessagesPage = () => {
                         <MessageBubble
                           key={message.id}
                           id={message.id}
-                          content={message.content}
+                          content={message.content || ''}
                           sender={{
-                            id: message.sender_id || '',
-                            name: senderProfile?.display_name || 'Unknown',
-                            avatar: senderProfile?.avatar_url
+                            username: senderProfile?.username || '',
+                            display_name: senderProfile?.display_name || 'Unknown',
+                            avatar_url: senderProfile?.avatar_url
                           }}
                           timestamp={message.created_at}
-                          isSent={isOwn}
+                          isOwn={isOwn}
                           mediaUrl={message.media_url}
+                          mediaType={message.media_type}
+                          isEdited={message.is_edited}
+                          onEdit={isOwn ? handleEditMessage : undefined}
+                          onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
                           onReply={() => setReplyingTo(message)}
-                          onReact={(emoji) => handleReact(message.id, emoji)}
                         />
                       );
                     })}
@@ -401,7 +420,7 @@ const MessagesPage = () => {
                         <Mic className="h-5 w-5" />
                       </Button>
                       <Input
-                        placeholder="Type a message..."
+                        placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
                         value={messageText}
                         onChange={(e) => setMessageText(e.target.value)}
                         className="flex-1"
@@ -412,6 +431,19 @@ const MessagesPage = () => {
                           }
                         }}
                       />
+                      {editingMessageId && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingMessageId(null);
+                            setMessageText('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      )}
                       <Button type="button" size="sm" variant="ghost">
                         <Smile className="h-5 w-5" />
                       </Button>
@@ -473,6 +505,21 @@ const MessagesPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deletingMessageId} onOpenChange={() => setDeletingMessageId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Message</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this message? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteMessage}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

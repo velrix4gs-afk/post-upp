@@ -162,12 +162,20 @@ export const useMessages = (chatId?: string) => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('messages', {
-        method: 'GET',
-        body: { chat_id: chatId }
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages?chat_id=${chatId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      const data = await response.json();
       setMessages(data || []);
     } catch (err: any) {
       toast({
@@ -180,25 +188,106 @@ export const useMessages = (chatId?: string) => {
     }
   };
 
-  const sendMessage = async (content: string, replyTo?: string) => {
-    if (!chatId || !content.trim()) return;
+  const sendMessage = async (content: string, replyTo?: string, mediaUrl?: string, mediaType?: string) => {
+    if (!chatId || (!content.trim() && !mediaUrl)) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('messages', {
-        method: 'POST',
-        body: {
-          chat_id: chatId,
-          content: content.trim(),
-          reply_to: replyTo
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            content: content.trim(),
+            reply_to: replyTo,
+            media_url: mediaUrl,
+            media_type: mediaType
+          })
         }
-      });
+      );
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to send message');
       // Message will be added via real-time subscription
     } catch (err: any) {
       toast({
         title: 'Error',
         description: 'Failed to send message',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const editMessage = async (messageId: string, content: string) => {
+    if (!content.trim()) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages/${messageId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ content: content.trim() })
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to edit message');
+      const data = await response.json();
+      
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? data : msg
+      ));
+
+      toast({
+        title: 'Success',
+        description: 'Message edited'
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to edit message',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages/${messageId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to delete message');
+      
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+
+      toast({
+        title: 'Success',
+        description: 'Message deleted'
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete message',
         variant: 'destructive'
       });
     }
@@ -270,6 +359,8 @@ export const useMessages = (chatId?: string) => {
     chats,
     loading,
     sendMessage,
+    editMessage,
+    deleteMessage,
     createChat,
     refetchChats: fetchChats,
     refetchMessages: fetchMessages
