@@ -161,71 +161,72 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="birth_date">Birth Date</Label>
-            <Input
-              id="birth_date"
-              type="date"
-              value={formData.birth_date}
-              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gender</Label>
-            <select
-              id="gender"
-              value={formData.gender}
-              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background"
-            >
-              <option value="">Prefer not to say</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+1234567890"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status_message">Status Message</Label>
-            <Input
-              id="status_message"
-              type="text"
-              placeholder="What's on your mind?"
-              value={formData.status_message}
-              onChange={(e) => setFormData({ ...formData, status_message: e.target.value })}
-              maxLength={100}
-            />
-            <p className="text-xs text-muted-foreground">
-              {formData.status_message.length}/100 characters
-            </p>
-          </div>
-              <div>
-                <Label htmlFor="relationship_status">Relationship Status</Label>
-                <Select
-                  value={formData.relationship_status}
-                  onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="in_relationship">In a relationship</SelectItem>
-                    <SelectItem value="married">Married</SelectItem>
-                    <SelectItem value="complicated">It's complicated</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="birth_date"
+                  type="date"
+                  value={formData.birth_date}
+                  onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                />
               </div>
+
+              <div>
+                <Label htmlFor="gender">Gender</Label>
+                <select
+                  id="gender"
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                >
+                  <option value="">Prefer not to say</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1234567890"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="status_message">Status Message</Label>
+              <Input
+                id="status_message"
+                type="text"
+                placeholder="What's on your mind?"
+                value={formData.status_message}
+                onChange={(e) => setFormData({ ...formData, status_message: e.target.value })}
+                maxLength={100}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.status_message.length}/100 characters
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="relationship_status">Relationship Status</Label>
+              <Select
+                value={formData.relationship_status}
+                onValueChange={(value) => setFormData({ ...formData, relationship_status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="in_relationship">In a relationship</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="complicated">It's complicated</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Privacy Settings */}

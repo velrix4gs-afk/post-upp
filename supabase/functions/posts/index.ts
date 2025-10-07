@@ -90,8 +90,8 @@ serve(async (req) => {
 
       console.log('Post data received:', { content, media_url, media_type });
 
-      // Validate required fields
-      if (!content && !media_url) {
+      // Validate required fields - check for truthy values
+      if ((!content || content.trim() === '') && (!media_url || media_url.trim() === '')) {
         throw new Error('Post must have content or media');
       }
 

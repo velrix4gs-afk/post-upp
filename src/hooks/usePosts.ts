@@ -36,13 +36,22 @@ export const usePosts = () => {
     if (!session?.access_token) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('posts', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      const response = await fetch(
+        'https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts',
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts');
+      }
+
+      const data = await response.json();
       setPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);

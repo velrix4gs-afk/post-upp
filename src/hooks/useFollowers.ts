@@ -95,7 +95,8 @@ export const useFollowers = (userId?: string) => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      // Add to followers table
+      const { error: followError } = await supabase
         .from('followers')
         .insert({
           follower_id: user.id,
@@ -103,7 +104,21 @@ export const useFollowers = (userId?: string) => {
           status: isPrivate ? 'pending' : 'accepted'
         });
 
-      if (error) throw error;
+      if (followError) throw followError;
+
+      // Also add to friendships table
+      const { error: friendError } = await supabase
+        .from('friendships')
+        .insert({
+          requester_id: user.id,
+          addressee_id: followingId,
+          status: isPrivate ? 'pending' : 'accepted'
+        });
+
+      // Ignore if friendship already exists
+      if (friendError && !friendError.message.includes('duplicate')) {
+        console.error('Friend request error:', friendError);
+      }
 
       toast({
         title: 'Success',
@@ -124,13 +139,25 @@ export const useFollowers = (userId?: string) => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      // Remove from followers table
+      const { error: followError } = await supabase
         .from('followers')
         .delete()
         .eq('follower_id', user.id)
         .eq('following_id', followingId);
 
-      if (error) throw error;
+      if (followError) throw followError;
+
+      // Also remove from friendships table
+      const { error: friendError } = await supabase
+        .from('friendships')
+        .delete()
+        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${followingId}),and(requester_id.eq.${followingId},addressee_id.eq.${user.id})`);
+
+      // Ignore if friendship doesn't exist
+      if (friendError) {
+        console.error('Friend removal error:', friendError);
+      }
 
       toast({
         title: 'Success',
