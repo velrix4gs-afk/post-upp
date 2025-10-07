@@ -44,7 +44,7 @@ serve(async (req) => {
       limit: 100,
     })
 
-    let product = products.data.find(p => p.metadata?.type === 'verification')
+    let product = products.data.find((p: Stripe.Product) => p.metadata?.type === 'verification')
     
     if (!product) {
       product = await stripe.products.create({
@@ -97,7 +97,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error creating checkout session:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as Error).message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

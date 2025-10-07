@@ -65,9 +65,9 @@ serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    console.error('Webhook error:', err.message)
+    console.error('Webhook error:', (err as Error).message)
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     )
   }
