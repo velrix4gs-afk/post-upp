@@ -77,14 +77,10 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      let body;
-      try {
-        const text = await req.text();
-        body = text ? JSON.parse(text) : {};
-      } catch (e) {
-        body = {};
-      }
+      const body = await req.json();
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
+
+      console.log('Post data received:', { content, media_url, media_type });
 
       // Validate required fields
       if (!content && !media_url) {
