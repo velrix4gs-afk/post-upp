@@ -40,62 +40,52 @@ const EmailVerification = () => {
 
     setLoading(true);
     try {
-      // Verify OTP with database
-      const { data: otpRecord, error: otpError } = await supabase
-        .from('email_otps')
-        .select('*')
-        .eq('email', email)
-        .eq('code', otp)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (otpError || !otpRecord) {
-        toast({
-          title: 'Invalid code',
-          description: 'The code you entered is incorrect or has expired.',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      // Create the user account
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: signupData.email,
-        password: signupData.password,
-        options: {
-          data: {
-            username: signupData.username,
-            display_name: signupData.displayName
-          },
-          emailRedirectTo: `${window.location.origin}/feed`
+      // Verify OTP and create account via edge function
+      const { data, error } = await supabase.functions.invoke('verify-signup-otp', {
+        body: {
+          email: signupData.email,
+          code: otp,
+          password: signupData.password,
+          username: signupData.username,
+          displayName: signupData.displayName
         }
       });
 
-      if (signUpError) {
-        if (signUpError.message.includes('already registered')) {
-          toast({
-            title: 'Account exists',
-            description: 'This email is already registered. Please sign in instead.',
-            variant: 'destructive'
-          });
+      if (error || data?.error) {
+        const errorMessage = data?.error || error?.message || 'Verification failed';
+        toast({
+          title: 'Verification failed',
+          description: errorMessage.includes('already registered') 
+            ? 'This email is already registered. Please sign in instead.'
+            : errorMessage,
+          variant: 'destructive'
+        });
+        
+        if (errorMessage.includes('already registered')) {
           navigate('/auth');
-        } else {
-          throw signUpError;
         }
         return;
       }
 
-      // Delete used OTP
-      await supabase
-        .from('email_otps')
-        .delete()
-        .eq('id', otpRecord.id);
+      // Sign in the newly created user
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: signupData.email,
+        password: signupData.password
+      });
+
+      if (signInError) {
+        console.error('Auto sign-in error:', signInError);
+        toast({
+          title: 'Account created!',
+          description: 'Please sign in with your new account.'
+        });
+        navigate('/auth');
+        return;
+      }
 
       toast({
-        title: 'Account created!',
-        description: 'Welcome to POST UP!'
+        title: 'Welcome to POST UP!',
+        description: 'Your account has been created successfully.'
       });
 
       navigate('/feed');
@@ -115,12 +105,15 @@ const EmailVerification = () => {
   const handleResend = async () => {
     setResending(true);
     try {
-      const { error } = await supabase.functions.invoke('send-signup-otp', {
+      const { data, error } = await supabase.functions.invoke('send-signup-otp', {
         body: { email }
       });
 
-      if (error) throw error;
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Failed to resend code');
+      }
 
+      setOtp(''); // Clear the OTP input
       toast({
         title: 'Code resent',
         description: 'A new verification code has been sent to your email.'
