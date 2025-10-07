@@ -65,16 +65,24 @@ export const usePosts = () => {
     if (!session?.access_token) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('posts', {
-        method: 'POST',
-        body: postData,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        'https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(postData),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create post');
+      }
+
+      const data = await response.json();
 
       // Add new post to the beginning of the list
       setPosts(prevPosts => [data, ...prevPosts]);
@@ -85,11 +93,11 @@ export const usePosts = () => {
       });
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating post:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create post',
+        description: error.message || 'Failed to create post',
         variant: 'destructive',
       });
       throw error;

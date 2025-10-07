@@ -30,6 +30,16 @@ const CreatePost = () => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        toast({
+          title: 'Error',
+          description: 'Please select an image or video file',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -160,7 +170,7 @@ const CreatePost = () => {
             <div className="relative">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 onChange={handleImageUpload}
                 className="hidden"
                 id="image-upload"
@@ -169,16 +179,11 @@ const CreatePost = () => {
                 <Button variant="ghost" size="sm" className="h-9 px-3 cursor-pointer" asChild>
                   <span>
                     <Image className="h-4 w-4 mr-2 text-success" />
-                    <span className="text-xs">Photo</span>
+                    <span className="text-xs">Photo/Video</span>
                   </span>
                 </Button>
               </label>
             </div>
-
-            <Button variant="ghost" size="sm" className="h-9 px-3">
-              <Video className="h-4 w-4 mr-2 text-destructive" />
-              <span className="text-xs">Video</span>
-            </Button>
 
             <Button variant="ghost" size="sm" className="h-9 px-3">
               <Smile className="h-4 w-4 mr-2 text-warning" />
