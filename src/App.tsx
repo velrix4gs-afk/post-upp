@@ -19,6 +19,7 @@ import ProfilePage from "./pages/ProfilePage";
 import BookmarksPage from "./pages/BookmarksPage";
 import ExplorePage from "./pages/ExplorePage";
 import VerificationPage from "./pages/VerificationPage";
+import EmailVerification from "./pages/EmailVerification";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/verify" element={<EmailVerification />} />
             <Route 
               path="/dashboard" 
               element={

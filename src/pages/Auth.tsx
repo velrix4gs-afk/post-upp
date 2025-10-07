@@ -100,38 +100,28 @@ const Auth = () => {
     try {
       const validatedData = signUpSchema.parse(signUpData);
       
-      const { error } = await supabase.auth.signUp({
-        email: validatedData.email,
-        password: validatedData.password,
-        options: {
-          data: {
-            username: validatedData.username,
-            display_name: validatedData.displayName
-          },
-          emailRedirectTo: `${window.location.origin}/feed`
-        }
+      // Send OTP to email
+      const { error } = await supabase.functions.invoke('send-signup-otp', {
+        body: { email: validatedData.email }
       });
 
       if (error) {
-        if (error.message.includes('already registered')) {
-          toast({
-            title: 'Account exists',
-            description: 'This email is already registered. Please sign in instead.',
-            variant: 'destructive'
-          });
-        } else {
-          toast({
-            title: 'Sign up failed',
-            description: error.message,
-            variant: 'destructive'
-          });
-        }
+        toast({
+          title: 'Failed to send verification code',
+          description: error.message || 'Please try again later.',
+          variant: 'destructive'
+        });
         return;
       }
 
       toast({
-        title: 'Account created successfully!',
-        description: 'Please check your email for verification link.'
+        title: 'Verification code sent!',
+        description: 'Check your email for the 6-digit code.'
+      });
+
+      // Navigate to verification page with signup data
+      navigate('/auth/verify', { 
+        state: { signupData: validatedData }
       });
       
     } catch (error) {
