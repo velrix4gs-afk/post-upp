@@ -5,6 +5,7 @@ import { useFollowers } from '@/hooks/useFollowers';
 import Navigation from '@/components/Navigation';
 import { MessageBubble } from '@/components/MessageBubble';
 import VoiceRecorder from '@/components/VoiceRecorder';
+import { NewChatDialog } from '@/components/NewChatDialog';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -173,12 +174,20 @@ const MessagesPage = () => {
     console.log('React with:', emoji, 'to message:', messageId);
   };
 
-  const handleCreateNewChat = async (userId: string) => {
-    const chatId = await createChat([userId], false);
-    if (chatId) {
-      setSelectedChatId(chatId);
-      setShowNewChatDialog(false);
-      await refetchChats();
+  const handleCreateNewChat = async (friendId: string) => {
+    try {
+      const chatId = await createChat([friendId], false);
+      if (chatId) {
+        setSelectedChatId(chatId);
+        setShowNewChatDialog(false);
+        await refetchChats();
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create chat',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -280,6 +289,13 @@ const MessagesPage = () => {
               </div>
             </ScrollArea>
           </div>
+
+          {/* New Chat Dialog */}
+          <NewChatDialog
+            open={showNewChatDialog}
+            onClose={() => setShowNewChatDialog(false)}
+            onSelectFriend={handleCreateNewChat}
+          />
 
           {/* Chat Area */}
           <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>

@@ -18,6 +18,7 @@ import EventsPage from "./pages/EventsPage";
 import ProfilePage from "./pages/ProfilePage";
 import BookmarksPage from "./pages/BookmarksPage";
 import ExplorePage from "./pages/ExplorePage";
+import VerificationPage from "./pages/VerificationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -109,6 +110,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ExplorePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/verification" 
+              element={
+                <ProtectedRoute>
+                  <VerificationPage />
                 </ProtectedRoute>
               } 
             />
