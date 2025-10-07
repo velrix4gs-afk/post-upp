@@ -85,6 +85,22 @@ export const useMessages = (chatId?: string) => {
 
   const fetchChats = async () => {
     try {
+      // First get chats where user is a participant
+      const { data: participantChats, error: participantError } = await supabase
+        .from('chat_participants')
+        .select('chat_id')
+        .eq('user_id', user?.id);
+
+      if (participantError) throw participantError;
+
+      const chatIds = participantChats?.map(p => p.chat_id) || [];
+      
+      if (chatIds.length === 0) {
+        setChats([]);
+        return;
+      }
+
+      // Fetch full chat details with participants
       const { data, error } = await supabase
         .from('chats')
         .select(`
@@ -94,19 +110,44 @@ export const useMessages = (chatId?: string) => {
           type,
           created_at
         `)
+        .in('id', chatIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Fetch participants for each chat
+      const chatsWithParticipants = await Promise.all(
+        (data || []).map(async (chat) => {
+          const { data: participants } = await supabase
+            .from('chat_participants')
+            .select(`
+              user_id,
+              role,
+              joined_at,
+              profiles:user_id (
+                username,
+                display_name,
+                avatar_url
+              )
+            `)
+            .eq('chat_id', chat.id);
+
+          return {
+            ...chat,
+            is_group: chat.type === 'group',
+            created_by: '',
+            updated_at: chat.created_at,
+            participants: participants?.map(p => ({
+              user_id: p.user_id,
+              role: p.role,
+              joined_at: p.joined_at,
+              profiles: p.profiles as any
+            })) || []
+          };
+        })
+      );
       
-      const processedChats = (data || []).map(chat => ({
-        ...chat,
-        is_group: chat.type === 'group',
-        created_by: '',
-        updated_at: chat.created_at,
-        participants: []
-      }));
-      
-      setChats(processedChats);
+      setChats(chatsWithParticipants);
     } catch (err: any) {
       toast({
         title: 'Error',
@@ -165,11 +206,35 @@ export const useMessages = (chatId?: string) => {
 
   const createChat = async (participantIds: string[], isGroup = false, name?: string) => {
     try {
+      // Check if private chat already exists
+      if (!isGroup && participantIds.length === 1) {
+        const { data: existingChats } = await supabase
+          .from('chat_participants')
+          .select('chat_id')
+          .eq('user_id', user?.id);
+
+        if (existingChats) {
+          for (const chat of existingChats) {
+            const { data: otherParticipant } = await supabase
+              .from('chat_participants')
+              .select('user_id')
+              .eq('chat_id', chat.chat_id)
+              .eq('user_id', participantIds[0])
+              .single();
+
+            if (otherParticipant) {
+              await fetchChats();
+              return chat.chat_id;
+            }
+          }
+        }
+      }
+
       const { data: chat, error: chatError } = await supabase
         .from('chats')
         .insert({
           name,
-          is_group: isGroup,
+          type: isGroup ? 'group' : 'private',
           created_by: user?.id
         })
         .select()

@@ -20,7 +20,7 @@ import { toast } from '@/hooks/use-toast';
 const MessagesPage = () => {
   const { user } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const { chats, messages, loading, sendMessage, createChat, refetchChats } = useMessages(selectedChatId || undefined);
+  const { chats, messages, loading, sendMessage, createChat, refetchChats, refetchMessages } = useMessages(selectedChatId || undefined);
   const { following } = useFollowers();
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,16 +81,20 @@ const MessagesPage = () => {
         mediaUrl = publicUrl;
       }
 
-      await sendMessage(messageText.trim() || '📷 Photo', replyingTo?.id);
-      
-      if (mediaUrl) {
-        await supabase
-          .from('messages')
-          .update({ media_url: mediaUrl })
-          .eq('chat_id', selectedChatId)
-          .order('created_at', { ascending: false })
-          .limit(1);
-      }
+      // Send message with media URL via edge function
+      const { error } = await supabase.functions.invoke('messages', {
+        body: {
+          method: 'POST',
+          chat_id: selectedChatId,
+          content: messageText.trim() || '📷 Photo',
+          media_url: mediaUrl,
+          media_type: mediaUrl ? 'image' : null,
+          reply_to: replyingTo?.id
+        }
+      });
+
+      if (error) throw error;
+      await refetchMessages();
 
       setMessageText('');
       setSelectedImage(null);
@@ -121,16 +125,18 @@ const MessagesPage = () => {
         .from('messages')
         .getPublicUrl(fileName);
 
-      await supabase
-        .from('messages')
-        .insert({
+      const { error } = await supabase.functions.invoke('messages', {
+        body: {
+          method: 'POST',
           chat_id: selectedChatId,
-          sender_id: user?.id,
           content: '🎤 Voice message',
-          voice_url: publicUrl,
-          voice_duration: duration,
-          is_voice_message: true
-        });
+          media_url: publicUrl,
+          media_type: 'audio'
+        }
+      });
+
+      if (error) throw error;
+      await refetchMessages();
 
       setIsRecordingVoice(false);
       toast({
@@ -172,14 +178,18 @@ const MessagesPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto p-4 h-[calc(100vh-80px)]">
-        <Card className="h-full flex">
+      <div className="container-mobile md:container-desktop mx-auto p-2 md:p-4 h-[calc(100vh-80px)]">
+        <Card className="h-full flex flex-col md:flex-row">
           {/* Chat List Sidebar */}
-          <div className="w-80 border-r flex flex-col">
+          <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 md:border-r flex-col`}>
             <div className="p-4 border-b space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Messages</h2>
-                <Button size="sm" variant="ghost">
+                <Button 
+                  size="sm" 
+                  variant="ghost"
+                  onClick={() => setShowNewChatDialog(true)}
+                >
                   <Plus className="h-5 w-5" />
                 </Button>
               </div>
@@ -256,12 +266,20 @@ const MessagesPage = () => {
           </div>
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
             {selectedChat ? (
               <>
                 {/* Chat Header */}
-                <div className="p-4 border-b flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="p-3 md:p-4 border-b flex items-center justify-between">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="md:hidden"
+                      onClick={() => setSelectedChatId(null)}
+                    >
+                      ←
+                    </Button>
                     <Avatar>
                       <AvatarImage src={selectedChat.avatar_url} />
                       <AvatarFallback>{selectedChat.name?.[0] || 'C'}</AvatarFallback>
