@@ -160,11 +160,11 @@ const Feed = () => {
                       verified: post.profiles.is_verified
                     }}
                     content={post.content || ''}
-                    image={post.media_urls?.[0]}
+                    image={post.media_url}
                     timestamp={new Date(post.created_at).toLocaleDateString()}
-                    likes={post.likes_count}
+                    likes={post.reactions_count}
                     comments={post.comments_count}
-                    shares={post.shares_count}
+                    shares={0}
                   />
                 ))}
               </div>

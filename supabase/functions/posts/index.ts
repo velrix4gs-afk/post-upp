@@ -84,10 +84,10 @@ serve(async (req) => {
       } catch (e) {
         body = {};
       }
-      const { content, media_urls, media_type, location, tagged_users, hashtags, privacy } = body;
+      const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
       // Validate required fields
-      if (!content && !media_urls?.length) {
+      if (!content && !media_url) {
         throw new Error('Post must have content or media');
       }
 
@@ -96,11 +96,8 @@ serve(async (req) => {
         .insert({
           user_id: user.id,
           content,
-          media_urls,
+          media_url,
           media_type,
-          location,
-          tagged_users,
-          hashtags,
           privacy: privacy || 'public'
         })
         .select(`
@@ -137,17 +134,14 @@ serve(async (req) => {
     if (method === 'PUT') {
       const postId = url.pathname.split('/').pop();
       const body = await req.json();
-      const { content, media_urls, media_type, location, tagged_users, hashtags, privacy } = body;
+      const { content, media_url, media_type, privacy } = body;
 
       const { data: post, error } = await supabaseClient
         .from('posts')
         .update({
           content,
-          media_urls,
+          media_url,
           media_type,
-          location,
-          tagged_users,
-          hashtags,
           privacy
         })
         .eq('id', postId)

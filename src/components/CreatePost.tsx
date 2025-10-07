@@ -86,7 +86,7 @@ const CreatePost = () => {
 
       await createPost({
         content: postContent.trim(),
-        media_urls: mediaUrl ? [mediaUrl] : undefined,
+        media_url: mediaUrl || undefined,
         media_type: selectedFile ? (selectedFile.type.startsWith('image/') ? 'image' : 'video') : undefined
       });
 

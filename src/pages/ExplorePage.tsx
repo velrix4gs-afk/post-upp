@@ -78,7 +78,7 @@ const ExplorePage = () => {
 
   // Get trending posts (most liked/commented in last 24h)
   const trendingPosts = [...posts]
-    .sort((a, b) => (b.likes_count + b.comments_count) - (a.likes_count + a.comments_count))
+    .sort((a, b) => (b.reactions_count + b.comments_count) - (a.reactions_count + a.comments_count))
     .slice(0, 10);
 
   return (
@@ -137,11 +137,11 @@ const ExplorePage = () => {
                     verified: post.profiles.is_verified
                   }}
                   content={post.content || ''}
-                  image={post.media_urls?.[0]}
+                  image={post.media_url}
                   timestamp={new Date(post.created_at).toLocaleDateString()}
-                  likes={post.likes_count}
+                  likes={post.reactions_count}
                   comments={post.comments_count}
-                  shares={post.shares_count}
+                  shares={0}
                 />
               ))
             ) : (

@@ -318,11 +318,11 @@ const ProfilePage = () => {
                     verified: profile?.is_verified
                   }}
                   content={post.content || ''}
-                  image={post.media_urls?.[0]}
+                  image={post.media_url}
                   timestamp={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                  likes={post.likes_count}
+                  likes={post.reactions_count}
                   comments={post.comments_count}
-                  shares={post.shares_count}
+                  shares={0}
                 />
               ))}
             </div>

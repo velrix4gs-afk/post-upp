@@ -61,10 +61,10 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
         <p className="mb-3 whitespace-pre-wrap">{post.content}</p>
       )}
 
-      {post.media_urls && post.media_urls.length > 0 && (
+      {post.media_url && (
         <div className="mb-3 rounded-lg overflow-hidden">
           <img 
-            src={post.media_urls[0]} 
+            src={post.media_url} 
             alt="Post media" 
             className="w-full max-h-96 object-cover"
           />
@@ -79,7 +79,7 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
           onClick={() => toggleReaction(post.id, 'like')}
         >
           <Heart className={`h-4 w-4 ${hasLiked ? 'fill-current' : ''}`} />
-          {post.likes_count}
+          {post.reactions_count}
         </Button>
 
         <Button variant="ghost" size="sm" className="gap-2">

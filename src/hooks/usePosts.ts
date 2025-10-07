@@ -7,15 +7,11 @@ export interface Post {
   id: string;
   user_id: string;
   content: string;
-  media_urls?: string[];
+  media_url?: string;
   media_type?: string;
-  location?: string;
-  tagged_users?: string[];
-  hashtags?: string[];
   privacy: string;
-  likes_count: number;
+  reactions_count: number;
   comments_count: number;
-  shares_count: number;
   created_at: string;
   updated_at: string;
   profiles: {
@@ -62,11 +58,8 @@ export const usePosts = () => {
 
   const createPost = async (postData: {
     content?: string;
-    media_urls?: string[];
+    media_url?: string;
     media_type?: string;
-    location?: string;
-    tagged_users?: string[];
-    hashtags?: string[];
     privacy?: string;
   }) => {
     if (!session?.access_token) return;
@@ -129,13 +122,13 @@ export const usePosts = () => {
             if (data.action === 'removed') {
               return {
                 ...post,
-                likes_count: Math.max(0, post.likes_count - 1),
+                reactions_count: Math.max(0, post.reactions_count - 1),
                 reactions: post.reactions?.filter(r => r.user_id !== session.user?.id) || []
               };
             } else if (data.action === 'created') {
               return {
                 ...post,
-                likes_count: post.likes_count + 1,
+                reactions_count: post.reactions_count + 1,
                 reactions: [
                   ...(post.reactions || []),
                   {
