@@ -20,9 +20,27 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-avatar'],
+        manualChunks: (id) => {
+          // Core React libraries
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
+            return 'react-vendor';
+          }
+          // Supabase - split into separate chunk to avoid loading on non-authenticated pages
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase-vendor';
+          }
+          // Toast libraries - split to avoid loading both initially
+          if (id.includes('node_modules/sonner') || id.includes('node_modules/@radix-ui/react-toast')) {
+            return 'toast-vendor';
+          }
+          // Heavy UI components - only load when needed
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'radix-vendor';
+          }
+          // Form and validation libraries
+          if (id.includes('node_modules/react-hook-form') || id.includes('node_modules/zod') || id.includes('node_modules/@hookform')) {
+            return 'forms-vendor';
+          }
         },
       },
     },
