@@ -38,7 +38,7 @@ export const usePosts = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('posts', {
-        method: 'GET',
+        body: { action: 'get' },
       });
 
       if (error) throw error;
@@ -112,8 +112,7 @@ export const usePosts = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('posts', {
-        body: { ...postData, postId },
-        method: 'PUT',
+        body: { action: 'update', postId, ...postData },
       });
 
       if (error) throw error;
@@ -147,8 +146,7 @@ export const usePosts = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('posts', {
-        body: { postId },
-        method: 'DELETE',
+        body: { action: 'delete', postId },
       });
 
       if (error) throw error;

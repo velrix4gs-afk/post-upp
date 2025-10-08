@@ -46,9 +46,9 @@ serve(async (req) => {
     const url = new URL(req.url);
     const method = req.method;
 
-    // Parse body for non-GET requests
+    // Parse body for POST requests
     let body: any = {};
-    if (method !== 'GET') {
+    if (method === 'POST') {
       try {
         const text = await req.text();
         body = text ? JSON.parse(text) : {};
@@ -58,9 +58,12 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Posts API: ${method} ${url.pathname}`);
+    console.log(`Posts API: ${method} ${url.pathname}`, { action: body.action });
 
-    if (method === 'GET') {
+    // Handle based on action field
+    const action = body.action;
+
+    if (method === 'GET' || action === 'get') {
       // Get posts feed
       const { data: posts, error } = await supabaseClient
         .from('posts')
@@ -101,7 +104,7 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'POST') {
+    if (action === 'create' || (method === 'POST' && !action)) {
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
       console.log('Post data received:', { content, media_url, media_type });
@@ -151,7 +154,7 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'PUT') {
+    if (action === 'update') {
       const { postId, content, media_url, media_type, privacy } = body;
 
       const { data: post, error } = await supabaseClient
@@ -182,7 +185,7 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'DELETE') {
+    if (action === 'delete') {
       const { postId } = body;
       console.log('Deleting post:', postId, 'for user:', user.id);
 
