@@ -148,24 +148,24 @@ const Feed = () => {
                 </div>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {posts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={{
-                      id: post.id,
-                      content: post.content || '',
-                      media_url: post.media_url,
-                      created_at: post.created_at,
-                      reactions_count: post.reactions_count,
-                      comments_count: post.comments_count,
-                      author_name: post.profiles.display_name,
-                      author_avatar: post.profiles.avatar_url,
-                      author_id: post.user_id
-                    }}
-                  />
-                ))}
-              </div>
+            <div className="space-y-4">
+              {posts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={{
+                    id: post.id,
+                    content: post.content || '',
+                    media_url: post.media_url,
+                    created_at: post.created_at,
+                    reactions_count: post.reactions_count,
+                    comments_count: post.comments_count,
+                    author_name: post.profiles?.display_name || 'Unknown User',
+                    author_avatar: post.profiles?.avatar_url,
+                    author_id: post.user_id
+                  }}
+                />
+              ))}
+            </div>
             )}
           </div>
 
