@@ -118,25 +118,6 @@ serve(async (req) => {
           await supabaseClient.rpc('increment_post_likes', { post_id: target_id });
         }
 
-        // Create notification for post/comment owner
-        if (target_type === 'post') {
-          const { data: post } = await supabaseClient
-            .from('posts')
-            .select('user_id, profiles:user_id(display_name)')
-            .eq('id', target_id)
-            .single();
-
-          if (post && post.user_id !== user.id) {
-            await supabaseClient.from('notifications').insert({
-              user_id: post.user_id,
-              type: 'like',
-              title: 'New reaction on your post',
-              content: `Someone reacted with ${reaction_type} to your post`,
-              data: { post_id: target_id, user_id: user.id, reaction_type }
-            });
-          }
-        }
-
         return new Response(JSON.stringify({ action: 'created', reaction }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

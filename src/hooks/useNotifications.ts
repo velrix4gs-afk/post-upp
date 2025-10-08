@@ -6,7 +6,7 @@ import { toast } from './use-toast';
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'friend_request' | 'message' | 'like' | 'comment' | 'mention' | 'share';
+  type: 'friend_request' | 'message' | 'like' | 'comment' | 'mention' | 'share' | 'follow';
   title: string;
   content?: string;
   data?: any;

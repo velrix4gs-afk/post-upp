@@ -9,6 +9,7 @@ import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from './ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,14 +95,35 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
     }
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!commentText.trim()) return;
     
-    toast({
-      title: 'Comment feature',
-      description: 'Comments will be implemented soon!',
-    });
-    setCommentText('');
+    try {
+      const { error } = await supabase
+        .from('post_comments')
+        .insert({
+          post_id: post.id,
+          user_id: user?.id,
+          content: commentText.trim(),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Comment added successfully!',
+      });
+      setCommentText('');
+      // Refresh the post to show new comment count
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add comment',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

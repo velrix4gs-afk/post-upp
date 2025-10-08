@@ -30,15 +30,17 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'like':
-        return <Heart className="h-4 w-4 text-destructive" />;
+        return <Heart className="h-4 w-4 text-red-500" />;
       case 'comment':
-        return <MessageCircle className="h-4 w-4 text-primary" />;
+        return <MessageCircle className="h-4 w-4 text-blue-500" />;
       case 'friend_request':
-        return <UserPlus className="h-4 w-4 text-success" />;
+        return <UserPlus className="h-4 w-4 text-green-500" />;
+      case 'follow':
+        return <UserPlus className="h-4 w-4 text-purple-500" />;
       case 'share':
-        return <Share2 className="h-4 w-4 text-accent" />;
+        return <Share2 className="h-4 w-4 text-orange-500" />;
       case 'mention':
-        return <AtSign className="h-4 w-4 text-warning" />;
+        return <AtSign className="h-4 w-4 text-yellow-500" />;
       case 'message':
         return <MessageCircle className="h-4 w-4 text-primary" />;
       default:
