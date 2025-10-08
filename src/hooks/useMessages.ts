@@ -204,7 +204,7 @@ export const useMessages = (chatId?: string) => {
           },
           body: JSON.stringify({
             chat_id: chatId,
-            content: content.trim(),
+            content: content.trim() || undefined,
             reply_to: replyTo,
             media_url: mediaUrl,
             media_type: mediaType
@@ -212,12 +212,16 @@ export const useMessages = (chatId?: string) => {
         }
       );
 
-      if (!response.ok) throw new Error('Failed to send message');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send message');
+      }
       // Message will be added via real-time subscription
     } catch (err: any) {
+      console.error('Send message error:', err);
       toast({
         title: 'Error',
-        description: 'Failed to send message',
+        description: err.message || 'Failed to send message',
         variant: 'destructive'
       });
     }
@@ -295,30 +299,39 @@ export const useMessages = (chatId?: string) => {
 
   const createChat = async (participantIds: string[], isGroup = false, name?: string) => {
     try {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       // Check if private chat already exists
       if (!isGroup && participantIds.length === 1) {
-        const { data: existingChats } = await supabase
+        const { data: myChats } = await supabase
           .from('chat_participants')
           .select('chat_id')
-          .eq('user_id', user?.id);
+          .eq('user_id', user.id);
 
-        if (existingChats) {
-          for (const chat of existingChats) {
-            const { data: otherParticipant } = await supabase
+        if (myChats && myChats.length > 0) {
+          for (const myChat of myChats) {
+            const { data: participants } = await supabase
               .from('chat_participants')
-              .select('user_id')
-              .eq('chat_id', chat.chat_id)
-              .eq('user_id', participantIds[0])
-              .single();
+              .select('user_id, chats!inner(type)')
+              .eq('chat_id', myChat.chat_id);
 
-            if (otherParticipant) {
-              await fetchChats();
-              return chat.chat_id;
+            if (participants && participants.length === 2) {
+              const chat = participants[0].chats as any;
+              if (chat.type === 'private') {
+                const otherUserId = participants.find(p => p.user_id !== user.id)?.user_id;
+                if (otherUserId === participantIds[0]) {
+                  await fetchChats();
+                  return myChat.chat_id;
+                }
+              }
             }
           }
         }
       }
 
+      // Create new chat via Supabase client
       const { data: chat, error: chatError } = await supabase
         .from('chats')
         .insert({
@@ -328,28 +341,59 @@ export const useMessages = (chatId?: string) => {
         .select()
         .single();
 
-      if (chatError) throw chatError;
+      if (chatError) {
+        console.error('Chat creation error:', chatError);
+        throw new Error(`Failed to create chat: ${chatError.message}`);
+      }
 
-      // Add participants
-      const participants = [
-        { chat_id: chat.id, user_id: user?.id, role: 'admin' },
-        ...participantIds.map(id => ({ chat_id: chat.id, user_id: id, role: 'member' }))
-      ];
-
-      const { error: participantsError } = await supabase
+      // Add current user as admin
+      const { error: adminError } = await supabase
         .from('chat_participants')
-        .insert(participants);
+        .insert({
+          chat_id: chat.id,
+          user_id: user.id,
+          role: 'admin'
+        });
 
-      if (participantsError) throw participantsError;
+      if (adminError) {
+        console.error('Admin participant error:', adminError);
+        throw new Error(`Failed to add admin: ${adminError.message}`);
+      }
+
+      // Add other participants
+      if (participantIds.length > 0) {
+        const { error: participantsError } = await supabase
+          .from('chat_participants')
+          .insert(
+            participantIds.map(id => ({
+              chat_id: chat.id,
+              user_id: id,
+              role: 'member'
+            }))
+          );
+
+        if (participantsError) {
+          console.error('Other participants error:', participantsError);
+          throw new Error(`Failed to add participants: ${participantsError.message}`);
+        }
+      }
 
       await fetchChats();
+      
+      toast({
+        title: 'Success',
+        description: 'Chat created successfully'
+      });
+
       return chat.id;
     } catch (err: any) {
+      console.error('Create chat error:', err);
       toast({
         title: 'Error',
-        description: 'Failed to create chat',
+        description: err.message || 'Failed to create chat',
         variant: 'destructive'
       });
+      return undefined;
     }
   };
 

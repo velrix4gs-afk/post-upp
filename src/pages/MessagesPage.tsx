@@ -190,12 +190,16 @@ const MessagesPage = () => {
       if (chatId) {
         setSelectedChatId(chatId);
         setShowNewChatDialog(false);
+        setSearchQuery('');
         await refetchChats();
+      } else {
+        throw new Error('Failed to create chat');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Create new chat error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create chat',
+        description: error.message || 'Failed to create chat',
         variant: 'destructive'
       });
     }
