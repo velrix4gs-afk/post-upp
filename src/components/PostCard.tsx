@@ -5,6 +5,7 @@ import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2 }
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
+import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import PollCard from "./PollCard";
@@ -41,6 +42,7 @@ export interface PostCardProps {
     created_at: string;
     reactions_count: number;
     comments_count: number;
+    shares_count?: number;
     author_name: string;
     author_avatar?: string;
     author_id: string;
@@ -76,6 +78,28 @@ export const PostCard = ({ post }: PostCardProps) => {
     await deletePost(post.id);
     setShowDeleteDialog(false);
     toast({ title: "Post deleted" });
+  };
+
+  const handleShare = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('post_shares')
+        .insert({ post_id: post.id, user_id: user.id });
+      
+      if (error && !error.message.includes('duplicate')) {
+        throw error;
+      }
+      
+      toast({ title: "Post shared!" });
+    } catch (err: any) {
+      toast({ 
+        title: "Error", 
+        description: err.message,
+        variant: "destructive" 
+      });
+    }
   };
 
   const isOwner = user?.id === post.author_id;
@@ -196,8 +220,9 @@ export const PostCard = ({ post }: PostCardProps) => {
                 <span>{post.comments_count}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-2" onClick={() => handleShare()}>
                 <Share className="h-4 w-4" />
+                <span>{post.shares_count || 0}</span>
               </Button>
             </div>
 

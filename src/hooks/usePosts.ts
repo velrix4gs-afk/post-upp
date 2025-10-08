@@ -12,6 +12,7 @@ export interface Post {
   privacy: string;
   reactions_count: number;
   comments_count: number;
+  shares_count?: number;
   created_at: string;
   updated_at: string;
   profiles: {
@@ -145,12 +146,23 @@ export const usePosts = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('posts', {
-        body: { postId },
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXl4a2pwZ2Viam5zdGV2Z2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3ODk0ODMsImV4cCI6MjA3NDM2NTQ4M30.u1lTe8ZgbRj6R2TJ1_gvEGvG1EHKD4ytId8IDjojbVI'
+          },
+          body: JSON.stringify({ postId })
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete post');
+      }
 
       // Remove post from local state
       setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));

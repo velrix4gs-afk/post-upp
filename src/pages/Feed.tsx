@@ -162,6 +162,7 @@ const Feed = () => {
                     created_at: post.created_at,
                     reactions_count: post.reactions_count,
                     comments_count: post.comments_count,
+                    shares_count: post.shares_count || 0,
                     author_name: post.profiles?.display_name || 'Unknown User',
                     author_avatar: post.profiles?.avatar_url,
                     author_id: post.user_id

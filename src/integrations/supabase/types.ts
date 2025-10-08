@@ -1342,6 +1342,49 @@ export type Database = {
           },
         ]
       }
+      post_shares: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts_view"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "post_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           comments_count: number | null
@@ -1354,6 +1397,7 @@ export type Database = {
           privacy: string | null
           reactions_count: number | null
           scheduled_for: string | null
+          shares_count: number | null
           updated_at: string | null
           user_id: string
         }
@@ -1368,6 +1412,7 @@ export type Database = {
           privacy?: string | null
           reactions_count?: number | null
           scheduled_for?: string | null
+          shares_count?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -1382,6 +1427,7 @@ export type Database = {
           privacy?: string | null
           reactions_count?: number | null
           scheduled_for?: string | null
+          shares_count?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -2395,6 +2441,7 @@ export type Database = {
           privacy: string | null
           reactions_count: number | null
           scheduled_for: string | null
+          shares_count: number | null
           trending_score: number | null
           updated_at: string | null
           user_id: string | null
@@ -2410,6 +2457,7 @@ export type Database = {
           privacy?: string | null
           reactions_count?: number | null
           scheduled_for?: string | null
+          shares_count?: number | null
           trending_score?: never
           updated_at?: string | null
           user_id?: string | null
@@ -2425,6 +2473,7 @@ export type Database = {
           privacy?: string | null
           reactions_count?: number | null
           scheduled_for?: string | null
+          shares_count?: number | null
           trending_score?: never
           updated_at?: string | null
           user_id?: string | null
