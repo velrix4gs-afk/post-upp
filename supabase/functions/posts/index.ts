@@ -46,6 +46,18 @@ serve(async (req) => {
     const url = new URL(req.url);
     const method = req.method;
 
+    // Parse body for non-GET requests
+    let body: any = {};
+    if (method !== 'GET') {
+      try {
+        const text = await req.text();
+        body = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.error('Failed to parse request body:', parseError);
+        throw new Error('Invalid request body');
+      }
+    }
+
     console.log(`Posts API: ${method} ${url.pathname}`);
 
     if (method === 'GET') {
@@ -90,15 +102,6 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      let body;
-      try {
-        const text = await req.text();
-        body = text ? JSON.parse(text) : {};
-      } catch (parseError) {
-        console.error('Failed to parse request body:', parseError);
-        throw new Error('Invalid request body');
-      }
-
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
       console.log('Post data received:', { content, media_url, media_type });
@@ -149,9 +152,7 @@ serve(async (req) => {
     }
 
     if (method === 'PUT') {
-      const postId = url.pathname.split('/').pop();
-      const body = await req.json();
-      const { content, media_url, media_type, privacy } = body;
+      const { postId, content, media_url, media_type, privacy } = body;
 
       const { data: post, error } = await supabaseClient
         .from('posts')
@@ -182,7 +183,7 @@ serve(async (req) => {
     }
 
     if (method === 'DELETE') {
-      const postId = url.pathname.split('/').pop();
+      const { postId } = body;
       console.log('Deleting post:', postId, 'for user:', user.id);
 
       if (!postId) {

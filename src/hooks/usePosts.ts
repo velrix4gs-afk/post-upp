@@ -36,22 +36,12 @@ export const usePosts = () => {
     if (!session?.access_token) return;
 
     try {
-      const response = await fetch(
-        'https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts',
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('posts', {
+        method: 'GET',
+      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch posts');
-      }
+      if (error) throw error;
 
-      const data = await response.json();
       setPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -83,32 +73,13 @@ export const usePosts = () => {
     try {
       console.log('Creating post with data:', postData);
       
-      const response = await fetch(
-        'https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(postData),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('posts', {
+        body: postData,
+      });
 
-      const responseText = await response.text();
-      console.log('Post creation response:', responseText);
+      if (error) throw error;
 
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = JSON.parse(responseText);
-        } catch {
-          throw new Error(`Failed to create post: ${responseText}`);
-        }
-        throw new Error(errorData.error || 'Failed to create post');
-      }
-
-      const data = JSON.parse(responseText);
+      console.log('Post creation response:', data);
 
       // Add new post to the beginning of the list
       setPosts(prevPosts => [data, ...prevPosts]);
@@ -139,24 +110,12 @@ export const usePosts = () => {
     }
 
     try {
-      const response = await fetch(
-        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts/${postId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(postData),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('posts', {
+        body: { ...postData, postId },
+        method: 'PUT',
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update post');
-      }
-
-      const data = await response.json();
+      if (error) throw error;
 
       // Update local state
       setPosts(prevPosts =>
@@ -186,21 +145,12 @@ export const usePosts = () => {
     }
 
     try {
-      const response = await fetch(
-        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts/${postId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('posts', {
+        body: { postId },
+        method: 'DELETE',
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete post');
-      }
+      if (error) throw error;
 
       // Remove post from local state
       setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));

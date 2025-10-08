@@ -85,69 +85,13 @@ export const useMessages = (chatId?: string) => {
 
   const fetchChats = async () => {
     try {
-      // First get chats where user is a participant
-      const { data: participantChats, error: participantError } = await supabase
-        .from('chat_participants')
-        .select('chat_id')
-        .eq('user_id', user?.id);
-
-      if (participantError) throw participantError;
-
-      const chatIds = participantChats?.map(p => p.chat_id) || [];
-      
-      if (chatIds.length === 0) {
-        setChats([]);
-        return;
-      }
-
-      // Fetch full chat details with participants
-      const { data, error } = await supabase
-        .from('chats')
-        .select(`
-          id,
-          name,
-          avatar_url,
-          type,
-          created_at
-        `)
-        .in('id', chatIds)
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('messages', {
+        body: { action: 'list_chats' },
+      });
 
       if (error) throw error;
-
-      // Fetch participants for each chat
-      const chatsWithParticipants = await Promise.all(
-        (data || []).map(async (chat) => {
-          const { data: participants } = await supabase
-            .from('chat_participants')
-            .select(`
-              user_id,
-              role,
-              joined_at,
-              profiles:user_id (
-                username,
-                display_name,
-                avatar_url
-              )
-            `)
-            .eq('chat_id', chat.id);
-
-          return {
-            ...chat,
-            is_group: chat.type === 'group',
-            created_by: '',
-            updated_at: chat.created_at,
-            participants: participants?.map(p => ({
-              user_id: p.user_id,
-              role: p.role,
-              joined_at: p.joined_at,
-              profiles: p.profiles as any
-            })) || []
-          };
-        })
-      );
       
-      setChats(chatsWithParticipants);
+      setChats(data || []);
     } catch (err: any) {
       toast({
         title: 'Error',
@@ -162,20 +106,12 @@ export const useMessages = (chatId?: string) => {
 
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
       
-      const response = await fetch(
-        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages?chat_id=${chatId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('messages', {
+        body: { chat_id: chatId },
+      });
 
-      if (!response.ok) throw new Error('Failed to fetch messages');
-      const data = await response.json();
+      if (error) throw error;
       setMessages(data || []);
     } catch (err: any) {
       toast({
@@ -192,30 +128,18 @@ export const useMessages = (chatId?: string) => {
     if (!chatId || (!content.trim() && !mediaUrl)) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(
-        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: chatId,
-            content: content.trim() || undefined,
-            reply_to: replyTo,
-            media_url: mediaUrl,
-            media_type: mediaType
-          })
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'send',
+          chat_id: chatId,
+          content: content.trim() || undefined,
+          reply_to: replyTo,
+          media_url: mediaUrl,
+          media_type: mediaType
+        },
+      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to send message');
-      }
+      if (error) throw error;
       // Message will be added via real-time subscription
     } catch (err: any) {
       console.error('Send message error:', err);
@@ -231,22 +155,15 @@ export const useMessages = (chatId?: string) => {
     if (!content.trim()) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(
-        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages/${messageId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ content: content.trim() })
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'edit',
+          messageId,
+          content: content.trim()
+        },
+      });
 
-      if (!response.ok) throw new Error('Failed to edit message');
-      const data = await response.json();
+      if (error) throw error;
       
       setMessages(prev => prev.map(msg => 
         msg.id === messageId ? data : msg
@@ -267,20 +184,14 @@ export const useMessages = (chatId?: string) => {
 
   const deleteMessage = async (messageId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(
-        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/messages/${messageId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'delete',
+          messageId
+        },
+      });
 
-      if (!response.ok) throw new Error('Failed to delete message');
+      if (error) throw error;
       
       setMessages(prev => prev.filter(msg => msg.id !== messageId));
 

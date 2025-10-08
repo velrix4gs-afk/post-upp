@@ -45,12 +45,82 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const method = req.method;
-    const chatId = url.searchParams.get('chat_id');
 
     console.log(`Messages API: ${method} ${url.pathname}`);
 
-    if (method === 'GET' && chatId) {
-      // Get messages for a chat
+    // Parse request body
+    const body = method !== 'GET' ? await req.json() : {};
+    const action = body.action;
+
+    // Handle list chats action
+    if (action === 'list_chats' || (method === 'POST' && !body.chat_id && !body.messageId)) {
+      const { data: participantChats, error: participantError } = await supabaseClient
+        .from('chat_participants')
+        .select('chat_id')
+        .eq('user_id', user.id);
+
+      if (participantError) throw participantError;
+
+      const chatIds = participantChats?.map(p => p.chat_id) || [];
+      
+      if (chatIds.length === 0) {
+        return new Response(JSON.stringify([]), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data, error } = await supabaseClient
+        .from('chats')
+        .select(`
+          id,
+          name,
+          avatar_url,
+          type,
+          created_at
+        `)
+        .in('id', chatIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const chatsWithParticipants = await Promise.all(
+        (data || []).map(async (chat) => {
+          const { data: participants } = await supabaseClient
+            .from('chat_participants')
+            .select(`
+              user_id,
+              role,
+              joined_at,
+              profiles:user_id (
+                username,
+                display_name,
+                avatar_url
+              )
+            `)
+            .eq('chat_id', chat.id);
+
+          return {
+            ...chat,
+            is_group: chat.type === 'group',
+            created_by: '',
+            updated_at: chat.created_at,
+            participants: participants?.map(p => ({
+              user_id: p.user_id,
+              role: p.role,
+              joined_at: p.joined_at,
+              profiles: p.profiles
+            })) || []
+          };
+        })
+      );
+
+      return new Response(JSON.stringify(chatsWithParticipants), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle fetch messages action
+    if (body.chat_id && !action) {
       const { data: messages, error } = await supabaseClient
         .from('messages')
         .select(`
@@ -66,7 +136,7 @@ serve(async (req) => {
             sender:sender_id (display_name)
           )
         `)
-        .eq('chat_id', chatId)
+        .eq('chat_id', body.chat_id)
         .order('created_at', { ascending: true })
         .limit(100);
 
@@ -77,8 +147,8 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'POST') {
-      const body = await req.json();
+    // Handle send message action
+    if (action === 'send') {
       const { chat_id, content, media_url, media_type, reply_to } = body;
 
       // Input validation
@@ -170,10 +240,9 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'PUT') {
-      const messageId = url.pathname.split('/').pop();
-      const body = await req.json();
-      const { content } = body;
+    // Handle edit message action
+    if (action === 'edit') {
+      const { messageId, content } = body;
 
       const { data: message, error } = await supabaseClient
         .from('messages')
@@ -200,8 +269,9 @@ serve(async (req) => {
       });
     }
 
-    if (method === 'DELETE') {
-      const messageId = url.pathname.split('/').pop();
+    // Handle delete message action
+    if (action === 'delete') {
+      const { messageId } = body;
 
       const { error } = await supabaseClient
         .from('messages')
