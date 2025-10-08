@@ -206,10 +206,13 @@ const ProfilePage = () => {
             {/* Avatar */}
             <div className="relative -mt-16 md:-mt-20 mb-4 md:mb-0">
               <Avatar className="h-32 w-32 md:h-40 md:w-40 ring-4 ring-background">
-                <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback className="bg-gradient-primary text-white text-4xl">
-                  {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
-                </AvatarFallback>
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt={`${profile.display_name}'s profile picture`} />
+                ) : (
+                  <AvatarFallback className="bg-gradient-primary text-white text-4xl">
+                    {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                  </AvatarFallback>
+                )}
               </Avatar>
               {profile?.is_verified && (
                 <Badge className="absolute -bottom-2 -right-2 bg-primary">

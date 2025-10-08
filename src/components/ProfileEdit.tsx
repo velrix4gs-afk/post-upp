@@ -210,34 +210,46 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
 
           {/* Avatar Section */}
           <div className="flex items-center space-x-6 mb-6 -mt-16 px-4">
-            <div className="relative">
+            <div className="relative group">
               <Avatar className="h-32 w-32 ring-4 ring-background">
-                <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback className="bg-gradient-primary text-white text-3xl">
-                  {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
-                </AvatarFallback>
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt="Profile picture" />
+                ) : (
+                  <AvatarFallback className="bg-gradient-primary text-white text-3xl">
+                    {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                  </AvatarFallback>
+                )}
               </Avatar>
-              <div className="absolute bottom-0 right-0">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                  id="avatar-upload"
-                  disabled={isUploading}
-                />
-                <label htmlFor="avatar-upload">
-                  <Button size="sm" className="h-10 w-10 rounded-full p-0" asChild disabled={isUploading}>
-                    <span className="cursor-pointer">
-                      <Camera className="h-4 w-4" />
-                    </span>
-                  </Button>
-                </label>
+              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera className="h-8 w-8 text-white" />
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+                id="avatar-upload"
+                disabled={isUploading}
+              />
+              <label 
+                htmlFor="avatar-upload"
+                className="absolute inset-0 cursor-pointer rounded-full"
+                title="Upload profile picture"
+              />
+              <div className="absolute bottom-0 right-0 pointer-events-none">
+                <Button size="sm" className="h-10 w-10 rounded-full p-0 pointer-events-auto" asChild disabled={isUploading}>
+                  <label htmlFor="avatar-upload" className="cursor-pointer flex items-center justify-center">
+                    <Camera className="h-4 w-4" />
+                  </label>
+                </Button>
               </div>
             </div>
-            <div className="mt-16">
+            <div className="mt-16 flex-1">
               <h3 className="font-semibold text-xl">{profile?.display_name}</h3>
               <p className="text-muted-foreground">@{profile?.username}</p>
+              {isUploading && (
+                <p className="text-sm text-primary mt-2">Uploading image...</p>
+              )}
             </div>
           </div>
 
