@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     cssCodeSplit: true,
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {
