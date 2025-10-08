@@ -109,27 +109,28 @@ export const useProfile = (userId?: string) => {
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
       
       // Delete old avatar if exists
       if (profile?.avatar_url) {
-        const oldFileName = profile.avatar_url.split('/').pop();
-        if (oldFileName) {
-          await supabase.storage.from('avatars').remove([oldFileName]);
+        const oldPath = profile.avatar_url.split('/avatars/').pop();
+        if (oldPath) {
+          await supabase.storage.from('avatars').remove([oldPath]);
         }
       }
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
 
       await updateProfile({ avatar_url: publicUrl });
       
