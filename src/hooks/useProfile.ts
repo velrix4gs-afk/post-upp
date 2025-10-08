@@ -73,7 +73,12 @@ export const useProfile = (userId?: string) => {
 
       if (error) throw error;
 
+      // Update local state
       setProfile(prev => prev ? { ...prev, ...updates } : null);
+      
+      // Refetch to ensure we have the latest data
+      await fetchProfile();
+      
       toast({
         title: 'Success',
         description: 'Profile updated successfully'
@@ -84,6 +89,7 @@ export const useProfile = (userId?: string) => {
         description: err.message,
         variant: 'destructive'
       });
+      throw err;
     }
   };
 

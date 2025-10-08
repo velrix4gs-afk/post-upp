@@ -40,11 +40,17 @@ const ProfilePage = () => {
   const profileUserId = userId || user?.id;
   const isOwnProfile = profileUserId === user?.id;
   
-  const { profile, loading: profileLoading } = useProfile(profileUserId);
+  const { profile, loading: profileLoading, refetch: refetchProfile } = useProfile(profileUserId);
   const { posts, loading: postsLoading } = usePosts();
   const { friends } = useFriends();
   const { followers, following, followUser, unfollowUser } = useFollowers(profileUserId);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+
+  const handleProfileEditClose = () => {
+    setShowProfileEdit(false);
+    // Refetch profile to get updated data
+    refetchProfile();
+  };
 
   const userPosts = posts.filter(post => post.user_id === profileUserId);
   
@@ -330,7 +336,7 @@ const ProfilePage = () => {
 
       {/* Profile Edit Modal */}
       {showProfileEdit && (
-        <ProfileEdit onClose={() => setShowProfileEdit(false)} />
+        <ProfileEdit onClose={handleProfileEditClose} />
       )}
     </div>
   );

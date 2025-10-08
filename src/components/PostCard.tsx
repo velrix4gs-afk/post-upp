@@ -8,6 +8,7 @@ import { usePosts } from "@/hooks/usePosts";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import PollCard from "./PollCard";
 import { 
   DropdownMenu, 
@@ -32,7 +33,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
 
 export interface PostCardProps {
   post: {
@@ -51,7 +51,7 @@ export interface PostCardProps {
 
 export const PostCard = ({ post }: PostCardProps) => {
   const { user } = useAuth();
-  const { toggleReaction, updatePost, deletePost } = usePosts();
+  const { toggleReaction, updatePost, deletePost, posts } = usePosts();
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -59,12 +59,52 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editContent, setEditContent] = useState(post.content || "");
+  const [localReactionCount, setLocalReactionCount] = useState(post.reactions_count);
+
+  // Check if user has liked this post
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('post_reactions')
+          .select('id')
+          .eq('post_id', post.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (!error && data) {
+          setIsLiked(true);
+        }
+      } catch (err) {
+        console.error('Error checking like status:', err);
+      }
+    };
+
+    checkLikeStatus();
+  }, [post.id, user]);
+
+  // Update local reaction count when post prop changes
+  useEffect(() => {
+    setLocalReactionCount(post.reactions_count);
+  }, [post.reactions_count]);
 
   const handleLike = async () => {
     if (!user) return;
+    
+    // Optimistic update
     const newLikedState = !isLiked;
     setIsLiked(newLikedState);
-    await toggleReaction(post.id, 'like');
+    setLocalReactionCount(prev => newLikedState ? prev + 1 : Math.max(0, prev - 1));
+    
+    try {
+      await toggleReaction(post.id, 'like');
+    } catch (err) {
+      // Revert on error
+      setIsLiked(!newLikedState);
+      setLocalReactionCount(post.reactions_count);
+    }
   };
 
   const handleEdit = async () => {
@@ -212,7 +252,7 @@ export const PostCard = ({ post }: PostCardProps) => {
                 onMouseLeave={() => setShowReactions(false)}
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                <span>{post.reactions_count}</span>
+                <span>{localReactionCount}</span>
               </Button>
               
               <Button variant="ghost" size="sm" className="gap-2">
