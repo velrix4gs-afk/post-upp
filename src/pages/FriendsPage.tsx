@@ -9,12 +9,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Search, UserPlus, UserMinus, UserCheck, X, Check, MessageSquare } from 'lucide-react';
 import { useFriends } from '@/hooks/useFriends';
+import { useFollowers } from '@/hooks/useFollowers';
 import { useSearch } from '@/hooks/useSearch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/useAuth';
 
 const FriendsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { 
     friends, 
     pendingRequests, 
@@ -25,6 +28,13 @@ const FriendsPage = () => {
     removeFriend,
     sendFriendRequest
   } = useFriends();
+  
+  const { 
+    following, 
+    followers,
+    loading: followersLoading,
+    unfollowUser 
+  } = useFollowers(user?.id);
   
   const { results, search } = useSearch();
 
@@ -69,14 +79,21 @@ const FriendsPage = () => {
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="all">
-              All Friends
+              Friends
               <Badge variant="secondary" className="ml-2">{friends.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="following">
+              Following
+              <Badge variant="secondary" className="ml-2">{following.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="followers">
+              Followers
+              <Badge variant="secondary" className="ml-2">{followers.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="online">
               Online
-              <Badge variant="secondary" className="ml-2">{onlineFriends.length}</Badge>
             </TabsTrigger>
             <TabsTrigger value="requests">
               Requests
@@ -159,6 +176,157 @@ const FriendsPage = () => {
                             onClick={() => removeFriend(friend.id)}
                           >
                             <UserMinus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="following" className="mt-6">
+            {followersLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-16 w-16 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : following.length === 0 ? (
+              <Card className="p-12 text-center">
+                <UserPlus className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">Not following anyone yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Start following people to see their content!
+                </p>
+                <Button onClick={() => navigate('/explore')}>
+                  <Search className="h-4 w-4 mr-2" />
+                  Discover People
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {following.map(follow => (
+                  <Card key={follow.id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar 
+                        className="h-16 w-16 cursor-pointer"
+                        onClick={() => navigate(`/profile/${follow.following.id}`)}
+                      >
+                        <AvatarImage src={follow.following.avatar_url} />
+                        <AvatarFallback>{follow.following.display_name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p 
+                            className="font-medium truncate cursor-pointer hover:underline"
+                            onClick={() => navigate(`/profile/${follow.following.id}`)}
+                          >
+                            {follow.following.display_name}
+                          </p>
+                          {follow.following.is_verified && (
+                            <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">@{follow.following.username}</p>
+                        <div className="flex gap-2 mt-3">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => navigate('/messages')}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => unfollowUser(follow.following.id)}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="followers" className="mt-6">
+            {followersLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-16 w-16 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-32 mb-2" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : followers.length === 0 ? (
+              <Card className="p-12 text-center">
+                <UserCheck className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No followers yet</h3>
+                <p className="text-muted-foreground">
+                  Share your profile to gain followers!
+                </p>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {followers.map(follow => (
+                  <Card key={follow.id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar 
+                        className="h-16 w-16 cursor-pointer"
+                        onClick={() => navigate(`/profile/${follow.follower.id}`)}
+                      >
+                        <AvatarImage src={follow.follower.avatar_url} />
+                        <AvatarFallback>{follow.follower.display_name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p 
+                            className="font-medium truncate cursor-pointer hover:underline"
+                            onClick={() => navigate(`/profile/${follow.follower.id}`)}
+                          >
+                            {follow.follower.display_name}
+                          </p>
+                          {follow.follower.is_verified && (
+                            <Badge variant="secondary" className="h-4 px-1">✓</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">@{follow.follower.username}</p>
+                        <div className="flex gap-2 mt-3">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => navigate('/messages')}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                          <Button 
+                            size="sm"
+                            onClick={() => navigate(`/profile/${follow.follower.id}`)}
+                          >
+                            View Profile
                           </Button>
                         </div>
                       </div>
