@@ -12,7 +12,7 @@ import { usePosts } from '@/hooks/usePosts';
 import { useFollowers } from '@/hooks/useFollowers';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import PostCard from '@/components/PostCard';
+import { PostCard } from '@/components/PostCard';
 
 interface TrendingUser {
   id: string;
@@ -129,19 +129,17 @@ const ExplorePage = () => {
               trendingPosts.map(post => (
                 <PostCard
                   key={post.id}
-                  id={post.id}
-                  author={{
-                    name: post.profiles.display_name,
-                    username: post.profiles.username,
-                    avatar: post.profiles.avatar_url,
-                    verified: post.profiles.is_verified
+                  post={{
+                    id: post.id,
+                    content: post.content || '',
+                    media_url: post.media_url,
+                    created_at: post.created_at,
+                    reactions_count: post.reactions_count,
+                    comments_count: post.comments_count,
+                    author_name: post.profiles.display_name,
+                    author_avatar: post.profiles.avatar_url,
+                    author_id: post.user_id
                   }}
-                  content={post.content || ''}
-                  image={post.media_url}
-                  timestamp={new Date(post.created_at).toLocaleDateString()}
-                  likes={post.reactions_count}
-                  comments={post.comments_count}
-                  shares={0}
                 />
               ))
             ) : (

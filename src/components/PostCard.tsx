@@ -1,175 +1,212 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  Bookmark,
-  MoreHorizontal,
-  Laugh,
-  ThumbsUp
-} from "lucide-react";
+import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { usePosts } from "@/hooks/usePosts";
 import { useAuth } from "@/hooks/useAuth";
+import { usePosts } from "@/hooks/usePosts";
+import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
-interface PostCardProps {
-  id: string;
-  author: {
-    name: string;
-    username: string;
-    avatar?: string;
-    verified?: boolean;
+export interface PostCardProps {
+  post: {
+    id: string;
+    content: string;
+    media_url?: string;
+    created_at: string;
+    reactions_count: number;
+    comments_count: number;
+    author_name: string;
+    author_avatar?: string;
+    author_id: string;
   };
-  content: string;
-  image?: string;
-  timestamp: string;
-  likes: number;
-  comments: number;
-  shares: number;
 }
 
-const PostCard = ({ 
-  id,
-  author, 
-  content, 
-  image, 
-  timestamp, 
-  likes, 
-  comments, 
-  shares 
-}: PostCardProps) => {
+export const PostCard = ({ post }: PostCardProps) => {
   const { user } = useAuth();
-  const { toggleReaction } = usePosts();
+  const { toggleReaction, updatePost, deletePost } = usePosts();
+  const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
-  const [likesCount, setLikesCount] = useState(likes);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editContent, setEditContent] = useState(post.content || "");
 
   const handleLike = async () => {
-    try {
-      await toggleReaction(id, 'like');
-      if (isLiked) {
-        setLikesCount(prev => prev - 1);
-      } else {
-        setLikesCount(prev => prev + 1);
-      }
-      setIsLiked(!isLiked);
-    } catch (error) {
-      console.error('Failed to toggle like:', error);
-    }
+    if (!user) return;
+    const newLikedState = !isLiked;
+    setIsLiked(newLikedState);
+    await toggleReaction(post.id, 'like');
   };
 
+  const handleEdit = async () => {
+    if (!editContent.trim()) return;
+    await updatePost(post.id, { content: editContent });
+    setShowEditDialog(false);
+    toast({ title: "Post updated" });
+  };
+
+  const handleDelete = async () => {
+    await deletePost(post.id);
+    setShowDeleteDialog(false);
+    toast({ title: "Post deleted" });
+  };
+
+  const isOwner = user?.id === post.author_id;
+
   return (
-    <Card className="bg-gradient-card border-0 hover:shadow-md transition-all duration-300">
-      <div className="p-4">
-        {/* Post Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-              <AvatarImage src={author.avatar} />
-              <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                {author.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-sm">{author.name}</h3>
-                {author.verified && (
-                  <Badge variant="secondary" className="h-4 px-1 text-xs">✓</Badge>
-                )}
+    <>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="min-h-[100px]"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+            <Button onClick={handleEdit}>Save</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Card className="overflow-hidden">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Avatar 
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate(`/profile/${post.author_id}`)}
+              >
+                <AvatarImage src={post.author_avatar} />
+                <AvatarFallback>{post.author_name?.[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <button
+                  onClick={() => navigate(`/profile/${post.author_id}`)}
+                  className="font-semibold hover:underline text-left"
+                >
+                  {post.author_name}
+                </button>
+                <p className="text-sm text-muted-foreground">
+                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                @{author.username} • {timestamp}
-              </p>
             </div>
+            {isOwner && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
 
-        {/* Post Content */}
-        <div className="mb-4">
-          <p className="text-sm leading-relaxed mb-3">{content}</p>
-          {image && (
-            <div className="rounded-lg overflow-hidden">
-              <img 
-                src={image} 
-                alt="Post content" 
-                className="w-full h-auto max-h-96 object-cover"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Post Stats */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3 px-1">
-          <div className="flex items-center space-x-4">
-            <span>{likesCount.toLocaleString()} likes</span>
-            <span>{comments} comments</span>
+          <div className="mb-4">
+            <p className="text-base mb-3 whitespace-pre-wrap">{post.content}</p>
+            {post.media_url && (
+              <div className="rounded-lg overflow-hidden">
+                <img 
+                  src={post.media_url} 
+                  alt="Post media"
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            )}
           </div>
-          <span>{shares} shares</span>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between border-t pt-3">
-          <div className="flex items-center space-x-1">
-            {/* Like Button with Reactions */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`h-9 px-3 ${isLiked ? 'text-destructive hover:text-destructive' : ''}`}
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={`gap-2 ${isLiked ? 'text-red-500' : ''}`}
                 onClick={handleLike}
                 onMouseEnter={() => setShowReactions(true)}
                 onMouseLeave={() => setShowReactions(false)}
               >
-                <Heart className={`h-4 w-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
-                <span className="text-xs">Like</span>
+                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                <span>{post.reactions_count}</span>
               </Button>
               
-              {/* Reaction Popup */}
-              {showReactions && (
-                <div className="absolute bottom-full left-0 mb-2 bg-card border rounded-full p-2 shadow-lg flex space-x-1 z-10">
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-destructive/10">
-                    <Heart className="h-4 w-4 text-destructive" />
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/10">
-                    <ThumbsUp className="h-4 w-4 text-primary" />
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-warning/10">
-                    <Laugh className="h-4 w-4 text-warning" />
-                  </Button>
-                </div>
-              )}
+              <Button variant="ghost" size="sm" className="gap-2">
+                <MessageCircle className="h-4 w-4" />
+                <span>{post.comments_count}</span>
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Share className="h-4 w-4" />
+              </Button>
             </div>
 
-            <Button variant="ghost" size="sm" className="h-9 px-3">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              <span className="text-xs">Comment</span>
-            </Button>
-
-            <Button variant="ghost" size="sm" className="h-9 px-3">
-              <Share2 className="h-4 w-4 mr-2" />
-              <span className="text-xs">Share</span>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setIsSaved(!isSaved)}
+            >
+              <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
             </Button>
           </div>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-9 w-9 p-0 ${isSaved ? 'text-warning' : ''}`}
-            onClick={() => setIsSaved(!isSaved)}
-          >
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-          </Button>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </>
   );
 };
-
-export default PostCard;

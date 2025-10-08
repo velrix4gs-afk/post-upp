@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
 import CreatePost from "@/components/CreatePost";
-import PostCard from "@/components/PostCard";
+import { PostCard } from "@/components/PostCard";
 import MessagesList from "@/components/MessagesList";
 import Stories from "@/components/Stories";
 import { Card } from "@/components/ui/card";
@@ -112,19 +112,17 @@ const Dashboard = () => {
                 posts.map((post) => (
                   <PostCard 
                     key={post.id} 
-                    id={post.id}
-                    author={{
-                      name: post.profiles.display_name,
-                      username: post.profiles.username,
-                      avatar: post.profiles.avatar_url,
-                      verified: post.profiles.is_verified
+                    post={{
+                      id: post.id,
+                      content: post.content || '',
+                      media_url: post.media_url,
+                      created_at: post.created_at,
+                      reactions_count: post.reactions_count,
+                      comments_count: post.comments_count,
+                      author_name: post.profiles.display_name,
+                      author_avatar: post.profiles.avatar_url,
+                      author_id: post.user_id
                     }}
-                    content={post.content || ''}
-                    image={post.media_url}
-                    timestamp={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                    likes={post.reactions_count}
-                    comments={post.comments_count}
-                    shares={0}
                   />
                 ))
               )}

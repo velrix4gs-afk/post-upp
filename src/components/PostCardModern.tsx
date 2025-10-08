@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Badge } from './ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,7 @@ interface PostCardModernProps {
 
 const PostCardModern = ({ post }: PostCardModernProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { toggleReaction, updatePost, deletePost } = usePosts();
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -130,13 +132,21 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
     <>
       <Card className="p-4">
         <div className="flex items-start gap-3 mb-3">
-          <Avatar>
+          <Avatar 
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate(`/profile/${post.user_id}`)}
+          >
             <AvatarImage src={post.profiles.avatar_url} />
             <AvatarFallback>{post.profiles.display_name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{post.profiles.display_name}</span>
+              <button
+                onClick={() => navigate(`/profile/${post.user_id}`)}
+                className="font-semibold hover:underline text-left"
+              >
+                {post.profiles.display_name}
+              </button>
               {post.profiles.is_verified && <Badge variant="secondary">✓</Badge>}
               <span className="text-muted-foreground text-sm">
                 @{post.profiles.username}

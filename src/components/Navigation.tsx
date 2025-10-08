@@ -2,8 +2,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
 import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass } from 'lucide-react';
+import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,12 +15,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/hooks/useProfile';
+import NotificationCenter from './NotificationCenter';
 
 const Navigation = () => {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -106,6 +111,14 @@ const Navigation = () => {
           </div>
 
           {user && (
+            <div className="flex md:hidden">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/search')}>
+                <Search className="h-5 w-5" />
+              </Button>
+            </div>
+          )}
+
+          {user && (
             <div className="hidden md:flex flex-1 max-w-md">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -124,12 +137,24 @@ const Navigation = () => {
             
             {user ? (
               <>
-                <Button variant="ghost" size="sm" className="relative hidden md:flex">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="relative"
+                  onClick={() => setShowNotifications(true)}
+                >
                   <Bell className="h-5 w-5" />
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                    5
-                  </Badge>
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {unreadCount}
+                    </Badge>
+                  )}
                 </Button>
+
+                <NotificationCenter 
+                  isOpen={showNotifications} 
+                  onClose={() => setShowNotifications(false)} 
+                />
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

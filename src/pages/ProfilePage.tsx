@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
-import PostCard from '@/components/PostCard';
+import { PostCard } from '@/components/PostCard';
 import ProfileEdit from '@/components/ProfileEdit';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -310,19 +310,17 @@ const ProfilePage = () => {
               {userPosts.map((post) => (
                 <PostCard 
                   key={post.id} 
-                  id={post.id}
-                  author={{
-                    name: profile?.display_name || '',
-                    username: profile?.username || '',
-                    avatar: profile?.avatar_url,
-                    verified: profile?.is_verified
+                  post={{
+                    id: post.id,
+                    content: post.content || '',
+                    media_url: post.media_url,
+                    created_at: post.created_at,
+                    reactions_count: post.reactions_count,
+                    comments_count: post.comments_count,
+                    author_name: profile?.display_name || '',
+                    author_avatar: profile?.avatar_url,
+                    author_id: post.user_id
                   }}
-                  content={post.content || ''}
-                  image={post.media_url}
-                  timestamp={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                  likes={post.reactions_count}
-                  comments={post.comments_count}
-                  shares={0}
                 />
               ))}
             </div>
