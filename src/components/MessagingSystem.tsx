@@ -13,12 +13,18 @@ import {
   MoreVertical,
   ArrowLeft,
   Smile,
-  Paperclip
+  Paperclip,
+  Mic
 } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
 import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/hooks/useAuth';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
+import TypingIndicator from './TypingIndicator';
+import VoiceRecorder from './VoiceRecorder';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const MessagingSystem = () => {
   const { user } = useAuth();
@@ -26,6 +32,7 @@ const MessagingSystem = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { 
@@ -33,8 +40,21 @@ const MessagingSystem = () => {
     chats, 
     loading, 
     sendMessage, 
-    createChat 
+    createChat,
+    markMessageRead
   } = useMessages(selectedChatId || undefined);
+
+  const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
+
+  // Mark messages as read when chat is selected
+  useEffect(() => {
+    if (selectedChatId && messages.length > 0) {
+      const unreadMessages = messages.filter(m => m.sender_id !== user?.id);
+      unreadMessages.forEach(msg => {
+        markMessageRead(msg.id);
+      });
+    }
+  }, [selectedChatId, messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -69,6 +89,38 @@ const MessagingSystem = () => {
     
     await sendMessage(newMessage);
     setNewMessage('');
+  };
+
+  const handleVoiceNote = async (audioBlob: Blob, duration: number) => {
+    if (!selectedChatId || !user) return;
+
+    try {
+      // Upload voice note to storage
+      const fileName = `${user.id}/${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from('messages')
+        .upload(fileName, audioBlob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('messages')
+        .getPublicUrl(fileName);
+
+      await sendMessage('', undefined, publicUrl, 'audio');
+      setShowVoiceRecorder(false);
+      
+      toast({
+        title: 'Voice note sent',
+      });
+    } catch (error) {
+      console.error('Error sending voice note:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send voice note',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleStartNewChat = async (friendId: string) => {
@@ -269,14 +321,20 @@ const MessagingSystem = () => {
                         </p>
                       )}
                       
-                      <div
+                       <div
                         className={`rounded-lg px-3 py-2 ${
                           isOwn
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted'
                         }`}
                       >
-                        <p className="text-sm">{message.content}</p>
+                        {message.media_type === 'audio' && message.media_url ? (
+                          <audio controls className="max-w-full">
+                            <source src={message.media_url} type="audio/webm" />
+                          </audio>
+                        ) : (
+                          <p className="text-sm">{message.content}</p>
+                        )}
                         {message.is_edited && (
                           <p className="text-xs opacity-70 mt-1">edited</p>
                         )}
@@ -293,32 +351,54 @@ const MessagingSystem = () => {
               })}
               <div ref={messagesEndRef} />
             </div>
+            
+            {/* Typing Indicator */}
+            {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
           </ScrollArea>
 
           {/* Message Input */}
           <div className="p-4 border-t">
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm">
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Smile className="h-4 w-4" />
-              </Button>
-              <Input
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                className="flex-1"
-              />
-              <Button 
-                size="sm" 
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim()}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+            {showVoiceRecorder ? (
+              <div className="flex items-center justify-center py-4">
+                <VoiceRecorder
+                  onSend={handleVoiceNote}
+                  onCancel={() => setShowVoiceRecorder(false)}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="sm">
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <Smile className="h-4 w-4" />
+                </Button>
+                <Input
+                  placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value);
+                    handleTyping();
+                  }}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  className="flex-1"
+                />
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowVoiceRecorder(true)}
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       ) : (

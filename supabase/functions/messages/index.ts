@@ -428,6 +428,44 @@ serve(async (req) => {
       });
     }
 
+    // Handle mark message as read
+    if (action === 'mark_read') {
+      const { messageId } = body;
+
+      const { error } = await supabaseClient
+        .from('message_reads')
+        .insert({
+          message_id: messageId,
+          user_id: user.id
+        });
+
+      if (error && error.code !== '23505') throw error; // Ignore duplicate
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle typing indicator
+    if (action === 'typing') {
+      const { chatId, isTyping } = body;
+
+      const { error } = await supabaseClient
+        .from('typing_status')
+        .upsert({
+          chat_id: chatId,
+          user_id: user.id,
+          is_typing: isTyping,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

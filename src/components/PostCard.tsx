@@ -2,11 +2,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import PollCard from "./PollCard";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -171,6 +172,9 @@ export const PostCard = ({ post }: PostCardProps) => {
                 />
               </div>
             )}
+            
+            {/* Poll */}
+            <PollCard postId={post.id} />
           </div>
 
           <div className="flex items-center justify-between pt-3 border-t">

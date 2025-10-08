@@ -8,7 +8,8 @@ import {
   Smile, 
   MapPin, 
   Users,
-  X
+  X,
+  BarChart3
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +17,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { usePosts } from "@/hooks/usePosts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import CreatePollDialog from "./CreatePollDialog";
 
 const CreatePost = () => {
   const { user } = useAuth();
@@ -26,6 +28,8 @@ const CreatePost = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [createdPostId, setCreatedPostId] = useState<string | null>(null);
+  const [showPollDialog, setShowPollDialog] = useState(false);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -114,13 +118,17 @@ const CreatePost = () => {
         postData.media_type = selectedFile!.type.startsWith('image/') ? 'image' : 'video';
       }
 
-      await createPost(postData);
+      const newPostId = await createPost(postData);
+      setCreatedPostId(newPostId);
 
-      // Reset form
-      setPostContent("");
-      setSelectedImage(null);
-      setSelectedFile(null);
-      setIsExpanded(false);
+      // If poll dialog should be shown, keep expanded
+      if (!showPollDialog) {
+        // Reset form
+        setPostContent("");
+        setSelectedImage(null);
+        setSelectedFile(null);
+        setIsExpanded(false);
+      }
     } catch (error: any) {
       console.error('Post creation error:', error);
     } finally {
@@ -207,6 +215,16 @@ const CreatePost = () => {
                   <Users className="h-4 w-4 mr-2 text-accent" />
                   <span className="text-xs">Tag</span>
                 </Button>
+
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-9 px-3"
+                  onClick={() => setShowPollDialog(true)}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2 text-info" />
+                  <span className="text-xs">Poll</span>
+                </Button>
               </>
             )}
           </div>
@@ -220,6 +238,20 @@ const CreatePost = () => {
             {isPosting ? 'Posting...' : 'Post'}
           </Button>
         </div>
+
+        {showPollDialog && createdPostId && (
+          <CreatePollDialog 
+            postId={createdPostId}
+            onPollCreated={() => {
+              setShowPollDialog(false);
+              setPostContent("");
+              setSelectedImage(null);
+              setSelectedFile(null);
+              setIsExpanded(false);
+              setCreatedPostId(null);
+            }}
+          />
+        )}
       </div>
     </Card>
   );

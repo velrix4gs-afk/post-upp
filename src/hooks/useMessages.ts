@@ -331,6 +331,19 @@ export const useMessages = (chatId?: string) => {
     }
   };
 
+  const markMessageRead = async (messageId: string) => {
+    try {
+      await supabase.functions.invoke('messages', {
+        body: {
+          action: 'mark_read',
+          messageId
+        },
+      });
+    } catch (err: any) {
+      console.error('Error marking message as read:', err);
+    }
+  };
+
   const createChat = async (participantIds: string[], isGroup = false, name?: string) => {
     try {
       if (!user?.id) {
@@ -365,12 +378,13 @@ export const useMessages = (chatId?: string) => {
         }
       }
 
-      // Create new chat via Supabase client
+      // Create new chat via Supabase client with service role
       const { data: chat, error: chatError } = await supabase
         .from('chats')
         .insert({
           name: name || null,
-          type: isGroup ? 'group' : 'private'
+          type: isGroup ? 'group' : 'private',
+          created_by: user.id
         })
         .select()
         .single();
@@ -444,6 +458,7 @@ export const useMessages = (chatId?: string) => {
     starMessage,
     unstarMessage,
     forwardMessage,
+    markMessageRead,
     refetchChats: fetchChats,
     refetchMessages: fetchMessages
   };
