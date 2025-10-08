@@ -1,4 +1,4 @@
-import { Heart, MoreVertical, Bookmark, Edit, Trash2 } from 'lucide-react';
+import { Heart, MoreVertical, Bookmark, Edit, Trash2, MessageCircle, Share2 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -46,6 +46,8 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editedContent, setEditedContent] = useState(post.content || '');
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
   
   const hasLiked = post.reactions?.some(r => r.reaction_type === 'like') || false;
   const bookmarked = isBookmarked(post.id);
@@ -67,6 +69,39 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
     } catch (error) {
       console.error('Failed to delete post:', error);
     }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/post/${post.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Post by ${post.profiles.display_name}`,
+          text: post.content || 'Check out this post',
+          url: shareUrl,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link copied!',
+        description: 'Post link copied to clipboard',
+      });
+    }
+  };
+
+  const handleAddComment = () => {
+    if (!commentText.trim()) return;
+    
+    toast({
+      title: 'Comment feature',
+      description: 'Comments will be implemented soon!',
+    });
+    setCommentText('');
   };
 
   return (
@@ -144,12 +179,51 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
           <Button 
             variant="ghost" 
             size="sm" 
+            className="gap-2"
+            onClick={() => setShowComments(!showComments)}
+          >
+            <MessageCircle className="h-4 w-4" />
+            {post.comments_count}
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleShare}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
             className="gap-2 ml-auto"
             onClick={() => toggleBookmark(post.id)}
           >
             <Bookmark className={`h-4 w-4 ${bookmarked ? 'fill-current' : ''}`} />
           </Button>
         </div>
+
+        {/* Comments Section */}
+        {showComments && (
+          <div className="border-t pt-3 mt-3 space-y-3">
+            <div className="flex gap-2">
+              <Textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write a comment..."
+                className="min-h-[60px]"
+              />
+              <Button onClick={handleAddComment} size="sm">
+                Post
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Comments will be displayed here
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Edit Dialog */}
