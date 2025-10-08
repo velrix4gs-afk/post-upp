@@ -71,9 +71,18 @@ export const usePosts = () => {
     media_type?: string;
     privacy?: string;
   }) => {
-    if (!session?.access_token) return;
+    if (!session?.access_token) {
+      throw new Error('You must be logged in to create a post');
+    }
+
+    // Validate that at least content or media is provided
+    if (!postData.content && !postData.media_url) {
+      throw new Error('Post must have either content or media');
+    }
 
     try {
+      console.log('Creating post with data:', postData);
+      
       const response = await fetch(
         'https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts',
         {
@@ -86,12 +95,20 @@ export const usePosts = () => {
         }
       );
 
+      const responseText = await response.text();
+      console.log('Post creation response:', responseText);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          throw new Error(`Failed to create post: ${responseText}`);
+        }
         throw new Error(errorData.error || 'Failed to create post');
       }
 
-      const data = await response.json();
+      const data = JSON.parse(responseText);
 
       // Add new post to the beginning of the list
       setPosts(prevPosts => [data, ...prevPosts]);

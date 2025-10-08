@@ -13,7 +13,20 @@ serve(async (req) => {
   }
 
   try {
+    // Create client with service role for database operations
     const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+    
+    // Create anon client for auth verification
+    const supabaseAnonClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
@@ -24,8 +37,8 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    // Get user from JWT
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
+    // Get user from JWT using anon client
+    const { data: { user }, error: userError } = await supabaseAnonClient.auth.getUser(authHeader.replace('Bearer ', ''));
     if (userError || !user) {
       throw new Error('Invalid or expired token');
     }

@@ -81,7 +81,14 @@ const CreatePost = () => {
   };
 
   const handlePost = async () => {
-    if (!postContent.trim() && !selectedFile) return;
+    if (!postContent.trim() && !selectedFile) {
+      toast({
+        title: 'Error',
+        description: 'Please add some content or media to your post',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     setIsPosting(true);
     try {
@@ -94,16 +101,20 @@ const CreatePost = () => {
         }
       }
 
-      await createPost({
-        content: postContent.trim() || undefined,
-        media_url: mediaUrl || undefined,
-        media_type: selectedFile ? (selectedFile.type.startsWith('image/') ? 'image' : 'video') : undefined
-      });
+      const postData: any = {
+        privacy: 'public'
+      };
+      
+      if (postContent.trim()) {
+        postData.content = postContent.trim();
+      }
+      
+      if (mediaUrl) {
+        postData.media_url = mediaUrl;
+        postData.media_type = selectedFile!.type.startsWith('image/') ? 'image' : 'video';
+      }
 
-      toast({
-        title: 'Success',
-        description: 'Post created successfully!'
-      });
+      await createPost(postData);
 
       // Reset form
       setPostContent("");
@@ -112,11 +123,6 @@ const CreatePost = () => {
       setIsExpanded(false);
     } catch (error: any) {
       console.error('Post creation error:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create post',
-        variant: 'destructive'
-      });
     } finally {
       setIsPosting(false);
     }
