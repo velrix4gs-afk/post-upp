@@ -130,6 +130,96 @@ export const usePosts = () => {
     }
   };
 
+  const updatePost = async (postId: string, postData: {
+    content?: string;
+    privacy?: string;
+  }) => {
+    if (!session?.access_token) {
+      throw new Error('You must be logged in to update a post');
+    }
+
+    try {
+      const response = await fetch(
+        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts/${postId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(postData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update post');
+      }
+
+      const data = await response.json();
+
+      // Update local state
+      setPosts(prevPosts =>
+        prevPosts.map(post => (post.id === postId ? { ...post, ...data } : post))
+      );
+      
+      toast({
+        title: 'Success',
+        description: 'Post updated successfully!',
+      });
+
+      return data;
+    } catch (error: any) {
+      console.error('Error updating post:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update post',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const deletePost = async (postId: string) => {
+    if (!session?.access_token) {
+      throw new Error('You must be logged in to delete a post');
+    }
+
+    try {
+      const response = await fetch(
+        `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/posts/${postId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete post');
+      }
+
+      // Remove post from local state
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      
+      toast({
+        title: 'Success',
+        description: 'Post deleted successfully!',
+      });
+    } catch (error: any) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete post',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
   const toggleReaction = async (postId: string, reactionType: string) => {
     if (!session?.access_token) return;
 
@@ -240,6 +330,8 @@ export const usePosts = () => {
     loading,
     fetchPosts,
     createPost,
+    updatePost,
+    deletePost,
     toggleReaction,
   };
 };
