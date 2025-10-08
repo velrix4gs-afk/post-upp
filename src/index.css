@@ -19,9 +19,9 @@ All colors MUST be HSL.
     --popover-foreground: 224 15% 15%;
 
     /* Primary: Modern blue like Facebook but refined */
-    --primary: 217 92% 62%;
+    --primary: 217 92% 52%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 92% 58%;
+    --primary-hover: 217 92% 48%;
 
     /* Secondary: Clean gray for subtle elements */
     --secondary: 220 14% 96%;
@@ -29,7 +29,7 @@ All colors MUST be HSL.
 
     /* Muted: Light backgrounds */
     --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 50%;
+    --muted-foreground: 220 10% 43%;
 
     /* Accent: Purple gradient accent */
     --accent: 262 83% 70%;
