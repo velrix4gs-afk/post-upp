@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation';
 import CreatePost from '@/components/CreatePost';
 import { PostCard } from '@/components/PostCard';
 import Stories from '@/components/Stories';
+import TrendingFeed from '@/components/TrendingFeed';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Users, Hash, UserCheck, Compass } from 'lucide-react';
@@ -120,7 +121,9 @@ const Feed = () => {
               </div>
             </Card>
 
-            {loading ? (
+            {activeTab === 'trending' ? (
+              <TrendingFeed />
+            ) : loading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
                   <Card key={i} className="p-4">

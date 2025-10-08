@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { 
   Image, 
   Video, 
@@ -9,20 +12,27 @@ import {
   MapPin, 
   Users,
   X,
-  BarChart3
+  BarChart3,
+  Save,
+  Clock
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { usePosts } from "@/hooks/usePosts";
+import { useDrafts } from "@/hooks/useDrafts";
+import { useHashtags } from "@/hooks/useHashtags";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import CreatePollDialog from "./CreatePollDialog";
+import DraftsDialog from "./DraftsDialog";
 
 const CreatePost = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { createPost } = usePosts();
+  const { saveDraft } = useDrafts();
+  const { processHashtags } = useHashtags();
   const [postContent, setPostContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -30,6 +40,7 @@ const CreatePost = () => {
   const [isPosting, setIsPosting] = useState(false);
   const [createdPostId, setCreatedPostId] = useState<string | null>(null);
   const [showPollDialog, setShowPollDialog] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date>();
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -121,6 +132,11 @@ const CreatePost = () => {
       const newPostId = await createPost(postData);
       setCreatedPostId(newPostId);
 
+      // Process hashtags
+      if (postContent.trim()) {
+        await processHashtags(newPostId, postContent);
+      }
+
       // If poll dialog should be shown, keep expanded
       if (!showPollDialog) {
         // Reset form
@@ -128,12 +144,45 @@ const CreatePost = () => {
         setSelectedImage(null);
         setSelectedFile(null);
         setIsExpanded(false);
+        setScheduledDate(undefined);
       }
     } catch (error: any) {
       console.error('Post creation error:', error);
     } finally {
       setIsPosting(false);
     }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!postContent.trim() && !selectedFile) return;
+    
+    let mediaUrl = null;
+    if (selectedFile) {
+      mediaUrl = await uploadPostMedia(selectedFile);
+    }
+
+    await saveDraft({
+      content: postContent.trim(),
+      media_url: mediaUrl,
+      media_type: selectedFile?.type.startsWith('image/') ? 'image' : 'video',
+      scheduled_for: scheduledDate?.toISOString()
+    });
+
+    // Reset form
+    setPostContent("");
+    setSelectedImage(null);
+    setSelectedFile(null);
+    setIsExpanded(false);
+    setScheduledDate(undefined);
+  };
+
+  const handleLoadDraft = (draft: any) => {
+    setPostContent(draft.content || '');
+    setSelectedImage(draft.media_url);
+    if (draft.scheduled_for) {
+      setScheduledDate(new Date(draft.scheduled_for));
+    }
+    setIsExpanded(true);
   };
 
   return (
@@ -179,8 +228,8 @@ const CreatePost = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center space-x-2 flex-wrap">
             <div className="relative">
               <input
                 type="file"
@@ -225,18 +274,51 @@ const CreatePost = () => {
                   <BarChart3 className="h-4 w-4 mr-2 text-info" />
                   <span className="text-xs">Poll</span>
                 </Button>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-9 px-3">
+                      <Clock className="h-4 w-4 mr-2 text-primary" />
+                      <span className="text-xs">Schedule</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={scheduledDate}
+                      onSelect={setScheduledDate}
+                      disabled={(date) => date < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
               </>
             )}
           </div>
 
-          <Button 
-            size="sm" 
-            className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-            disabled={(!postContent.trim() && !selectedImage) || isPosting}
-            onClick={handlePost}
-          >
-            {isPosting ? 'Posting...' : 'Post'}
-          </Button>
+          <div className="flex gap-2">
+            {isExpanded && (
+              <>
+                <DraftsDialog onSelectDraft={handleLoadDraft} />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleSaveDraft}
+                  disabled={!postContent.trim() && !selectedImage}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Draft
+                </Button>
+              </>
+            )}
+            <Button 
+              size="sm" 
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+              disabled={(!postContent.trim() && !selectedImage) || isPosting}
+              onClick={handlePost}
+            >
+              {isPosting ? 'Posting...' : scheduledDate ? 'Schedule' : 'Post'}
+            </Button>
+          </div>
         </div>
 
         {showPollDialog && createdPostId && (

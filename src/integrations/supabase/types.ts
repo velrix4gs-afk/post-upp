@@ -49,6 +49,13 @@ export type Database = {
             referencedColumns: ["post_id"]
           },
           {
+            foreignKeyName: "bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookmarks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -547,6 +554,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hashtags: {
+        Row: {
+          created_at: string | null
+          id: string
+          tag: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tag: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tag?: string
+          usage_count?: number | null
+        }
+        Relationships: []
       }
       likes: {
         Row: {
@@ -1096,6 +1124,13 @@ export type Database = {
             referencedRelation: "posts_view"
             referencedColumns: ["post_id"]
           },
+          {
+            foreignKeyName: "polls_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       post_comments: {
@@ -1139,6 +1174,13 @@ export type Database = {
             referencedColumns: ["post_id"]
           },
           {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "post_comments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1150,6 +1192,92 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_drafts: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          privacy: string | null
+          scheduled_for: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          privacy?: string | null
+          scheduled_for?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          privacy?: string | null
+          scheduled_for?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      post_hashtags: {
+        Row: {
+          created_at: string | null
+          hashtag_id: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          hashtag_id: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string | null
+          hashtag_id?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_hashtags_hashtag_id_fkey"
+            columns: ["hashtag_id"]
+            isOneToOne: false
+            referencedRelation: "hashtags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_hashtags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_hashtags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts_view"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "post_hashtags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -1192,6 +1320,13 @@ export type Database = {
             referencedColumns: ["post_id"]
           },
           {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "post_reactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1213,10 +1348,12 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
+          is_published: boolean | null
           media_type: string | null
           media_url: string | null
           privacy: string | null
           reactions_count: number | null
+          scheduled_for: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1225,10 +1362,12 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          is_published?: boolean | null
           media_type?: string | null
           media_url?: string | null
           privacy?: string | null
           reactions_count?: number | null
+          scheduled_for?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1237,10 +1376,12 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          is_published?: boolean | null
           media_type?: string | null
           media_url?: string | null
           privacy?: string | null
           reactions_count?: number | null
+          scheduled_for?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -2242,6 +2383,69 @@ export type Database = {
           },
         ]
       }
+      trending_posts: {
+        Row: {
+          comments_count: number | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          is_published: boolean | null
+          media_type: string | null
+          media_url: string | null
+          privacy: string | null
+          reactions_count: number | null
+          scheduled_for: string | null
+          trending_score: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          media_type?: string | null
+          media_url?: string | null
+          privacy?: string | null
+          reactions_count?: number | null
+          scheduled_for?: string | null
+          trending_score?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          media_type?: string | null
+          media_url?: string | null
+          privacy?: string | null
+          reactions_count?: number | null
+          scheduled_for?: string | null
+          trending_score?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_status_view: {
         Row: {
           avatar_url: string | null
@@ -2255,6 +2459,10 @@ export type Database = {
       }
     }
     Functions: {
+      extract_hashtags: {
+        Args: { post_content: string }
+        Returns: string[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
