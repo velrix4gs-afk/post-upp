@@ -20,6 +20,7 @@ import { useMessages } from '@/hooks/useMessages';
 import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/hooks/useAuth';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { usePresence } from '@/hooks/usePresence';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
 import TypingIndicator from './TypingIndicator';
 import VoiceRecorder from './VoiceRecorder';
@@ -45,6 +46,12 @@ const MessagingSystem = () => {
   } = useMessages(selectedChatId || undefined);
 
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
+  const { onlineUsers, isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
+
+  // Update viewing chat when selected chat changes
+  useEffect(() => {
+    updateViewingChat(selectedChatId || undefined);
+  }, [selectedChatId]);
 
   // Mark messages as read when chat is selected
   useEffect(() => {
@@ -272,8 +279,11 @@ const MessagingSystem = () => {
                        getOtherParticipants(selectedChat).map(p => p.profiles.display_name).join(', ')}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {getOtherParticipants(selectedChat).length === 1 ? 'Active now' : 
-                       `${selectedChat.participants.length} members`}
+                      {getOtherParticipants(selectedChat).length === 1 ? (
+                        isUserOnline(getOtherParticipants(selectedChat)[0].user_id) 
+                          ? 'Online' 
+                          : 'Offline'
+                      ) : `${selectedChat.participants.length} members`}
                     </p>
                   </div>
                 </>
@@ -337,6 +347,16 @@ const MessagingSystem = () => {
                         )}
                         {message.is_edited && (
                           <p className="text-xs opacity-70 mt-1">edited</p>
+                        )}
+                        {isOwn && message.status && (
+                          <div className="flex justify-end mt-1">
+                            {message.status === 'sending' && (
+                              <span className="text-xs opacity-70">Sending...</span>
+                            )}
+                            {message.status === 'failed' && (
+                              <span className="text-xs text-red-500">Failed to send</span>
+                            )}
+                          </div>
                         )}
                       </div>
                       

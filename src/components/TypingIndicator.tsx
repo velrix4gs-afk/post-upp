@@ -6,6 +6,12 @@ interface TypingIndicatorProps {
   chatId: string;
 }
 
+interface TypingEvent {
+  user_id: string;
+  display_name: string;
+  is_typing: boolean;
+}
+
 const TypingIndicator = ({ chatId }: TypingIndicatorProps) => {
   const { user } = useAuth();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -13,38 +19,17 @@ const TypingIndicator = ({ chatId }: TypingIndicatorProps) => {
   useEffect(() => {
     if (!chatId || !user) return;
 
-    // Subscribe to typing status changes
+    // Subscribe to typing broadcast events
     const channel = supabase
       .channel(`typing:${chatId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'typing_status',
-        filter: `chat_id=eq.${chatId}`
-      }, async (payload: any) => {
-        if (payload.new && payload.new.user_id !== user.id) {
-          if (payload.new.is_typing) {
-            // Fetch user profile
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('display_name')
-              .eq('id', payload.new.user_id)
-              .single();
-
-            if (profile) {
-              setTypingUsers(prev => [...new Set([...prev, profile.display_name])]);
-            }
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        const event = payload.payload as TypingEvent;
+        
+        if (event.user_id !== user.id) {
+          if (event.is_typing) {
+            setTypingUsers(prev => [...new Set([...prev, event.display_name])]);
           } else {
-            // Fetch user profile to remove
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('display_name')
-              .eq('id', payload.new.user_id)
-              .single();
-
-            if (profile) {
-              setTypingUsers(prev => prev.filter(name => name !== profile.display_name));
-            }
+            setTypingUsers(prev => prev.filter(name => name !== event.display_name));
           }
         }
       })

@@ -44,7 +44,7 @@ interface EnhancedMessageBubbleProps {
   isEdited?: boolean;
   isForwarded?: boolean;
   isStarred?: boolean;
-  status?: 'sent' | 'delivered' | 'read';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   reactions?: MessageReaction[];
   onEdit?: (id: string, content: string) => void;
   onDelete?: (id: string, deleteFor: 'me' | 'everyone') => void;
@@ -165,6 +165,17 @@ export const EnhancedMessageBubble = ({
                 {/* Message status for own messages */}
                 {isOwn && (
                   <div className="flex justify-end items-center gap-1 mt-1">
+                    {status === 'sending' && (
+                      <div className="flex items-center gap-1 text-xs opacity-70">
+                        <div className="h-2 w-2 rounded-full bg-current animate-pulse" />
+                        Sending...
+                      </div>
+                    )}
+                    {status === 'failed' && (
+                      <div className="flex items-center gap-1 text-xs text-destructive">
+                        <span>Failed</span>
+                      </div>
+                    )}
                     {status === 'read' && <CheckCheck className="h-3 w-3 text-blue-500" />}
                     {status === 'delivered' && <CheckCheck className="h-3 w-3" />}
                     {status === 'sent' && <CheckCheck className="h-3 w-3 opacity-50" />}

@@ -1,37 +1,51 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export const useTypingIndicator = (chatId: string | undefined) => {
   const { user } = useAuth();
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
-  const setTyping = async (isTyping: boolean) => {
+  useEffect(() => {
     if (!chatId || !user) return;
 
-    try {
-      if (isTyping) {
-        // Upsert typing status
-        await supabase
-          .from('typing_status')
-          .upsert({
-            chat_id: chatId,
-            user_id: user.id,
-            is_typing: true,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'chat_id,user_id'
-          });
-      } else {
-        // Remove typing status
-        await supabase
-          .from('typing_status')
-          .update({ is_typing: false })
-          .eq('chat_id', chatId)
-          .eq('user_id', user.id);
+    const channel = supabase.channel(`typing:${chatId}`);
+    channel.subscribe();
+    channelRef.current = channel;
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
       }
+      broadcastTyping(false);
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [chatId, user]);
+
+  const broadcastTyping = async (isTyping: boolean) => {
+    if (!channelRef.current || !user) return;
+
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+
+      await channelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          user_id: user.id,
+          display_name: profile?.display_name || 'User',
+          is_typing: isTyping,
+        },
+      });
     } catch (error) {
-      console.error('Error updating typing status:', error);
+      console.error('Error broadcasting typing status:', error);
     }
   };
 
@@ -40,21 +54,12 @@ export const useTypingIndicator = (chatId: string | undefined) => {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    setTyping(true);
+    broadcastTyping(true);
 
     typingTimeoutRef.current = setTimeout(() => {
-      setTyping(false);
+      broadcastTyping(false);
     }, 3000);
   };
 
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      setTyping(false);
-    };
-  }, [chatId]);
-
-  return { handleTyping, setTyping };
+  return { handleTyping };
 };

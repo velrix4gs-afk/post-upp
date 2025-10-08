@@ -14,6 +14,8 @@ export interface Message {
   is_edited: boolean;
   created_at: string;
   updated_at: string;
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+  is_optimistic?: boolean;
   sender: {
     username: string;
     display_name: string;
@@ -125,7 +127,34 @@ export const useMessages = (chatId?: string) => {
   };
 
   const sendMessage = async (content: string, replyTo?: string, mediaUrl?: string, mediaType?: string) => {
-    if (!chatId || (!content.trim() && !mediaUrl)) return;
+    if (!chatId || (!content.trim() && !mediaUrl) || !user) return;
+
+    // Generate temporary ID for optimistic update
+    const tempId = `temp-${crypto.randomUUID()}`;
+    
+    // Create optimistic message
+    const optimisticMessage: Message = {
+      id: tempId,
+      chat_id: chatId,
+      sender_id: user.id,
+      content: content.trim() || undefined,
+      media_url: mediaUrl,
+      media_type: mediaType,
+      reply_to: replyTo,
+      is_edited: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'sending',
+      is_optimistic: true,
+      sender: {
+        username: user.user_metadata?.username || 'user',
+        display_name: user.user_metadata?.display_name || 'User',
+        avatar_url: user.user_metadata?.avatar_url,
+      },
+    };
+
+    // Add optimistic message immediately
+    setMessages(prev => [...prev, optimisticMessage]);
 
     try {
       const { data, error } = await supabase.functions.invoke('messages', {
@@ -140,9 +169,23 @@ export const useMessages = (chatId?: string) => {
       });
 
       if (error) throw error;
-      // Message will be added via real-time subscription
+      
+      // Replace optimistic message with real message
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempId 
+          ? { ...data, status: 'sent' as const }
+          : msg
+      ));
     } catch (err: any) {
       console.error('Send message error:', err);
+      
+      // Mark message as failed
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempId 
+          ? { ...msg, status: 'failed' as const }
+          : msg
+      ));
+      
       toast({
         title: 'Error',
         description: err.message || 'Failed to send message',
