@@ -271,13 +271,155 @@ serve(async (req) => {
 
     // Handle delete message action
     if (action === 'delete') {
+      const { messageId, deleteFor } = body; // deleteFor: 'me' | 'everyone'
+
+      if (deleteFor === 'everyone') {
+        // Delete for everyone - actually delete the message
+        const { error } = await supabaseClient
+          .from('messages')
+          .delete()
+          .eq('id', messageId)
+          .eq('sender_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Delete for me - add user to deleted_for array
+        const { data: message, error: fetchError } = await supabaseClient
+          .from('messages')
+          .select('deleted_for')
+          .eq('id', messageId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        const deletedFor = message.deleted_for || [];
+        if (!deletedFor.includes(user.id)) {
+          deletedFor.push(user.id);
+        }
+
+        const { error } = await supabaseClient
+          .from('messages')
+          .update({ deleted_for: deletedFor })
+          .eq('id', messageId);
+
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle react to message
+    if (action === 'react') {
+      const { messageId, reactionType } = body;
+
+      // Check if reaction already exists
+      const { data: existing } = await supabaseClient
+        .from('message_reactions')
+        .select('id')
+        .eq('message_id', messageId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing) {
+        // Update existing reaction
+        const { error } = await supabaseClient
+          .from('message_reactions')
+          .update({ reaction_type: reactionType })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        // Create new reaction
+        const { error } = await supabaseClient
+          .from('message_reactions')
+          .insert({
+            message_id: messageId,
+            user_id: user.id,
+            reaction_type: reactionType
+          });
+
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle remove reaction
+    if (action === 'unreact') {
       const { messageId } = body;
 
       const { error } = await supabaseClient
-        .from('messages')
+        .from('message_reactions')
         .delete()
+        .eq('message_id', messageId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle star/unstar message
+    if (action === 'star' || action === 'unstar') {
+      const { messageId } = body;
+
+      if (action === 'star') {
+        const { error } = await supabaseClient
+          .from('starred_messages')
+          .insert({
+            user_id: user.id,
+            message_id: messageId
+          });
+
+        if (error && error.code !== '23505') throw error; // Ignore duplicate key error
+      } else {
+        const { error } = await supabaseClient
+          .from('starred_messages')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('message_id', messageId);
+
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle forward message
+    if (action === 'forward') {
+      const { messageId, toChatIds } = body;
+
+      // Get original message
+      const { data: originalMessage, error: fetchError } = await supabaseClient
+        .from('messages')
+        .select('content, media_url, media_type')
         .eq('id', messageId)
-        .eq('sender_id', user.id); // Ensure user owns the message
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Create forwarded messages for each chat
+      const forwardedMessages = toChatIds.map((chatId: string) => ({
+        chat_id: chatId,
+        sender_id: user.id,
+        content: originalMessage.content,
+        media_url: originalMessage.media_url,
+        media_type: originalMessage.media_type,
+        is_forwarded: true,
+        forwarded_from_message_id: messageId
+      }));
+
+      const { error } = await supabaseClient
+        .from('messages')
+        .insert(forwardedMessages);
 
       if (error) throw error;
 

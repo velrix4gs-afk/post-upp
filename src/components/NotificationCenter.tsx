@@ -82,9 +82,8 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
                 )}
                 <Button 
                   variant="ghost" 
-                  size="sm" 
+                  size="icon"
                   onClick={onClose}
-                  className="md:hidden"
                 >
                   <X className="h-4 w-4" />
                 </Button>

@@ -792,7 +792,10 @@ export type Database = {
           chat_id: string | null
           content: string
           created_at: string | null
+          deleted_for: string[] | null
+          forwarded_from_message_id: string | null
           id: string
+          is_forwarded: boolean | null
           media_url: string | null
           receiver_id: string | null
           sender_id: string | null
@@ -802,7 +805,10 @@ export type Database = {
           chat_id?: string | null
           content: string
           created_at?: string | null
+          deleted_for?: string[] | null
+          forwarded_from_message_id?: string | null
           id?: string
+          is_forwarded?: boolean | null
           media_url?: string | null
           receiver_id?: string | null
           sender_id?: string | null
@@ -812,7 +818,10 @@ export type Database = {
           chat_id?: string | null
           content?: string
           created_at?: string | null
+          deleted_for?: string[] | null
+          forwarded_from_message_id?: string | null
           id?: string
+          is_forwarded?: boolean | null
           media_url?: string | null
           receiver_id?: string | null
           sender_id?: string | null
@@ -846,6 +855,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "conversations_view"
             referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "messages_forwarded_from_message_id_fkey"
+            columns: ["forwarded_from_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "messages_forwarded_from_message_id_fkey"
+            columns: ["forwarded_from_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_forwarded_from_message_id_fkey"
+            columns: ["forwarded_from_message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_forwarded_from_message_id_fkey"
+            columns: ["forwarded_from_message_id"]
+            isOneToOne: false
+            referencedRelation: "message_with_users"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_forwarded_from_message_id_fkey"
+            columns: ["forwarded_from_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_forwarded_from_message_id_fkey"
+            columns: ["forwarded_from_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
           },
           {
             foreignKeyName: "messages_receiver_id_fkey"
@@ -1208,6 +1259,84 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_view"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      starred_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "starred_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "starred_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "starred_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "starred_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_with_users"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "starred_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "starred_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "starred_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "message_with_users"
+            referencedColumns: ["receiver_id"]
+          },
+          {
+            foreignKeyName: "starred_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "message_with_users"
+            referencedColumns: ["sender_id"]
           },
         ]
       }

@@ -182,18 +182,24 @@ export const useMessages = (chatId?: string) => {
     }
   };
 
-  const deleteMessage = async (messageId: string) => {
+  const deleteMessage = async (messageId: string, deleteFor: 'me' | 'everyone' = 'me') => {
     try {
       const { data, error } = await supabase.functions.invoke('messages', {
         body: {
           action: 'delete',
-          messageId
+          messageId,
+          deleteFor
         },
       });
 
       if (error) throw error;
       
-      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      if (deleteFor === 'everyone') {
+        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      } else {
+        // For "delete for me", just remove from local state
+        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      }
 
       toast({
         title: 'Success',
@@ -203,6 +209,123 @@ export const useMessages = (chatId?: string) => {
       toast({
         title: 'Error',
         description: 'Failed to delete message',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const reactToMessage = async (messageId: string, reactionType: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'react',
+          messageId,
+          reactionType
+        },
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Success',
+        description: 'Reaction added'
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add reaction',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const unreactToMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'unreact',
+          messageId
+        },
+      });
+
+      if (error) throw error;
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to remove reaction',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const starMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'star',
+          messageId
+        },
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Success',
+        description: 'Message starred'
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to star message',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const unstarMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'unstar',
+          messageId
+        },
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Success',
+        description: 'Message unstarred'
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to unstar message',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const forwardMessage = async (messageId: string, toChatIds: string[]) => {
+    try {
+      const { error } = await supabase.functions.invoke('messages', {
+        body: {
+          action: 'forward',
+          messageId,
+          toChatIds
+        },
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Success',
+        description: `Message forwarded to ${toChatIds.length} chat(s)`
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to forward message',
         variant: 'destructive'
       });
     }
@@ -316,6 +439,11 @@ export const useMessages = (chatId?: string) => {
     editMessage,
     deleteMessage,
     createChat,
+    reactToMessage,
+    unreactToMessage,
+    starMessage,
+    unstarMessage,
+    forwardMessage,
     refetchChats: fetchChats,
     refetchMessages: fetchMessages
   };
