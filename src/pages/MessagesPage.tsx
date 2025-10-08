@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { TestChatButton } from '@/components/TestChatButton';
 
 const MessagesPage = () => {
   const { user } = useAuth();
@@ -235,10 +234,6 @@ const MessagesPage = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-lg md:text-xl font-bold">Messages</h2>
                 <div className="flex gap-2">
-                  <TestChatButton onChatCreated={(chatId) => {
-                    setSelectedChatId(chatId);
-                    refetchChats();
-                  }} />
                   <Button 
                     size="sm" 
                     variant="ghost"
