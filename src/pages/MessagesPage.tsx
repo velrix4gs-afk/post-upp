@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { TestChatButton } from '@/components/TestChatButton';
 
 const MessagesPage = () => {
   const { user } = useAuth();
@@ -206,12 +207,21 @@ const MessagesPage = () => {
   };
 
   const selectedChat = chats.find(c => c.id === selectedChatId);
+  
+  // Filter chats by name or participant
   const filteredChats = chats.filter(chat => 
     chat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     chat.participants.some(p => 
       p.profiles.display_name.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
+
+  // Filter messages by content when in a chat
+  const filteredMessages = selectedChatId && searchQuery.trim() 
+    ? messages.filter(msg => 
+        msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : messages;
 
   return (
     <div className="min-h-screen bg-background">
@@ -224,18 +234,24 @@ const MessagesPage = () => {
             <div className="p-3 md:p-4 border-b space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg md:text-xl font-bold">Messages</h2>
-                <Button 
-                  size="sm" 
-                  variant="ghost"
-                  onClick={() => setShowNewChatDialog(true)}
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
+                <div className="flex gap-2">
+                  <TestChatButton onChatCreated={(chatId) => {
+                    setSelectedChatId(chatId);
+                    refetchChats();
+                  }} />
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => setShowNewChatDialog(true)}
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search messages..."
+                  placeholder={selectedChatId ? "Search in conversation..." : "Search messages..."}
                   className="pl-9"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -351,31 +367,39 @@ const MessagesPage = () => {
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4 bg-muted/20">
                   <div className="space-y-1">
-                    {messages.map((message) => {
-                      const isOwn = message.sender_id === user?.id;
-                      const senderProfile = selectedChat.participants.find(p => p.user_id === message.sender_id)?.profiles;
-                      
-                      return (
-                        <MessageBubble
-                          key={message.id}
-                          id={message.id}
-                          content={message.content || ''}
-                          sender={{
-                            username: senderProfile?.username || '',
-                            display_name: senderProfile?.display_name || 'Unknown',
-                            avatar_url: senderProfile?.avatar_url
-                          }}
-                          timestamp={message.created_at}
-                          isOwn={isOwn}
-                          mediaUrl={message.media_url}
-                          mediaType={message.media_type}
-                          isEdited={message.is_edited}
-                          onEdit={isOwn ? handleEditMessage : undefined}
-                          onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
-                          onReply={() => setReplyingTo(message)}
-                        />
-                      );
-                    })}
+                    {searchQuery.trim() && filteredMessages.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p className="font-medium mb-2">No messages found</p>
+                        <p className="text-sm">Try a different search term</p>
+                      </div>
+                    ) : (
+                      filteredMessages.map((message) => {
+                        const isOwn = message.sender_id === user?.id;
+                        const senderProfile = selectedChat.participants.find(p => p.user_id === message.sender_id)?.profiles;
+                        
+                        return (
+                          <MessageBubble
+                            key={message.id}
+                            id={message.id}
+                            content={message.content || ''}
+                            sender={{
+                              username: senderProfile?.username || '',
+                              display_name: senderProfile?.display_name || 'Unknown',
+                              avatar_url: senderProfile?.avatar_url
+                            }}
+                            timestamp={message.created_at}
+                            isOwn={isOwn}
+                            mediaUrl={message.media_url}
+                            mediaType={message.media_type}
+                            isEdited={message.is_edited}
+                            onEdit={isOwn ? handleEditMessage : undefined}
+                            onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
+                            onReply={() => setReplyingTo(message)}
+                          />
+                        );
+                      })
+                    )}
                     <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
