@@ -183,17 +183,46 @@ serve(async (req) => {
 
     if (method === 'DELETE') {
       const postId = url.pathname.split('/').pop();
+      console.log('Deleting post:', postId, 'for user:', user.id);
 
+      if (!postId) {
+        throw new Error('Post ID is required');
+      }
+
+      // First check if post exists and belongs to user
+      const { data: existingPost, error: checkError } = await supabaseClient
+        .from('posts')
+        .select('id, user_id')
+        .eq('id', postId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (checkError) {
+        console.error('Error checking post:', checkError);
+        throw new Error('Post not found or you do not have permission to delete it');
+      }
+
+      if (!existingPost) {
+        throw new Error('Post not found or you do not have permission to delete it');
+      }
+
+      // Delete the post
       const { error } = await supabaseClient
         .from('posts')
         .delete()
         .eq('id', postId)
-        .eq('user_id', user.id); // Ensure user owns the post
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting post:', error);
+        throw error;
+      }
 
-      return new Response(JSON.stringify({ success: true }), {
+      console.log('Post deleted successfully:', postId);
+
+      return new Response(JSON.stringify({ success: true, message: 'Post deleted successfully' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       });
     }
 
