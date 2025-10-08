@@ -241,15 +241,17 @@ export const usePosts = () => {
       setPosts(prevPosts =>
         prevPosts.map(post => {
           if (post.id === postId) {
-            const userReaction = post.reactions?.find(r => r.user_id === session.user?.id);
+            const hasUserReaction = post.reactions?.some(r => r.user_id === session.user?.id);
             
             if (data.action === 'removed') {
+              // User unliked - decrease count by 1
               return {
                 ...post,
                 reactions_count: Math.max(0, post.reactions_count - 1),
                 reactions: post.reactions?.filter(r => r.user_id !== session.user?.id) || []
               };
             } else if (data.action === 'created') {
+              // User liked for the first time - increase count by 1
               return {
                 ...post,
                 reactions_count: post.reactions_count + 1,
@@ -263,6 +265,7 @@ export const usePosts = () => {
                 ]
               };
             } else if (data.action === 'updated') {
+              // User changed reaction type - count stays the same
               return {
                 ...post,
                 reactions: post.reactions?.map(r =>
