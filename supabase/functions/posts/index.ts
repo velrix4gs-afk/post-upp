@@ -92,7 +92,7 @@ serve(async (req) => {
           return {
             ...post,
             reactions: reactions || [],
-            likes_count: reactions?.filter(r => r.reaction_type === 'like').length || 0,
+            reactions_count: reactions?.length || 0,
             comments_count: post.comments_count || 0,
             shares_count: 0
           };
