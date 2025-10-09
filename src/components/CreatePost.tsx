@@ -229,7 +229,7 @@ const CreatePost = () => {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center space-x-2 flex-wrap">
+          <div className="flex items-center flex-wrap gap-1 md:gap-2">
             <div className="relative">
               <input
                 type="file"
@@ -239,47 +239,47 @@ const CreatePost = () => {
                 id="image-upload"
               />
               <label htmlFor="image-upload">
-                <Button variant="ghost" size="sm" className="h-9 px-3 cursor-pointer" asChild>
+                <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 cursor-pointer text-xs" asChild>
                   <span>
-                    <Image className="h-4 w-4 mr-2 text-success" />
-                    <span className="text-xs">Photo/Video</span>
+                    <Image className="h-4 w-4 md:mr-2 text-success" />
+                    <span className="hidden md:inline text-xs">Photo/Video</span>
                   </span>
                 </Button>
               </label>
             </div>
 
-            <Button variant="ghost" size="sm" className="h-9 px-3">
-              <Smile className="h-4 w-4 mr-2 text-warning" />
-              <span className="text-xs">Feeling</span>
+            <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-xs">
+              <Smile className="h-4 w-4 md:mr-2 text-warning" />
+              <span className="hidden md:inline text-xs">Feeling</span>
             </Button>
 
             {isExpanded && (
               <>
-                <Button variant="ghost" size="sm" className="h-9 px-3">
-                  <MapPin className="h-4 w-4 mr-2 text-primary" />
-                  <span className="text-xs">Location</span>
+                <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-xs hidden sm:flex">
+                  <MapPin className="h-4 w-4 md:mr-2 text-primary" />
+                  <span className="hidden md:inline text-xs">Location</span>
                 </Button>
 
-                <Button variant="ghost" size="sm" className="h-9 px-3">
-                  <Users className="h-4 w-4 mr-2 text-accent" />
-                  <span className="text-xs">Tag</span>
+                <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-xs hidden sm:flex">
+                  <Users className="h-4 w-4 md:mr-2 text-accent" />
+                  <span className="hidden md:inline text-xs">Tag</span>
                 </Button>
 
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-9 px-3"
+                  className="h-8 md:h-9 px-2 md:px-3 text-xs hidden sm:flex"
                   onClick={() => setShowPollDialog(true)}
                 >
-                  <BarChart3 className="h-4 w-4 mr-2 text-info" />
-                  <span className="text-xs">Poll</span>
+                  <BarChart3 className="h-4 w-4 md:mr-2 text-info" />
+                  <span className="hidden md:inline text-xs">Poll</span>
                 </Button>
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-9 px-3">
-                      <Clock className="h-4 w-4 mr-2 text-primary" />
-                      <span className="text-xs">Schedule</span>
+                    <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-xs hidden sm:flex">
+                      <Clock className="h-4 w-4 md:mr-2 text-primary" />
+                      <span className="hidden md:inline text-xs">Schedule</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -302,6 +302,7 @@ const CreatePost = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
+                  className="hidden md:flex"
                   onClick={handleSaveDraft}
                   disabled={!postContent.trim() && !selectedImage}
                 >
@@ -312,7 +313,7 @@ const CreatePost = () => {
             )}
             <Button 
               size="sm" 
-              className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300 text-xs md:text-sm"
               disabled={(!postContent.trim() && !selectedImage) || isPosting}
               onClick={handlePost}
             >

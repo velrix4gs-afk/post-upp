@@ -179,11 +179,11 @@ export const PostCard = ({ post }: PostCardProps) => {
       </Dialog>
 
       <Card className="overflow-hidden">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+        <div className="p-3 md:p-4">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="flex items-center gap-2 md:gap-3">
               <Avatar 
-                className="cursor-pointer hover:opacity-80 transition-opacity"
+                className="cursor-pointer hover:opacity-80 transition-opacity h-9 w-9 md:h-10 md:w-10"
                 onClick={() => navigate(`/profile/${post.author_id}`)}
               >
                 <AvatarImage src={post.author_avatar} />
@@ -192,11 +192,11 @@ export const PostCard = ({ post }: PostCardProps) => {
               <div>
                 <button
                   onClick={() => navigate(`/profile/${post.author_id}`)}
-                  className="font-semibold hover:underline text-left"
+                  className="font-semibold hover:underline text-left text-sm md:text-base"
                 >
                   {post.author_name}
                 </button>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs md:text-sm text-muted-foreground">
                   {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                 </p>
               </div>
@@ -204,7 +204,7 @@ export const PostCard = ({ post }: PostCardProps) => {
             {isOwner && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -225,8 +225,8 @@ export const PostCard = ({ post }: PostCardProps) => {
             )}
           </div>
 
-          <div className="mb-4">
-            <p className="text-base mb-3 whitespace-pre-wrap">{post.content}</p>
+          <div className="mb-3 md:mb-4">
+            <p className="text-sm md:text-base mb-3 whitespace-pre-wrap">{post.content}</p>
             {post.media_url && (
               <div className="rounded-lg overflow-hidden">
                 <img 
@@ -242,33 +242,34 @@ export const PostCard = ({ post }: PostCardProps) => {
           </div>
 
           <div className="flex items-center justify-between pt-3 border-t">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className={`gap-2 ${isLiked ? 'text-red-500' : ''}`}
+                className={`gap-1 md:gap-2 h-8 md:h-9 px-2 md:px-3 ${isLiked ? 'text-red-500' : ''}`}
                 onClick={handleLike}
                 onMouseEnter={() => setShowReactions(true)}
                 onMouseLeave={() => setShowReactions(false)}
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                <span>{localReactionCount}</span>
+                <span className="text-xs md:text-sm">{localReactionCount}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-1 md:gap-2 h-8 md:h-9 px-2 md:px-3">
                 <MessageCircle className="h-4 w-4" />
-                <span>{post.comments_count}</span>
+                <span className="text-xs md:text-sm">{post.comments_count}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-2" onClick={() => handleShare()}>
+              <Button variant="ghost" size="sm" className="gap-1 md:gap-2 h-8 md:h-9 px-2 md:px-3" onClick={() => handleShare()}>
                 <Share className="h-4 w-4" />
-                <span>{post.shares_count || 0}</span>
+                <span className="text-xs md:text-sm">{post.shares_count || 0}</span>
               </Button>
             </div>
 
             <Button 
               variant="ghost" 
               size="sm"
+              className="h-8 md:h-9 px-2 md:px-3"
               onClick={() => setIsSaved(!isSaved)}
             >
               <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
