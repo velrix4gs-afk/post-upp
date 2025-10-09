@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import ThemeToggle from './ThemeToggle';
 import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass } from 'lucide-react';
 import { useState } from 'react';
@@ -21,6 +22,7 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { unreadCount } = useNotifications();
+  const { unreadCount: unreadMessages } = useUnreadMessages();
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -62,9 +64,11 @@ const Navigation = () => {
                     >
                       <MessageCircle className="h-4 w-4" />
                       Messages
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                        3
-                      </Badge>
+                      {unreadMessages > 0 && (
+                        <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                          {unreadMessages > 99 ? '99+' : unreadMessages}
+                        </Badge>
+                      )}
                     </Button>
                   </Link>
                   <Link to="/friends">
@@ -238,9 +242,11 @@ const Navigation = () => {
               >
                 <MessageCircle className="h-5 w-5" />
                 <span className="text-xs mt-1">Messages</span>
-                <Badge variant="destructive" className="absolute top-0 right-0 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
-                  3
-                </Badge>
+                {unreadMessages > 0 && (
+                  <Badge variant="destructive" className="absolute top-0 right-0 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </Badge>
+                )}
               </Button>
             </Link>
             <Link to="/friends">
