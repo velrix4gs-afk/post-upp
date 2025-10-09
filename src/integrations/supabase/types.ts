@@ -827,11 +827,15 @@ export type Database = {
           content: string
           created_at: string | null
           deleted_for: string[] | null
+          edited_at: string | null
           forwarded_from_message_id: string | null
           id: string
+          is_edited: boolean | null
           is_forwarded: boolean | null
+          media_type: string | null
           media_url: string | null
           receiver_id: string | null
+          reply_to: string | null
           sender_id: string | null
           status: string | null
         }
@@ -840,11 +844,15 @@ export type Database = {
           content: string
           created_at?: string | null
           deleted_for?: string[] | null
+          edited_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
+          is_edited?: boolean | null
           is_forwarded?: boolean | null
+          media_type?: string | null
           media_url?: string | null
           receiver_id?: string | null
+          reply_to?: string | null
           sender_id?: string | null
           status?: string | null
         }
@@ -853,11 +861,15 @@ export type Database = {
           content?: string
           created_at?: string | null
           deleted_for?: string[] | null
+          edited_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
+          is_edited?: boolean | null
           is_forwarded?: boolean | null
+          media_type?: string | null
           media_url?: string | null
           receiver_id?: string | null
+          reply_to?: string | null
           sender_id?: string | null
           status?: string | null
         }
@@ -945,6 +957,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "message_with_users"
             referencedColumns: ["sender_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "message_with_users"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
           },
           {
             foreignKeyName: "messages_sender_id_fkey"

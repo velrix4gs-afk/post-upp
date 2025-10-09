@@ -223,31 +223,32 @@ const MessagesPage = () => {
     : messages;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="container-mobile md:container-desktop mx-auto p-2 md:p-4 h-[calc(100vh-80px)]">
+      <div className="container-mobile md:container-desktop mx-auto p-2 md:p-4 h-[calc(100vh-80px)] md:h-[calc(100vh-80px)]">
         <Card className="h-full flex flex-col md:flex-row overflow-hidden">
           {/* Chat List Sidebar */}
           <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r flex-col`}>
-            <div className="p-3 md:p-4 border-b space-y-3">
+            <div className="p-2 md:p-4 border-b space-y-2 md:space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-bold">Messages</h2>
+                <h2 className="text-base md:text-xl font-bold">Messages</h2>
                 <div className="flex gap-2">
                   <Button 
                     size="sm" 
                     variant="ghost"
+                    className="h-8 w-8 md:h-9 md:w-9 p-0"
                     onClick={() => setShowNewChatDialog(true)}
                   >
-                    <Plus className="h-5 w-5" />
+                    <Plus className="h-4 w-4 md:h-5 md:w-5" />
                   </Button>
                 </div>
               </div>
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2 md:left-3 top-2 md:top-2.5 h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                 <Input
-                  placeholder={selectedChatId ? "Search in conversation..." : "Search messages..."}
-                  className="pl-9"
+                  placeholder={selectedChatId ? "Search..." : "Search messages..."}
+                  className="pl-7 md:pl-9 h-8 md:h-10 text-xs md:text-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -285,24 +286,24 @@ const MessagesPage = () => {
                     return (
                       <div
                         key={chat.id}
-                        className={`p-3 rounded cursor-pointer hover:bg-muted transition-colors ${
+                        className={`p-2 md:p-3 rounded cursor-pointer hover:bg-muted transition-colors min-h-[60px] ${
                           selectedChatId === chat.id ? 'bg-muted' : ''
                         }`}
                         onClick={() => setSelectedChatId(chat.id)}
                       >
-                        <div className="flex gap-3">
+                        <div className="flex gap-2 md:gap-3">
                           <div className="relative">
-                            <Avatar>
+                            <Avatar className="h-9 w-9 md:h-10 md:w-10">
                               <AvatarImage src={avatar} />
                               <AvatarFallback>{chatName[0]}</AvatarFallback>
                             </Avatar>
-                            <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
+                            <div className="absolute bottom-0 right-0 h-2 w-2 md:h-3 md:w-3 bg-green-500 rounded-full border-2 border-background" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="font-medium truncate">{chatName}</p>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <p className="font-medium truncate text-sm md:text-base">{chatName}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground truncate">
+                            <p className="text-xs md:text-sm text-muted-foreground truncate">
                               {chat.is_group ? `${chat.participants.length} members` : 'Direct message'}
                             </p>
                           </div>
@@ -327,41 +328,41 @@ const MessagesPage = () => {
             {selectedChat ? (
               <>
                 {/* Chat Header */}
-                <div className="p-3 md:p-4 border-b flex items-center justify-between">
+                <div className="p-2 md:p-4 border-b flex items-center justify-between">
                   <div className="flex items-center gap-2 md:gap-3">
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="md:hidden"
+                      className="md:hidden h-8 w-8 p-0"
                       onClick={() => setSelectedChatId(null)}
                     >
                       ←
                     </Button>
-                    <Avatar>
+                    <Avatar className="h-8 w-8 md:h-10 md:w-10">
                       <AvatarImage src={selectedChat.avatar_url} />
                       <AvatarFallback>{selectedChat.name?.[0] || 'C'}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{selectedChat.name || 'Chat'}</p>
-                      <p className="text-sm text-muted-foreground">Online</p>
+                      <p className="font-medium text-sm md:text-base">{selectedChat.name || 'Chat'}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Online</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="ghost">
-                      <Phone className="h-5 w-5" />
+                  <div className="flex gap-1 md:gap-2">
+                    <Button size="sm" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 p-0 hidden sm:flex">
+                      <Phone className="h-4 w-4 md:h-5 md:w-5" />
                     </Button>
-                    <Button size="sm" variant="ghost">
-                      <Video className="h-5 w-5" />
+                    <Button size="sm" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 p-0 hidden sm:flex">
+                      <Video className="h-4 w-4 md:h-5 md:w-5" />
                     </Button>
-                    <Button size="sm" variant="ghost">
-                      <MoreVertical className="h-5 w-5" />
+                    <Button size="sm" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 p-0">
+                      <MoreVertical className="h-4 w-4 md:h-5 md:w-5" />
                     </Button>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 p-4 bg-muted/20">
-                  <div className="space-y-1">
+                <ScrollArea className="flex-1 p-2 md:p-4 bg-muted/20">
+                  <div className="space-y-1 md:space-y-2">
                     {searchQuery.trim() && filteredMessages.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -443,8 +444,8 @@ const MessagesPage = () => {
                     onCancel={() => setIsRecordingVoice(false)}
                   />
                 ) : (
-                  <form onSubmit={handleSendMessage} className="p-4 border-t">
-                    <div className="flex gap-2 items-end">
+                  <form onSubmit={handleSendMessage} className="p-2 md:p-4 border-t">
+                    <div className="flex gap-1 md:gap-2 items-end">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -456,23 +457,25 @@ const MessagesPage = () => {
                         type="button" 
                         size="sm" 
                         variant="ghost"
+                        className="h-8 w-8 md:h-9 md:w-9 p-0"
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        <ImageIcon className="h-5 w-5" />
+                        <ImageIcon className="h-4 w-4 md:h-5 md:w-5" />
                       </Button>
                       <Button 
                         type="button" 
                         size="sm" 
                         variant="ghost"
+                        className="h-8 w-8 md:h-9 md:w-9 p-0"
                         onClick={() => setIsRecordingVoice(true)}
                       >
-                        <Mic className="h-5 w-5" />
+                        <Mic className="h-4 w-4 md:h-5 md:w-5" />
                       </Button>
                       <Input
                         placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
                         value={messageText}
                         onChange={(e) => setMessageText(e.target.value)}
-                        className="flex-1"
+                        className="flex-1 h-8 md:h-10 text-xs md:text-sm"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
@@ -485,6 +488,7 @@ const MessagesPage = () => {
                           type="button"
                           size="sm"
                           variant="ghost"
+                          className="h-8 md:h-9 text-xs md:text-sm"
                           onClick={() => {
                             setEditingMessageId(null);
                             setMessageText('');
@@ -493,11 +497,11 @@ const MessagesPage = () => {
                           Cancel
                         </Button>
                       )}
-                      <Button type="button" size="sm" variant="ghost">
-                        <Smile className="h-5 w-5" />
+                      <Button type="button" size="sm" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 p-0 hidden sm:flex">
+                        <Smile className="h-4 w-4 md:h-5 md:w-5" />
                       </Button>
-                      <Button type="submit" size="sm" disabled={!messageText.trim() && !selectedImage}>
-                        <Send className="h-5 w-5" />
+                      <Button type="submit" size="sm" className="h-8 md:h-9" disabled={!messageText.trim() && !selectedImage}>
+                        <Send className="h-4 w-4 md:h-5 md:w-5" />
                       </Button>
                     </div>
                   </form>
