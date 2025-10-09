@@ -555,6 +555,127 @@ export type Database = {
           },
         ]
       }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_posts: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts_view"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "group_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          avatar_url: string | null
+          cover_url: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          member_count: number | null
+          name: string
+          privacy: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          member_count?: number | null
+          name: string
+          privacy?: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          member_count?: number | null
+          name?: string
+          privacy?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       hashtags: {
         Row: {
           created_at: string | null

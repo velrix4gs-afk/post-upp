@@ -55,7 +55,64 @@ serve(async (req) => {
         throw new Error('Missing required fields: target_id, target_type, reaction_type');
       }
 
-      // Check if reaction already exists
+      // Check if reaction already exists for posts
+      if (target_type === 'post') {
+        const { data: existingReaction } = await supabaseClient
+          .from('post_reactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('post_id', target_id)
+          .single();
+
+        if (existingReaction) {
+          // Remove reaction if clicking same type (toggle)
+          if (existingReaction.reaction_type === reaction_type) {
+            const { error } = await supabaseClient
+              .from('post_reactions')
+              .delete()
+              .eq('id', existingReaction.id);
+
+            if (error) throw error;
+
+            return new Response(JSON.stringify({ action: 'removed', reaction_type }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          } else {
+            // Update reaction type
+            const { data: reaction, error } = await supabaseClient
+              .from('post_reactions')
+              .update({ reaction_type })
+              .eq('id', existingReaction.id)
+              .select()
+              .single();
+
+            if (error) throw error;
+
+            return new Response(JSON.stringify({ action: 'updated', reaction }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        } else {
+          // Create new reaction
+          const { data: reaction, error } = await supabaseClient
+            .from('post_reactions')
+            .insert({
+              user_id: user.id,
+              post_id: target_id,
+              reaction_type
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          return new Response(JSON.stringify({ action: 'created', reaction }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // For other target types (messages, etc), use the reactions table
       const { data: existingReaction } = await supabaseClient
         .from('reactions')
         .select('*')
@@ -65,9 +122,7 @@ serve(async (req) => {
         .single();
 
       if (existingReaction) {
-        // Update existing reaction or remove if same type
         if (existingReaction.reaction_type === reaction_type) {
-          // Remove reaction
           const { error } = await supabaseClient
             .from('reactions')
             .delete()
@@ -75,16 +130,10 @@ serve(async (req) => {
 
           if (error) throw error;
 
-          // Update count in target table
-          if (target_type === 'post') {
-            await supabaseClient.rpc('decrement_post_likes', { post_id: target_id });
-          }
-
           return new Response(JSON.stringify({ action: 'removed', reaction_type }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         } else {
-          // Update reaction type
           const { data: reaction, error } = await supabaseClient
             .from('reactions')
             .update({ reaction_type })
@@ -99,7 +148,6 @@ serve(async (req) => {
           });
         }
       } else {
-        // Create new reaction
         const { data: reaction, error } = await supabaseClient
           .from('reactions')
           .insert({
@@ -112,11 +160,6 @@ serve(async (req) => {
           .single();
 
         if (error) throw error;
-
-        // Update count in target table
-        if (target_type === 'post') {
-          await supabaseClient.rpc('increment_post_likes', { post_id: target_id });
-        }
 
         return new Response(JSON.stringify({ action: 'created', reaction }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

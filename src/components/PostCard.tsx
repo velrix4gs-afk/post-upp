@@ -60,6 +60,9 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editContent, setEditContent] = useState(post.content || "");
   const [localReactionCount, setLocalReactionCount] = useState(post.reactions_count);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
 
   // Check if user has liked this post
   useEffect(() => {
@@ -89,6 +92,29 @@ export const PostCard = ({ post }: PostCardProps) => {
   useEffect(() => {
     setLocalReactionCount(post.reactions_count);
   }, [post.reactions_count]);
+
+  // Fetch comments when showing them
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!showComments) return;
+
+      const { data } = await supabase
+        .from('post_comments')
+        .select(`
+          *,
+          profiles:user_id (
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: false });
+      
+      if (data) setComments(data);
+    };
+
+    fetchComments();
+  }, [post.id, showComments]);
 
   const handleLike = async () => {
     if (!user) return;
@@ -140,6 +166,48 @@ export const PostCard = ({ post }: PostCardProps) => {
         variant: "destructive" 
       });
     }
+  };
+
+  const handleAddComment = async () => {
+    if (!user || !commentText.trim()) return;
+
+    const { error } = await supabase
+      .from('post_comments')
+      .insert({
+        post_id: post.id,
+        user_id: user.id,
+        content: commentText.trim()
+      });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add comment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCommentText('');
+    toast({
+      title: "Comment added",
+      description: "Your comment has been posted",
+    });
+
+    // Refresh comments
+    const { data } = await supabase
+      .from('post_comments')
+      .select(`
+        *,
+        profiles:user_id (
+          display_name,
+          avatar_url
+        )
+      `)
+      .eq('post_id', post.id)
+      .order('created_at', { ascending: false });
+    
+    if (data) setComments(data);
   };
 
   const isOwner = user?.id === post.author_id;
@@ -255,7 +323,7 @@ export const PostCard = ({ post }: PostCardProps) => {
                 <span className="text-xs md:text-sm">{localReactionCount}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-1 md:gap-2 h-8 md:h-9 px-2 md:px-3">
+              <Button variant="ghost" size="sm" className="gap-1 md:gap-2 h-8 md:h-9 px-2 md:px-3" onClick={() => setShowComments(!showComments)}>
                 <MessageCircle className="h-4 w-4" />
                 <span className="text-xs md:text-sm">{post.comments_count}</span>
               </Button>
@@ -275,6 +343,50 @@ export const PostCard = ({ post }: PostCardProps) => {
               <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
             </Button>
           </div>
+
+          {showComments && (
+            <div className="mt-4 pt-4 border-t space-y-4">
+              <div className="flex gap-2">
+                <Textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Write a comment..."
+                  className="min-h-[60px] text-sm"
+                />
+                <Button 
+                  onClick={handleAddComment}
+                  disabled={!commentText.trim()}
+                  size="sm"
+                >
+                  Post
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-2">
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage src={comment.profiles?.avatar_url} />
+                      <AvatarFallback>
+                        {comment.profiles?.display_name?.[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="bg-muted rounded-lg p-2">
+                        <p className="font-semibold text-sm">
+                          {comment.profiles?.display_name}
+                        </p>
+                        <p className="text-sm break-words">{comment.content}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     </>
