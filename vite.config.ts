@@ -21,21 +21,25 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React core libraries
+          // React core libraries - MUST load first
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'react-core';
           }
-          // React Router
+          // Lucide icons - depends on React, so separate chunk
+          if (id.includes('node_modules/lucide-react')) {
+            return 'react-icons';
+          }
+          // React Router - depends on React
           if (id.includes('node_modules/react-router-dom')) {
             return 'react-router';
+          }
+          // Radix UI components - depends on React
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'radix-ui';
           }
           // Supabase
           if (id.includes('node_modules/@supabase')) {
             return 'supabase';
-          }
-          // Radix UI components (UI library that depends on React)
-          if (id.includes('node_modules/@radix-ui')) {
-            return 'radix-ui';
           }
           // Other large dependencies
           if (id.includes('node_modules')) {
