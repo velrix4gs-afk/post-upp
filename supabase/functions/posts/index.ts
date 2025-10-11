@@ -6,6 +6,43 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation helpers
+const validatePostContent = (content: any): boolean => {
+  return !content || (typeof content === 'string' && content.length <= 10000);
+};
+
+const validateMediaUrl = (url: any): boolean => {
+  if (!url) return true;
+  if (typeof url !== 'string') return false;
+  try {
+    new URL(url);
+    return url.length <= 2048;
+  } catch {
+    return false;
+  }
+};
+
+const validateUuid = (id: any): boolean => {
+  if (!id) return true;
+  if (typeof id !== 'string') return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};
+
+const validateUuidArray = (arr: any, maxLength = 50): boolean => {
+  if (!arr) return true;
+  if (!Array.isArray(arr)) return false;
+  if (arr.length > maxLength) return false;
+  return arr.every(validateUuid);
+};
+
+const validateStringArray = (arr: any, maxItems = 30, maxLength = 50): boolean => {
+  if (!arr) return true;
+  if (!Array.isArray(arr)) return false;
+  if (arr.length > maxItems) return false;
+  return arr.every((item: any) => typeof item === 'string' && item.length <= maxLength);
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -109,9 +146,37 @@ serve(async (req) => {
 
       console.log('Post data received:', { content, media_url, media_type });
 
-      // Validate required fields - check for truthy values
+      // Comprehensive input validation
       if ((!content || content.trim() === '') && (!media_url || media_url.trim() === '')) {
         throw new Error('Post must have content or media');
+      }
+
+      if (!validatePostContent(content)) {
+        throw new Error('Content too long (max 10000 characters)');
+      }
+
+      if (!validateMediaUrl(media_url)) {
+        throw new Error('Invalid media URL');
+      }
+
+      if (media_type && !['image', 'video'].includes(media_type)) {
+        throw new Error('Invalid media type');
+      }
+
+      if (location && (typeof location !== 'string' || location.length > 200)) {
+        throw new Error('Location too long (max 200 characters)');
+      }
+
+      if (!validateUuidArray(tagged_users)) {
+        throw new Error('Invalid tagged users (max 50)');
+      }
+
+      if (!validateStringArray(hashtags)) {
+        throw new Error('Invalid hashtags (max 30, 50 chars each)');
+      }
+
+      if (privacy && !['public', 'friends', 'private'].includes(privacy)) {
+        throw new Error('Invalid privacy setting');
       }
 
       const { data: post, error } = await supabaseClient

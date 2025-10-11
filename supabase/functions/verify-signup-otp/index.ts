@@ -32,6 +32,7 @@ serve(async (req) => {
       .select('*')
       .eq('email', email)
       .eq('code', code)
+      .eq('used', false)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
@@ -44,6 +45,12 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Mark OTP as used immediately to prevent reuse
+    await supabase
+      .from('email_otps')
+      .update({ used: true })
+      .eq('id', otpRecord.id);
 
     // Create user account
     const { data: authData, error: signUpError } = await supabase.auth.admin.createUser({
