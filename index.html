@@ -19,6 +19,15 @@
     <!-- Preconnect for external resources -->
     <link rel="preconnect" href="https://ccyyxkjpgebjnstevgkw.supabase.co" crossorigin />
     <link rel="dns-prefetch" href="https://ccyyxkjpgebjnstevgkw.supabase.co" />
+    
+    <!-- Critical CSS: Inline essential design tokens to prevent FOUC -->
+    <style>
+      :root{--background:0 0% 99%;--foreground:224 15% 15%;--card:0 0% 100%;--card-foreground:224 15% 15%;--primary:217 92% 52%;--primary-foreground:0 0% 100%;--border:220 13% 91%;--ring:217 92% 62%;}
+      .dark{--background:224 15% 8%;--foreground:0 0% 95%;--card:224 15% 10%;--card-foreground:0 0% 95%;--primary:217 92% 62%;--primary-foreground:0 0% 100%;--border:224 15% 20%;--ring:217 92% 62%;}
+      *{border-color:hsl(var(--border));}
+      body{background-color:hsl(var(--background));color:hsl(var(--foreground));}
+      #root{min-height:100vh;}
+    </style>
   </head>
 
   <body>
