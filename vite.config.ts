@@ -33,9 +33,9 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/@supabase')) {
             return 'supabase';
           }
-          // Radix UI and Lucide React (UI libraries that depend on React)
-          if (id.includes('node_modules/@radix-ui') || id.includes('node_modules/lucide-react')) {
-            return 'ui-components';
+          // Radix UI components (UI library that depends on React)
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'radix-ui';
           }
           // Other large dependencies
           if (id.includes('node_modules')) {
