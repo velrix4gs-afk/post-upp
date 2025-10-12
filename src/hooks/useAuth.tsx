@@ -33,15 +33,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     console.log('[Auth] Initializing auth state...');
     
-    // Set timeout to prevent infinite loading (5 seconds)
+    // Set timeout to prevent infinite loading (3 seconds)
     const timeout = setTimeout(() => {
       if (mounted && loading) {
         console.warn('[Auth] Auth check timed out, continuing without auth');
         setLoading(false);
-        setSession(null);
-        setUser(null);
       }
-    }, 5000);
+    }, 3000);
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

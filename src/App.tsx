@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 // Lazy load pages for code splitting
-const Index = lazy(() => import("./pages/Index"));
+const Landing = lazy(() => import("./pages/Landing"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Feed = lazy(() => import("./pages/Feed"));
@@ -103,7 +103,7 @@ const App = () => (
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/verify" element={<EmailVerification />} />
               <Route 
