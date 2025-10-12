@@ -43,7 +43,7 @@ class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    console.error('Lazy loading error:', error, errorInfo);
+    console.error('[ErrorBoundary] Component error:', error, errorInfo);
   }
 
   render() {
@@ -53,9 +53,24 @@ class ErrorBoundary extends Component<
           <div className="text-center space-y-4 max-w-md">
             <h2 className="text-2xl font-bold text-foreground">Something went wrong</h2>
             <p className="text-muted-foreground">Failed to load this page. Please try refreshing.</p>
-            <Button onClick={() => window.location.reload()}>
-              Refresh Page
-            </Button>
+            {this.state.error && (
+              <details className="text-left text-sm">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                  Error details
+                </summary>
+                <pre className="mt-2 p-2 bg-muted rounded overflow-auto">
+                  {this.state.error.toString()}
+                </pre>
+              </details>
+            )}
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+              <Button variant="outline" onClick={() => window.location.href = '/auth'}>
+                Go to Login
+              </Button>
+            </div>
           </div>
         </div>
       );

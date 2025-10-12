@@ -2,8 +2,21 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://ccyyxkjpgebjnstevgkw.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXl4a2pwZ2Viam5zdGV2Z2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3ODk0ODMsImV4cCI6MjA3NDM2NTQ4M30.u1lTe8ZgbRj6R2TJ1_gvEGvG1EHKD4ytId8IDjojbVI";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ccyyxkjpgebjnstevgkw.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXl4a2pwZ2Viam5zdGV2Z2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3ODk0ODMsImV4cCI6MjA3NDM2NTQ4M30.u1lTe8ZgbRj6R2TJ1_gvEGvG1EHKD4ytId8IDjojbVI";
+
+// Validate Supabase configuration
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error('Supabase configuration missing:', { 
+    hasUrl: !!SUPABASE_URL, 
+    hasKey: !!SUPABASE_PUBLISHABLE_KEY 
+  });
+}
+
+console.log('Supabase client initializing:', { 
+  url: SUPABASE_URL,
+  env: import.meta.env.MODE 
+});
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
