@@ -1,1 +1,37 @@
 project_id = "ccyyxkjpgebjnstevgkw"
+
+[functions.posts]
+verify_jwt = true
+
+[functions.reactions]
+verify_jwt = true
+
+[functions.messages]
+verify_jwt = true
+
+[functions.friendships]
+verify_jwt = true
+
+[functions.profiles]
+verify_jwt = true
+
+[functions.groups]
+verify_jwt = true
+
+[functions.auth-settings]
+verify_jwt = false
+
+[functions.create-verification-checkout]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.send-signup-otp]
+verify_jwt = false
+
+[functions.verify-signup-otp]
+verify_jwt = false
+
+[functions.create-official-account]
+verify_jwt = true
