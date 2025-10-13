@@ -63,24 +63,50 @@ export const usePosts = () => {
     privacy?: string;
   }) => {
     if (!session?.access_token) {
+      console.error('[usePosts] No access token available');
       throw new Error('You must be logged in to create a post');
     }
 
     // Validate that at least content or media is provided
     if (!postData.content && !postData.media_url) {
+      console.error('[usePosts] No content or media provided');
       throw new Error('Post must have either content or media');
     }
 
     try {
-      console.log('Creating post with data:', postData);
+      console.log('[usePosts] Creating post with data:', {
+        hasContent: !!postData.content,
+        contentLength: postData.content?.length,
+        hasMedia: !!postData.media_url,
+        mediaType: postData.media_type,
+        privacy: postData.privacy,
+        hasAccessToken: !!session.access_token
+      });
+      
+      const requestBody = {
+        action: 'create',
+        ...postData,
+      };
+      
+      console.log('[usePosts] Sending request to posts edge function:', requestBody);
       
       const { data, error } = await supabase.functions.invoke('posts', {
-        body: postData,
+        body: requestBody,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[usePosts] Edge function returned error:', error);
+        throw error;
+      }
 
-      console.log('Post creation response:', data);
+      console.log('[usePosts] Post creation successful:', {
+        postId: data?.id,
+        hasProfiles: !!data?.profiles,
+        reactionsCount: data?.reactions_count
+      });
 
       // Add new post to the beginning of the list
       setPosts(prevPosts => [data, ...prevPosts]);
@@ -92,7 +118,12 @@ export const usePosts = () => {
 
       return data;
     } catch (error: any) {
-      console.error('Error creating post:', error);
+      console.error('[usePosts] Error creating post:', {
+        error: error,
+        message: error?.message,
+        stack: error?.stack,
+        details: error
+      });
       toast({
         title: 'Error',
         description: error.message || 'Failed to create post',

@@ -142,12 +142,28 @@ serve(async (req) => {
     }
 
     if (action === 'create' || (method === 'POST' && !action)) {
+      console.log('[Posts API] CREATE action triggered', {
+        action,
+        method,
+        userId: user.id,
+        bodyKeys: Object.keys(body)
+      });
+
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
-      console.log('Post data received:', { content, media_url, media_type });
+      console.log('[Posts API] Post data received:', {
+        hasContent: !!content,
+        contentLength: content?.length,
+        hasMediaUrl: !!media_url,
+        mediaType: media_type,
+        privacy: privacy,
+        hasTaggedUsers: !!tagged_users?.length,
+        hasHashtags: !!hashtags?.length
+      });
 
       // Comprehensive input validation
       if ((!content || content.trim() === '') && (!media_url || media_url.trim() === '')) {
+        console.error('[Posts API] Validation failed: No content or media');
         throw new Error('Post must have content or media');
       }
 
@@ -179,6 +195,13 @@ serve(async (req) => {
         throw new Error('Invalid privacy setting');
       }
 
+      console.log('[Posts API] Attempting database insert', {
+        user_id: user.id,
+        hasContent: !!content,
+        hasMedia: !!media_url,
+        privacy: privacy || 'public'
+      });
+
       const { data: post, error } = await supabaseClient
         .from('posts')
         .insert({
@@ -199,7 +222,21 @@ serve(async (req) => {
         `)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Posts API] Database insert error:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
+
+      console.log('[Posts API] Post created successfully:', {
+        postId: post.id,
+        hasProfiles: !!post.profiles
+      });
 
       // Create notification for tagged users
       if (tagged_users?.length > 0) {
