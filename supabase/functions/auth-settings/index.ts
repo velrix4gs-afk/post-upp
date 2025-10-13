@@ -162,34 +162,23 @@ const handler = async (req: Request): Promise<Response> => {
     if (method === 'POST' && url.pathname.includes('/reset-password')) {
       const body: { email: string } = await req.json();
       
-      // Validate email
-      if (!body.email || typeof body.email !== 'string') {
-        return new Response(
-          JSON.stringify({ error: 'Invalid email' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(body.email)) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid email format' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
-      }
-      
-      // Always return success to prevent email enumeration
-      await supabaseClient.auth.resetPasswordForEmail(
+      const { data, error } = await supabaseClient.auth.resetPasswordForEmail(
         body.email,
         {
           redirectTo: `${Deno.env.get('SITE_URL')}/reset-password`,
         }
       );
 
-      // Generic success message regardless of whether email exists
+      if (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
       return new Response(JSON.stringify({ 
         success: true, 
-        message: 'If that email exists, a password reset link will be sent'
+        message: 'Password reset email sent'
       }), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });

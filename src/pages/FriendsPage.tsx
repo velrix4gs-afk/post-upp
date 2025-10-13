@@ -11,10 +11,8 @@ import { Search, UserPlus, UserMinus, UserCheck, X, Check, MessageSquare } from 
 import { useFriends } from '@/hooks/useFriends';
 import { useFollowers } from '@/hooks/useFollowers';
 import { useSearch } from '@/hooks/useSearch';
-import { useChats } from '@/hooks/useChats';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
 
 const FriendsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,22 +46,6 @@ const FriendsPage = () => {
       return () => clearTimeout(debounce);
     }
   }, [searchQuery]);
-
-  const { createChat } = useChats();
-
-  const handleMessage = async (userId: string) => {
-    try {
-      const chatId = await createChat(userId);
-      navigate(`/messages?chat=${chatId}`);
-    } catch (error) {
-      console.error('Error creating chat:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create chat",
-        variant: "destructive",
-      });
-    }
-  };
 
   const filteredFriends = friends.filter(friend =>
     friend.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -183,7 +165,7 @@ const FriendsPage = () => {
                             size="sm" 
                             variant="outline" 
                             className="flex-1"
-                            onClick={() => handleMessage(friend.id)}
+                            onClick={() => navigate('/messages')}
                           >
                             <MessageSquare className="h-4 w-4 mr-1" />
                             Message

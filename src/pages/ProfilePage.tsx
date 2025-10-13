@@ -3,8 +3,6 @@ import { useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { PostCard } from '@/components/PostCard';
 import ProfileEdit from '@/components/ProfileEdit';
-import { FollowersDialog } from '@/components/FollowersDialog';
-import { PrivacySettingsDialog } from '@/components/PrivacySettingsDialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -47,8 +45,6 @@ const ProfilePage = () => {
   const { friends } = useFriends();
   const { followers, following, followUser, unfollowUser } = useFollowers(profileUserId);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
-  const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
-  const [isPrivacySettingsOpen, setIsPrivacySettingsOpen] = useState(false);
 
   const handleProfileEditClose = () => {
     setShowProfileEdit(false);
@@ -237,17 +233,11 @@ const ProfilePage = () => {
                     <div className="text-2xl font-bold">{userPosts.length}</div>
                     <div className="text-sm text-muted-foreground">Posts</div>
                   </div>
-                  <div 
-                    className="text-center cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setIsFollowersDialogOpen(true)}
-                  >
+                  <div className="text-center cursor-pointer hover:opacity-80">
                     <div className="text-2xl font-bold">{followers.length}</div>
                     <div className="text-sm text-muted-foreground">Followers</div>
                   </div>
-                  <div 
-                    className="text-center cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setIsFollowersDialogOpen(true)}
-                  >
+                  <div className="text-center cursor-pointer hover:opacity-80">
                     <div className="text-2xl font-bold">{following.length}</div>
                     <div className="text-sm text-muted-foreground">Following</div>
                   </div>
@@ -309,18 +299,12 @@ const ProfilePage = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Posts</h2>
-            {isOwnProfile && (
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsPrivacySettingsOpen(true)}
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Privacy
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Privacy
+              </Button>
+            </div>
           </div>
 
           {userPosts.length === 0 ? (
@@ -357,29 +341,6 @@ const ProfilePage = () => {
       {showProfileEdit && (
         <ProfileEdit onClose={handleProfileEditClose} />
       )}
-
-      <FollowersDialog
-        isOpen={isFollowersDialogOpen}
-        onClose={() => setIsFollowersDialogOpen(false)}
-        followers={followers}
-        following={following}
-        onFollowToggle={async (userId: string, isCurrentlyFollowing: boolean) => {
-          if (isCurrentlyFollowing) {
-            await unfollowUser(userId);
-          } else {
-            await followUser(userId, false);
-          }
-        }}
-        followingIds={following.map(u => u.id)}
-      />
-
-      <PrivacySettingsDialog
-        isOpen={isPrivacySettingsOpen}
-        onClose={() => setIsPrivacySettingsOpen(false)}
-        userId={profileUserId!}
-        currentSettings={{ is_private: profile?.is_private }}
-        onUpdate={refetchProfile}
-      />
     </div>
   );
 };

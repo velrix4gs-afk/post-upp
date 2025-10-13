@@ -47,13 +47,13 @@ const Feed = () => {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-3 py-4 md:p-4 max-w-7xl">
-        <div className="grid lg:grid-cols-12 gap-4 md:gap-6">
-          {/* Left Sidebar - Quick Actions - Hidden on mobile */}
-          <div className="hidden lg:block lg:col-span-3 space-y-4">
+      <div className="container mx-auto p-4 max-w-7xl">
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* Left Sidebar - Quick Actions */}
+          <div className="lg:col-span-3 space-y-4">
             <Card className="p-4">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <Compass className="h-5 w-5" />
@@ -88,35 +88,32 @@ const Feed = () => {
             </Card>
           </div>
 
-          {/* Main Feed - Full width on mobile */}
-          <div className="lg:col-span-6 space-y-4 md:space-y-6">
+          {/* Main Feed */}
+          <div className="lg:col-span-6 space-y-6">
             {/* Stories */}
             <Stories />
 
             <CreatePost />
 
             <Card className="p-2">
-              <div className="flex gap-1 md:gap-2">
+              <div className="flex gap-2">
                 <Button
                   variant={activeTab === 'all' ? 'default' : 'ghost'}
-                  className="flex-1 text-xs md:text-sm"
-                  size="sm"
+                  className="flex-1"
                   onClick={() => setActiveTab('all')}
                 >
                   All Posts
                 </Button>
                 <Button
                   variant={activeTab === 'friends' ? 'default' : 'ghost'}
-                  className="flex-1 text-xs md:text-sm"
-                  size="sm"
+                  className="flex-1"
                   onClick={() => setActiveTab('friends')}
                 >
                   Friends
                 </Button>
                 <Button
                   variant={activeTab === 'trending' ? 'default' : 'ghost'}
-                  className="flex-1 text-xs md:text-sm"
-                  size="sm"
+                  className="flex-1"
                   onClick={() => setActiveTab('trending')}
                 >
                   Trending
@@ -176,8 +173,8 @@ const Feed = () => {
             )}
           </div>
 
-          {/* Right Sidebar - Info - Hidden on mobile */}
-          <div className="hidden lg:block lg:col-span-3 space-y-4">
+          {/* Right Sidebar - Info */}
+          <div className="lg:col-span-3 space-y-4">
             <Card className="p-4">
               <h3 className="font-semibold mb-4">Welcome!</h3>
               <p className="text-sm text-muted-foreground">

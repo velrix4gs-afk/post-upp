@@ -20,31 +20,9 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // React core libraries - MUST load first
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'react-core';
-          }
-          // Lucide icons - depends on React, so separate chunk
-          if (id.includes('node_modules/lucide-react')) {
-            return 'react-icons';
-          }
-          // React Router - depends on React
-          if (id.includes('node_modules/react-router-dom')) {
-            return 'react-router';
-          }
-          // Radix UI components - depends on React
-          if (id.includes('node_modules/@radix-ui')) {
-            return 'radix-ui';
-          }
-          // Supabase
-          if (id.includes('node_modules/@supabase')) {
-            return 'supabase';
-          }
-          // Other large dependencies
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-avatar'],
         },
       },
     },

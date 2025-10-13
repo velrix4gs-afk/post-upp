@@ -29,57 +29,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-    
-    console.log('[Auth] Initializing auth state...');
-    
-    // Set timeout to prevent infinite loading (3 seconds)
-    const timeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn('[Auth] Auth check timed out, continuing without auth');
-        setLoading(false);
-      }
-    }, 3000);
-
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('[Auth] State change:', event, session?.user?.id);
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession()
-      .then(({ data: { session }, error }) => {
-        if (error) {
-          console.error('[Auth] Session error:', error.message);
-        }
-        console.log('[Auth] Session loaded:', session?.user?.id || 'no session');
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      })
-      .catch((error) => {
-        console.error('[Auth] Failed to get session:', error);
-        if (mounted) {
-          setLoading(false);
-          setSession(null);
-          setUser(null);
-        }
-      });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    return () => {
-      mounted = false;
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {

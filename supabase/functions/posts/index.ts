@@ -6,43 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Input validation helpers
-const validatePostContent = (content: any): boolean => {
-  return !content || (typeof content === 'string' && content.length <= 10000);
-};
-
-const validateMediaUrl = (url: any): boolean => {
-  if (!url) return true;
-  if (typeof url !== 'string') return false;
-  try {
-    new URL(url);
-    return url.length <= 2048;
-  } catch {
-    return false;
-  }
-};
-
-const validateUuid = (id: any): boolean => {
-  if (!id) return true;
-  if (typeof id !== 'string') return false;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(id);
-};
-
-const validateUuidArray = (arr: any, maxLength = 50): boolean => {
-  if (!arr) return true;
-  if (!Array.isArray(arr)) return false;
-  if (arr.length > maxLength) return false;
-  return arr.every(validateUuid);
-};
-
-const validateStringArray = (arr: any, maxItems = 30, maxLength = 50): boolean => {
-  if (!arr) return true;
-  if (!Array.isArray(arr)) return false;
-  if (arr.length > maxItems) return false;
-  return arr.every((item: any) => typeof item === 'string' && item.length <= maxLength);
-};
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -83,9 +46,9 @@ serve(async (req) => {
     const url = new URL(req.url);
     const method = req.method;
 
-    // Parse body for POST requests
+    // Parse body for non-GET requests
     let body: any = {};
-    if (method === 'POST') {
+    if (method !== 'GET') {
       try {
         const text = await req.text();
         body = text ? JSON.parse(text) : {};
@@ -95,12 +58,9 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Posts API: ${method} ${url.pathname}`, { action: body.action });
+    console.log(`Posts API: ${method} ${url.pathname}`);
 
-    // Handle based on action field
-    const action = body.action;
-
-    if (method === 'GET' || action === 'get') {
+    if (method === 'GET') {
       // Get posts feed
       const { data: posts, error } = await supabaseClient
         .from('posts')
@@ -129,7 +89,7 @@ serve(async (req) => {
           return {
             ...post,
             reactions: reactions || [],
-            reactions_count: reactions?.length || 0,
+            likes_count: reactions?.filter(r => r.reaction_type === 'like').length || 0,
             comments_count: post.comments_count || 0,
             shares_count: 0
           };
@@ -141,66 +101,15 @@ serve(async (req) => {
       });
     }
 
-    if (action === 'create' || (method === 'POST' && !action)) {
-      console.log('[Posts API] CREATE action triggered', {
-        action,
-        method,
-        userId: user.id,
-        bodyKeys: Object.keys(body)
-      });
-
+    if (method === 'POST') {
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
-      console.log('[Posts API] Post data received:', {
-        hasContent: !!content,
-        contentLength: content?.length,
-        hasMediaUrl: !!media_url,
-        mediaType: media_type,
-        privacy: privacy,
-        hasTaggedUsers: !!tagged_users?.length,
-        hasHashtags: !!hashtags?.length
-      });
+      console.log('Post data received:', { content, media_url, media_type });
 
-      // Comprehensive input validation
+      // Validate required fields - check for truthy values
       if ((!content || content.trim() === '') && (!media_url || media_url.trim() === '')) {
-        console.error('[Posts API] Validation failed: No content or media');
         throw new Error('Post must have content or media');
       }
-
-      if (!validatePostContent(content)) {
-        throw new Error('Content too long (max 10000 characters)');
-      }
-
-      if (!validateMediaUrl(media_url)) {
-        throw new Error('Invalid media URL');
-      }
-
-      if (media_type && !['image', 'video'].includes(media_type)) {
-        throw new Error('Invalid media type');
-      }
-
-      if (location && (typeof location !== 'string' || location.length > 200)) {
-        throw new Error('Location too long (max 200 characters)');
-      }
-
-      if (!validateUuidArray(tagged_users)) {
-        throw new Error('Invalid tagged users (max 50)');
-      }
-
-      if (!validateStringArray(hashtags)) {
-        throw new Error('Invalid hashtags (max 30, 50 chars each)');
-      }
-
-      if (privacy && !['public', 'friends', 'private'].includes(privacy)) {
-        throw new Error('Invalid privacy setting');
-      }
-
-      console.log('[Posts API] Attempting database insert', {
-        user_id: user.id,
-        hasContent: !!content,
-        hasMedia: !!media_url,
-        privacy: privacy || 'public'
-      });
 
       const { data: post, error } = await supabaseClient
         .from('posts')
@@ -222,21 +131,7 @@ serve(async (req) => {
         `)
         .single();
 
-      if (error) {
-        console.error('[Posts API] Database insert error:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        throw error;
-      }
-
-      console.log('[Posts API] Post created successfully:', {
-        postId: post.id,
-        hasProfiles: !!post.profiles
-      });
+      if (error) throw error;
 
       // Create notification for tagged users
       if (tagged_users?.length > 0) {
@@ -256,7 +151,7 @@ serve(async (req) => {
       });
     }
 
-    if (action === 'update') {
+    if (method === 'PUT') {
       const { postId, content, media_url, media_type, privacy } = body;
 
       const { data: post, error } = await supabaseClient
@@ -287,7 +182,7 @@ serve(async (req) => {
       });
     }
 
-    if (action === 'delete') {
+    if (method === 'DELETE') {
       const { postId } = body;
       console.log('Deleting post:', postId, 'for user:', user.id);
 

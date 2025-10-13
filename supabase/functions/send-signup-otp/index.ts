@@ -6,26 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Rate limiting storage
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
-const checkRateLimit = (identifier: string, maxRequests = 3, windowMs = 300000): boolean => {
-  const now = Date.now();
-  const record = rateLimitMap.get(identifier);
-  
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(identifier, { count: 1, resetTime: now + windowMs });
-    return true;
-  }
-  
-  if (record.count >= maxRequests) {
-    return false;
-  }
-  
-  record.count++;
-  return true;
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -34,28 +14,10 @@ serve(async (req) => {
   try {
     const { email } = await req.json();
 
-    // Validate email
-    if (!email || typeof email !== 'string') {
+    if (!email) {
       return new Response(
         JSON.stringify({ error: 'Email is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email) || email.length > 255) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid email format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Rate limiting - max 3 OTP requests per 5 minutes per email
-    if (!checkRateLimit(email)) {
-      console.warn(`Rate limit exceeded for email: ${email}`);
-      return new Response(
-        JSON.stringify({ error: 'Too many requests. Please wait before requesting another code.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -86,72 +48,45 @@ serve(async (req) => {
       );
     }
 
-    // Send email with OTP using Resend
-    console.log(`Attempting to send OTP for ${email}: ${code}`);
+    // Send email with OTP
+    // Note: In production, integrate with your email service (Resend, SendGrid, etc.)
+    // For now, we'll log it and return success
+    console.log(`OTP for ${email}: ${code}`);
     
+    // If you have RESEND_API_KEY configured, you can send the email:
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    
-    if (!resendApiKey) {
-      console.error('RESEND_API_KEY not configured');
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Verification code generated (email not sent - configure RESEND_API_KEY)',
-          code // Return code for testing when email not configured
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    try {
-      const emailResponse = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'POST UP <noreply@resend.dev>',
-          to: [email],
-          subject: 'Your POST UP Verification Code',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h1 style="color: #333;">Welcome to POST UP!</h1>
-              <p style="font-size: 16px; color: #666;">Your verification code is:</p>
-              <div style="background: #f5f5f5; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-                <h2 style="font-size: 32px; letter-spacing: 8px; margin: 0; color: #333;">${code}</h2>
+    if (resendApiKey) {
+      try {
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'POST UP <onboarding@resend.dev>',
+            to: [email],
+            subject: 'Your POST UP Verification Code',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h1 style="color: #333;">Welcome to POST UP!</h1>
+                <p style="font-size: 16px; color: #666;">Your verification code is:</p>
+                <div style="background: #f5f5f5; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                  <h2 style="font-size: 32px; letter-spacing: 8px; margin: 0; color: #333;">${code}</h2>
+                </div>
+                <p style="font-size: 14px; color: #666;">This code will expire in 10 minutes.</p>
+                <p style="font-size: 14px; color: #999;">If you didn't request this code, please ignore this email.</p>
               </div>
-              <p style="font-size: 14px; color: #666;">This code will expire in 10 minutes.</p>
-              <p style="font-size: 14px; color: #999;">If you didn't request this code, please ignore this email.</p>
-            </div>
-          `,
-        }),
-      });
-
-      const responseData = await emailResponse.json();
-      
-      if (!emailResponse.ok) {
-        console.error('Resend API error:', responseData);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Failed to send email. Please check your Resend configuration.',
-            details: responseData
+            `,
           }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+        });
 
-      console.log('Email sent successfully:', responseData);
-    } catch (emailError) {
-      console.error('Error sending email:', emailError);
-      const errorMessage = emailError instanceof Error ? emailError.message : 'Unknown error';
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to send verification email',
-          details: errorMessage
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        if (!emailResponse.ok) {
+          console.error('Failed to send email:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+      }
     }
 
     return new Response(

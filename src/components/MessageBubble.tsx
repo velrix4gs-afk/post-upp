@@ -43,28 +43,28 @@ export const MessageBubble = ({
 }: MessageBubbleProps) => {
   return (
     <div className={cn(
-      "flex gap-2 md:gap-3 group mb-2 md:mb-4",
+      "flex gap-3 group mb-4",
       isOwn ? "flex-row-reverse" : "flex-row"
     )}>
-      <Avatar className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0">
+      <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
         <AvatarFallback>{sender.display_name[0]}</AvatarFallback>
       </Avatar>
       
       <div className={cn(
-        "flex flex-col max-w-[85%] md:max-w-[70%]",
+        "flex flex-col max-w-[70%]",
         isOwn ? "items-end" : "items-start"
       )}>
         {!isOwn && (
-          <span className="text-xs text-muted-foreground mb-1 px-2 md:px-3">
+          <span className="text-xs text-muted-foreground mb-1 px-3">
             {sender.display_name}
           </span>
         )}
 
-        <div className="flex items-start gap-1 md:gap-2">
+        <div className="flex items-start gap-2">
           <div
             className={cn(
-              "rounded-2xl px-3 py-2 md:px-4 shadow-sm",
+              "rounded-2xl px-4 py-2 shadow-sm",
               isOwn
                 ? "bg-primary text-primary-foreground rounded-tr-sm"
                 : "bg-muted rounded-tl-sm"
@@ -76,7 +76,7 @@ export const MessageBubble = ({
                   <img 
                     src={mediaUrl} 
                     alt="Message attachment" 
-                    className="rounded-lg max-w-full max-h-48 md:max-h-64 cursor-pointer hover:opacity-90"
+                    className="rounded-lg max-w-full max-h-64 cursor-pointer hover:opacity-90"
                     onClick={() => window.open(mediaUrl, '_blank')}
                   />
                 ) : mediaType?.startsWith('audio/') ? (
@@ -85,7 +85,7 @@ export const MessageBubble = ({
               </div>
             )}
             {content && (
-              <p className="text-xs md:text-sm break-words whitespace-pre-wrap">
+              <p className="text-sm break-words whitespace-pre-wrap">
                 {content}
                 {isEdited && (
                   <span className="text-xs opacity-70 ml-2">(edited)</span>
@@ -100,34 +100,34 @@ export const MessageBubble = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-5 w-5 md:h-6 md:w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={isOwn ? "end" : "start"}>
                 {onReply && (
-                  <DropdownMenuItem onClick={onReply} className="text-xs md:text-sm">
-                    <Reply className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                  <DropdownMenuItem onClick={onReply}>
+                    <Reply className="h-4 w-4 mr-2" />
                     Reply
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(content)} className="text-xs md:text-sm">
-                  <Copy className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(content)}>
+                  <Copy className="h-4 w-4 mr-2" />
                   Copy
                 </DropdownMenuItem>
                 {isOwn && onEdit && (
-                  <DropdownMenuItem onClick={() => onEdit(id, content)} className="text-xs md:text-sm">
-                    <Edit2 className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                  <DropdownMenuItem onClick={() => onEdit(id, content)}>
+                    <Edit2 className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
                 )}
                 {isOwn && onDelete && (
                   <DropdownMenuItem 
                     onClick={() => onDelete(id)}
-                    className="text-xs md:text-sm text-destructive focus:text-destructive"
+                    className="text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                    <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
                 )}
@@ -136,7 +136,7 @@ export const MessageBubble = ({
           )}
         </div>
 
-        <span className="text-xs text-muted-foreground mt-0.5 md:mt-1 px-2 md:px-3">
+        <span className="text-xs text-muted-foreground mt-1 px-3">
           {formatDistanceToNow(new Date(timestamp), { addSuffix: true })}
         </span>
       </div>
