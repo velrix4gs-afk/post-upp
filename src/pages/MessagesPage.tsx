@@ -226,22 +226,21 @@ const MessagesPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container-mobile md:container-desktop mx-auto p-2 md:p-4 h-[calc(100vh-80px)]">
-        <Card className="h-full flex flex-col md:flex-row overflow-hidden">
+      <div className="container mx-auto px-0 md:px-4 h-[calc(100dvh-80px)]">
+        <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x">
           {/* Chat List Sidebar */}
           <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r flex-col`}>
-            <div className="p-3 md:p-4 border-b space-y-3">
+            <div className="p-3 md:p-4 border-b space-y-3 bg-background">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg md:text-xl font-bold">Messages</h2>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="ghost"
-                    onClick={() => setShowNewChatDialog(true)}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </Button>
-                </div>
+                <Button 
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setShowNewChatDialog(true)}
+                  className="h-10 w-10"
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -285,14 +284,14 @@ const MessagesPage = () => {
                     return (
                       <div
                         key={chat.id}
-                        className={`p-3 rounded cursor-pointer hover:bg-muted transition-colors ${
+                        className={`p-3 rounded-lg cursor-pointer hover:bg-muted active:bg-muted/80 transition-colors ${
                           selectedChatId === chat.id ? 'bg-muted' : ''
                         }`}
                         onClick={() => setSelectedChatId(chat.id)}
                       >
                         <div className="flex gap-3">
-                          <div className="relative">
-                            <Avatar>
+                          <div className="relative flex-shrink-0">
+                            <Avatar className="h-12 w-12">
                               <AvatarImage src={avatar} />
                               <AvatarFallback>{chatName[0]}</AvatarFallback>
                             </Avatar>
@@ -300,9 +299,9 @@ const MessagesPage = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <p className="font-medium truncate">{chatName}</p>
+                              <p className="font-medium truncate text-sm md:text-base">{chatName}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground truncate">
+                            <p className="text-xs md:text-sm text-muted-foreground truncate">
                               {chat.is_group ? `${chat.participants.length} members` : 'Direct message'}
                             </p>
                           </div>
@@ -327,41 +326,41 @@ const MessagesPage = () => {
             {selectedChat ? (
               <>
                 {/* Chat Header */}
-                <div className="p-3 md:p-4 border-b flex items-center justify-between">
-                  <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-3 md:p-4 border-b flex items-center justify-between bg-background sticky top-0 z-10">
+                  <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                     <Button
-                      size="sm"
+                      size="icon"
                       variant="ghost"
-                      className="md:hidden"
+                      className="md:hidden flex-shrink-0 h-10 w-10"
                       onClick={() => setSelectedChatId(null)}
                     >
                       ←
                     </Button>
-                    <Avatar>
+                    <Avatar className="h-10 w-10 flex-shrink-0">
                       <AvatarImage src={selectedChat.avatar_url} />
                       <AvatarFallback>{selectedChat.name?.[0] || 'C'}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium">{selectedChat.name || 'Chat'}</p>
-                      <p className="text-sm text-muted-foreground">Online</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{selectedChat.name || 'Chat'}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Online</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="ghost">
+                  <div className="flex gap-1 md:gap-2 flex-shrink-0">
+                    <Button size="icon" variant="ghost" className="h-10 w-10">
                       <Phone className="h-5 w-5" />
                     </Button>
-                    <Button size="sm" variant="ghost">
+                    <Button size="icon" variant="ghost" className="h-10 w-10 hidden md:flex">
                       <Video className="h-5 w-5" />
                     </Button>
-                    <Button size="sm" variant="ghost">
+                    <Button size="icon" variant="ghost" className="h-10 w-10">
                       <MoreVertical className="h-5 w-5" />
                     </Button>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 p-4 bg-muted/20">
-                  <div className="space-y-1">
+                <ScrollArea className="flex-1 px-2 py-3 md:px-4 md:py-4 bg-muted/20">
+                  <div className="space-y-0.5 md:space-y-1">
                     {searchQuery.trim() && filteredMessages.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -438,13 +437,15 @@ const MessagesPage = () => {
 
                 {/* Voice Recorder */}
                 {isRecordingVoice ? (
-                  <VoiceRecorder
-                    onSend={handleVoiceSend}
-                    onCancel={() => setIsRecordingVoice(false)}
-                  />
+                  <div className="p-4 border-t">
+                    <VoiceRecorder
+                      onSend={handleVoiceSend}
+                      onCancel={() => setIsRecordingVoice(false)}
+                    />
+                  </div>
                 ) : (
-                  <form onSubmit={handleSendMessage} className="p-4 border-t">
-                    <div className="flex gap-2 items-end">
+                  <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t bg-background">
+                    <div className="flex gap-1.5 md:gap-2 items-end">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -454,17 +455,19 @@ const MessagesPage = () => {
                       />
                       <Button 
                         type="button" 
-                        size="sm" 
+                        size="icon"
                         variant="ghost"
                         onClick={() => fileInputRef.current?.click()}
+                        className="h-10 w-10 flex-shrink-0"
                       >
                         <ImageIcon className="h-5 w-5" />
                       </Button>
                       <Button 
                         type="button" 
-                        size="sm" 
+                        size="icon"
                         variant="ghost"
                         onClick={() => setIsRecordingVoice(true)}
+                        className="h-10 w-10 flex-shrink-0 hidden md:flex"
                       >
                         <Mic className="h-5 w-5" />
                       </Button>
@@ -472,7 +475,7 @@ const MessagesPage = () => {
                         placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
                         value={messageText}
                         onChange={(e) => setMessageText(e.target.value)}
-                        className="flex-1"
+                        className="flex-1 h-10 text-base"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
@@ -489,14 +492,25 @@ const MessagesPage = () => {
                             setEditingMessageId(null);
                             setMessageText('');
                           }}
+                          className="h-10 flex-shrink-0"
                         >
                           Cancel
                         </Button>
                       )}
-                      <Button type="button" size="sm" variant="ghost">
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        variant="ghost"
+                        className="h-10 w-10 flex-shrink-0 hidden md:flex"
+                      >
                         <Smile className="h-5 w-5" />
                       </Button>
-                      <Button type="submit" size="sm" disabled={!messageText.trim() && !selectedImage}>
+                      <Button 
+                        type="submit" 
+                        size="icon"
+                        disabled={!messageText.trim() && !selectedImage}
+                        className="h-10 w-10 flex-shrink-0"
+                      >
                         <Send className="h-5 w-5" />
                       </Button>
                     </div>
