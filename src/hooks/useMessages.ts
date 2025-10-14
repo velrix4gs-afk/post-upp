@@ -12,6 +12,7 @@ export interface Message {
   media_type?: string;
   reply_to?: string;
   is_edited: boolean;
+  is_forwarded?: boolean;
   created_at: string;
   updated_at: string;
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';

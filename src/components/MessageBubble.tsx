@@ -1,14 +1,19 @@
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Edit2, Trash2, Reply, Copy } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, Reply, Copy, Star, Forward } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { MessageReactions } from "./messaging/MessageReactions";
+import { ReadReceiptIndicator } from "./messaging/ReadReceiptIndicator";
+import { ReactionPicker } from "./ReactionPicker";
+import { Badge } from "./ui/badge";
 
 interface MessageBubbleProps {
   id: string;
@@ -23,9 +28,23 @@ interface MessageBubbleProps {
   mediaUrl?: string;
   mediaType?: string;
   isEdited?: boolean;
+  isForwarded?: boolean;
+  isStarred?: boolean;
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+  reactions?: Array<{
+    type: string;
+    count: number;
+    users: { id: string; name: string }[];
+    hasReacted: boolean;
+  }>;
   onEdit?: (id: string, content: string) => void;
   onDelete?: (id: string) => void;
   onReply?: () => void;
+  onReact?: (id: string, reaction: string) => void;
+  onUnreact?: (id: string, reaction: string) => void;
+  onStar?: (id: string) => void;
+  onUnstar?: (id: string) => void;
+  onForward?: (id: string) => void;
 }
 
 export const MessageBubble = ({
@@ -37,9 +56,18 @@ export const MessageBubble = ({
   mediaUrl,
   mediaType,
   isEdited = false,
+  isForwarded = false,
+  isStarred = false,
+  status = 'sent',
+  reactions = [],
   onEdit,
   onDelete,
   onReply,
+  onReact,
+  onUnreact,
+  onStar,
+  onUnstar,
+  onForward,
 }: MessageBubbleProps) => {
   return (
     <div className={cn(
@@ -61,15 +89,26 @@ export const MessageBubble = ({
           </span>
         )}
 
+        {isForwarded && (
+          <Badge variant="secondary" className="mb-1 text-xs">
+            <Forward className="h-3 w-3 mr-1" />
+            Forwarded
+          </Badge>
+        )}
+
         <div className="flex items-start gap-1 md:gap-2">
           <div
             className={cn(
-              "rounded-2xl px-3 py-2 md:px-4 shadow-sm",
+              "rounded-2xl px-3 py-2 md:px-4 shadow-sm relative",
               isOwn
                 ? "bg-primary text-primary-foreground rounded-tr-sm"
                 : "bg-muted rounded-tl-sm"
             )}
           >
+            {isStarred && (
+              <Star className="absolute -top-2 -right-2 h-4 w-4 fill-yellow-500 text-yellow-500" />
+            )}
+            
             {mediaUrl && (
               <div className="mb-2">
                 {mediaType?.startsWith('image/') ? (
@@ -94,7 +133,7 @@ export const MessageBubble = ({
             )}
           </div>
           
-          {(onEdit || onDelete || onReply) && (
+          {(onEdit || onDelete || onReply || onReact || onStar || onForward) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -106,6 +145,13 @@ export const MessageBubble = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={isOwn ? "end" : "start"} className="min-w-[160px]">
+                {onReact && (
+                  <div className="p-2 flex items-center gap-1">
+                    <ReactionPicker onReact={(reaction) => onReact(id, reaction)} />
+                    <span className="text-xs text-muted-foreground ml-2">React</span>
+                  </div>
+                )}
+                {onReact && <DropdownMenuSeparator />}
                 {onReply && (
                   <DropdownMenuItem onClick={onReply} className="py-3 md:py-2">
                     <Reply className="h-4 w-4 mr-3" />
@@ -116,6 +162,22 @@ export const MessageBubble = ({
                   <Copy className="h-4 w-4 mr-3" />
                   Copy
                 </DropdownMenuItem>
+                {onForward && (
+                  <DropdownMenuItem onClick={() => onForward(id)} className="py-3 md:py-2">
+                    <Forward className="h-4 w-4 mr-3" />
+                    Forward
+                  </DropdownMenuItem>
+                )}
+                {(onStar || onUnstar) && (
+                  <DropdownMenuItem 
+                    onClick={() => isStarred ? onUnstar?.(id) : onStar?.(id)} 
+                    className="py-3 md:py-2"
+                  >
+                    <Star className={cn("h-4 w-4 mr-3", isStarred && "fill-yellow-500 text-yellow-500")} />
+                    {isStarred ? 'Unstar' : 'Star'}
+                  </DropdownMenuItem>
+                )}
+                {(onStar || onUnstar) && <DropdownMenuSeparator />}
                 {isOwn && onEdit && (
                   <DropdownMenuItem onClick={() => onEdit(id, content)} className="py-3 md:py-2">
                     <Edit2 className="h-4 w-4 mr-3" />
@@ -136,9 +198,18 @@ export const MessageBubble = ({
           )}
         </div>
 
-        <span className="text-xs text-muted-foreground mt-1 px-2 md:px-3">
-          {formatDistanceToNow(new Date(timestamp), { addSuffix: true })}
-        </span>
+        {onReact && onUnreact && (
+          <MessageReactions
+            reactions={reactions}
+            onReact={(type) => onReact(id, type)}
+            onUnreact={(type) => onUnreact(id, type)}
+          />
+        )}
+
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 px-2 md:px-3">
+          <span>{formatDistanceToNow(new Date(timestamp), { addSuffix: true })}</span>
+          {isOwn && <ReadReceiptIndicator status={status} isOwn={isOwn} />}
+        </div>
       </div>
     </div>
   );

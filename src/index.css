@@ -260,4 +260,30 @@ All colors MUST be HSL.
   .spacing-responsive {
     @apply space-y-4 md:space-y-6;
   }
+  
+  /* Typing indicator animation */
+  .animate-bounce {
+    animation: bounce 1.4s infinite;
+  }
+  
+  .delay-0 {
+    animation-delay: 0s;
+  }
+  
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
+  
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
 }

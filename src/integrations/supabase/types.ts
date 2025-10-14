@@ -555,6 +555,127 @@ export type Database = {
           },
         ]
       }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_posts: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts_view"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "group_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          avatar_url: string | null
+          cover_url: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          member_count: number | null
+          name: string
+          privacy: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          member_count?: number | null
+          name: string
+          privacy?: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          member_count?: number | null
+          name?: string
+          privacy?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       hashtags: {
         Row: {
           created_at: string | null
@@ -827,11 +948,15 @@ export type Database = {
           content: string
           created_at: string | null
           deleted_for: string[] | null
+          edited_at: string | null
           forwarded_from_message_id: string | null
           id: string
+          is_edited: boolean | null
           is_forwarded: boolean | null
+          media_type: string | null
           media_url: string | null
           receiver_id: string | null
+          reply_to: string | null
           sender_id: string | null
           status: string | null
         }
@@ -840,11 +965,15 @@ export type Database = {
           content: string
           created_at?: string | null
           deleted_for?: string[] | null
+          edited_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
+          is_edited?: boolean | null
           is_forwarded?: boolean | null
+          media_type?: string | null
           media_url?: string | null
           receiver_id?: string | null
+          reply_to?: string | null
           sender_id?: string | null
           status?: string | null
         }
@@ -853,11 +982,15 @@ export type Database = {
           content?: string
           created_at?: string | null
           deleted_for?: string[] | null
+          edited_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
+          is_edited?: boolean | null
           is_forwarded?: boolean | null
+          media_type?: string | null
           media_url?: string | null
           receiver_id?: string | null
+          reply_to?: string | null
           sender_id?: string | null
           status?: string | null
         }
@@ -945,6 +1078,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "message_with_users"
             referencedColumns: ["sender_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "message_with_users"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
           },
           {
             foreignKeyName: "messages_sender_id_fkey"
@@ -1456,6 +1631,7 @@ export type Database = {
           cover_url: string | null
           created_at: string | null
           display_name: string
+          full_name: string | null
           gender: string | null
           id: string
           is_private: boolean | null
@@ -1476,6 +1652,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string | null
           display_name: string
+          full_name?: string | null
           gender?: string | null
           id: string
           is_private?: boolean | null
@@ -1496,6 +1673,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string | null
           display_name?: string
+          full_name?: string | null
           gender?: string | null
           id?: string
           is_private?: boolean | null

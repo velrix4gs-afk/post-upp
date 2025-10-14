@@ -2,16 +2,21 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
 import { useFollowers } from '@/hooks/useFollowers';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import Navigation from '@/components/Navigation';
 import { MessageBubble } from '@/components/MessageBubble';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import { NewChatDialog } from '@/components/NewChatDialog';
+import TypingIndicator from '@/components/TypingIndicator';
+import { StarredMessagesDialog } from '@/components/messaging/StarredMessagesDialog';
+import { ForwardMessageDialog } from '@/components/messaging/ForwardMessageDialog';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -31,8 +36,25 @@ import { toast } from '@/hooks/use-toast';
 const MessagesPage = () => {
   const { user } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const { chats, messages, loading, sendMessage, editMessage, deleteMessage, createChat, refetchChats, refetchMessages } = useMessages(selectedChatId || undefined);
+  const { 
+    chats, 
+    messages, 
+    loading, 
+    sendMessage, 
+    editMessage, 
+    deleteMessage, 
+    createChat, 
+    reactToMessage,
+    unreactToMessage,
+    starMessage,
+    unstarMessage,
+    forwardMessage,
+    markMessageRead,
+    refetchChats, 
+    refetchMessages 
+  } = useMessages(selectedChatId || undefined);
   const { following } = useFollowers();
+  const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [newChatSearch, setNewChatSearch] = useState('');
@@ -41,6 +63,9 @@ const MessagesPage = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [showStarredDialog, setShowStarredDialog] = useState(false);
+  const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -179,7 +204,12 @@ const MessagesPage = () => {
     }
   };
 
-  // Removed - reactions will be implemented in Phase 1 Step 2
+  const handleForwardMessage = async (chatIds: string[]) => {
+    if (forwardingMessageId) {
+      await forwardMessage(forwardingMessageId, chatIds);
+      setForwardingMessageId(null);
+    }
+  };
 
   const handleCreateNewChat = async (friendId: string) => {
     try {
@@ -379,15 +409,28 @@ const MessagesPage = () => {
                             mediaUrl={message.media_url}
                             mediaType={message.media_type}
                             isEdited={message.is_edited}
+                            status={message.status}
+                            isForwarded={message.is_forwarded}
                             onEdit={isOwn ? handleEditMessage : undefined}
                             onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
                             onReply={() => setReplyingTo(message)}
+                            onReact={reactToMessage}
+                            onUnreact={unreactToMessage}
+                            onStar={starMessage}
+                            onUnstar={unstarMessage}
+                            onForward={(id) => {
+                              setForwardingMessageId(id);
+                              setShowForwardDialog(true);
+                            }}
                           />
                         );
                       })
                     )}
                     <div ref={messagesEndRef} />
                   </div>
+                  
+                  {/* Typing Indicator */}
+                  {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
                 </ScrollArea>
 
                 {/* Reply Preview */}
@@ -466,7 +509,10 @@ const MessagesPage = () => {
                       <Input
                         placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
                         value={messageText}
-                        onChange={(e) => setMessageText(e.target.value)}
+                        onChange={(e) => {
+                          setMessageText(e.target.value);
+                          handleTyping();
+                        }}
                         className="flex-1 h-10 text-base"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
@@ -527,11 +573,28 @@ const MessagesPage = () => {
         </Card>
       </div>
 
-      {/* New Chat Dialog */}
+      {/* Dialogs */}
       <NewChatDialog
         open={showNewChatDialog}
         onClose={() => setShowNewChatDialog(false)}
         onSelectFriend={handleCreateNewChat}
+      />
+
+      <StarredMessagesDialog
+        open={showStarredDialog}
+        onClose={() => setShowStarredDialog(false)}
+        chatId={selectedChatId || undefined}
+      />
+
+      <ForwardMessageDialog
+        open={showForwardDialog}
+        onClose={() => {
+          setShowForwardDialog(false);
+          setForwardingMessageId(null);
+        }}
+        onForward={handleForwardMessage}
+        chats={chats}
+        currentChatId={selectedChatId || undefined}
       />
 
       <AlertDialog open={!!deletingMessageId} onOpenChange={() => setDeletingMessageId(null)}>
