@@ -12,11 +12,21 @@ const TrendingFeed = () => {
     try {
       setLoading(true);
       
-      // Fetch trending posts using the view
+      // Fetch trending posts - view already sorts by trending_score DESC
       const { data, error } = await supabase
         .from('trending_posts')
         .select(`
-          *,
+          id,
+          user_id,
+          content,
+          media_url,
+          media_type,
+          privacy,
+          reactions_count,
+          comments_count,
+          shares_count,
+          created_at,
+          updated_at,
           profiles:user_id (
             display_name,
             username,
@@ -73,7 +83,21 @@ const TrendingFeed = () => {
       </div>
       
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <PostCard 
+          key={post.id} 
+          post={{
+            id: post.id,
+            content: post.content || '',
+            media_url: post.media_url,
+            created_at: post.created_at,
+            reactions_count: post.reactions_count,
+            comments_count: post.comments_count,
+            shares_count: post.shares_count || 0,
+            author_name: post.profiles?.display_name || 'Unknown User',
+            author_avatar: post.profiles?.avatar_url,
+            author_id: post.user_id
+          }}
+        />
       ))}
     </div>
   );

@@ -213,22 +213,30 @@ const MessagesPage = () => {
 
   const handleCreateNewChat = async (friendId: string) => {
     try {
+      console.log('Creating chat with friend:', friendId);
       const chatId = await createChat([friendId], false);
+      console.log('Chat created with ID:', chatId);
+      
       if (chatId) {
         setSelectedChatId(chatId);
-        setShowNewChatDialog(false);
         setSearchQuery('');
+        setShowNewChatDialog(false);
         await refetchChats();
+        toast({
+          title: 'Success',
+          description: 'Chat created successfully'
+        });
       } else {
-        throw new Error('Failed to create chat');
+        throw new Error('Failed to create chat - no ID returned');
       }
     } catch (error: any) {
       console.error('Create new chat error:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create chat',
+        description: error.message || 'Failed to create chat. Please try again.',
         variant: 'destructive'
       });
+      throw error; // Re-throw so NewChatDialog knows it failed
     }
   };
 

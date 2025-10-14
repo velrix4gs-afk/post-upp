@@ -16,6 +16,7 @@ interface NewChatDialogProps {
 export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogProps) => {
   const { friends, loading } = useFriends();
   const [searchQuery, setSearchQuery] = useState('');
+  const [creating, setCreating] = useState(false);
 
   const filteredFriends = friends.filter(friend =>
     !searchQuery.trim() ||
@@ -67,10 +68,17 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
                 {filteredFriends.map(friend => (
                   <div
                     key={friend.id}
-                    className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer transition-colors"
-                    onClick={() => {
-                      onSelectFriend(friend.id);
-                      onClose();
+                    className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer transition-colors disabled:opacity-50"
+                    onClick={async () => {
+                      if (creating) return;
+                      setCreating(true);
+                      try {
+                        await onSelectFriend(friend.id);
+                        setSearchQuery('');
+                        onClose();
+                      } finally {
+                        setCreating(false);
+                      }
                     }}
                   >
                     <Avatar>
