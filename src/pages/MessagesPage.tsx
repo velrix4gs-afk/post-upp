@@ -179,10 +179,7 @@ const MessagesPage = () => {
     }
   };
 
-  const handleReact = async (messageId: string, emoji: string) => {
-    // TODO: Implement when types are updated
-    console.log('React with:', emoji, 'to message:', messageId);
-  };
+  // Removed - reactions will be implemented in Phase 1 Step 2
 
   const handleCreateNewChat = async (friendId: string) => {
     try {
@@ -314,12 +311,7 @@ const MessagesPage = () => {
             </ScrollArea>
           </div>
 
-          {/* New Chat Dialog */}
-          <NewChatDialog
-            open={showNewChatDialog}
-            onClose={() => setShowNewChatDialog(false)}
-            onSelectFriend={handleCreateNewChat}
-          />
+          {/* NewChatDialog is rendered at bottom of component */}
 
           {/* Chat Area */}
           <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
@@ -536,52 +528,11 @@ const MessagesPage = () => {
       </div>
 
       {/* New Chat Dialog */}
-      <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New Message</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search followers..." 
-                className="pl-9"
-                value={newChatSearch}
-                onChange={(e) => setNewChatSearch(e.target.value)}
-              />
-            </div>
-            <ScrollArea className="h-64">
-              {following
-                .filter(follower => 
-                  !newChatSearch.trim() ||
-                  follower.following.display_name.toLowerCase().includes(newChatSearch.toLowerCase()) ||
-                  follower.following.username.toLowerCase().includes(newChatSearch.toLowerCase())
-                )
-                .map((follower) => (
-                <div
-                  key={follower.following.id}
-                  className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg cursor-pointer"
-                  onClick={() => handleCreateNewChat(follower.following.id)}
-                >
-                  <Avatar>
-                    <AvatarImage src={follower.following.avatar_url} />
-                    <AvatarFallback>
-                      {follower.following.display_name[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{follower.following.display_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      @{follower.following.username}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </ScrollArea>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <NewChatDialog
+        open={showNewChatDialog}
+        onClose={() => setShowNewChatDialog(false)}
+        onSelectFriend={handleCreateNewChat}
+      />
 
       <AlertDialog open={!!deletingMessageId} onOpenChange={() => setDeletingMessageId(null)}>
         <AlertDialogContent>
