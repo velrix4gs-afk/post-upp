@@ -10,6 +10,7 @@ import { TrendingUp, Users, Hash, Sparkles, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
 import { useFollowers } from '@/hooks/useFollowers';
+import { useHashtags } from '@/hooks/useHashtags';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostCard } from '@/components/PostCard';
@@ -28,6 +29,7 @@ const ExplorePage = () => {
   const { user } = useAuth();
   const { posts, loading: postsLoading } = usePosts();
   const { followUser } = useFollowers();
+  const { trending: trendingHashtags, loading: hashtagsLoading } = useHashtags();
   const [trendingUsers, setTrendingUsers] = useState<TrendingUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
@@ -224,13 +226,49 @@ const ExplorePage = () => {
           </TabsContent>
 
           <TabsContent value="hashtags">
-            <Card className="p-12 text-center">
-              <Hash className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">Hashtags coming soon</h3>
-              <p className="text-muted-foreground">
-                Start using hashtags in your posts and they'll appear here
-              </p>
-            </Card>
+            {hashtagsLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <Card key={i} className="p-4">
+                    <Skeleton className="h-6 w-32 mb-2" />
+                    <Skeleton className="h-4 w-24" />
+                  </Card>
+                ))}
+              </div>
+            ) : trendingHashtags.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {trendingHashtags.map(hashtag => (
+                  <Card 
+                    key={hashtag.id}
+                    className="p-4 hover:shadow-md transition-shadow cursor-pointer group"
+                    onClick={() => navigate(`/hashtag/${hashtag.tag}`)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Hash className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                            {hashtag.tag}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {hashtag.usage_count} {hashtag.usage_count === 1 ? 'post' : 'posts'}
+                        </p>
+                      </div>
+                      <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="p-12 text-center">
+                <Hash className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No hashtags yet</h3>
+                <p className="text-muted-foreground">
+                  Start using hashtags in your posts and they'll appear here
+                </p>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

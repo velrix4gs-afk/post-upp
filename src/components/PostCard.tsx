@@ -5,11 +5,13 @@ import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2 }
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import PollCard from "./PollCard";
+import { PostContent } from "./PostContent";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -52,9 +54,9 @@ export interface PostCardProps {
 export const PostCard = ({ post }: PostCardProps) => {
   const { user } = useAuth();
   const { toggleReaction, updatePost, deletePost, posts } = usePosts();
+  const { toggleBookmark, isBookmarked } = useBookmarks();
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -226,7 +228,7 @@ export const PostCard = ({ post }: PostCardProps) => {
           </div>
 
           <div className="mb-4">
-            <p className="text-base mb-3 whitespace-pre-wrap">{post.content}</p>
+            <PostContent content={post.content} />
             {post.media_url && (
               <div className="rounded-lg overflow-hidden">
                 <img 
@@ -269,9 +271,9 @@ export const PostCard = ({ post }: PostCardProps) => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setIsSaved(!isSaved)}
+              onClick={() => toggleBookmark(post.id)}
             >
-              <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+              <Bookmark className={`h-4 w-4 ${isBookmarked(post.id) ? 'fill-current text-primary' : ''}`} />
             </Button>
           </div>
         </div>
