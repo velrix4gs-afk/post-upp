@@ -34,6 +34,27 @@ export const useFriends = () => {
   useEffect(() => {
     if (user) {
       fetchFriendships();
+
+      // Set up real-time subscription for friendships
+      const channel = supabase
+        .channel('friendships-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'friendships',
+            filter: `requester_id=eq.${user.id},addressee_id=eq.${user.id}`
+          },
+          () => {
+            fetchFriendships();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

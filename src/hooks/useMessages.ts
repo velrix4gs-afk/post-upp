@@ -60,6 +60,38 @@ export const useMessages = (chatId?: string) => {
   useEffect(() => {
     if (user) {
       fetchChats();
+
+      // Set up real-time subscription for chats
+      const chatsChannel = supabase
+        .channel('chats-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'chats'
+          },
+          () => {
+            fetchChats();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'chat_participants',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchChats();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(chatsChannel);
+      };
     }
   }, [user]);
 

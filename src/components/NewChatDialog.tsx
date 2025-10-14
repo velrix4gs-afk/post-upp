@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
-import { useFriends } from '@/hooks/useFriends';
+import { useFollowers } from '@/hooks/useFollowers';
 
 interface NewChatDialogProps {
   open: boolean;
@@ -14,9 +14,12 @@ interface NewChatDialogProps {
 }
 
 export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogProps) => {
-  const { friends, loading } = useFriends();
+  const { following, loading } = useFollowers();
   const [searchQuery, setSearchQuery] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // Get the list of people we're following (our friends)
+  const friends = following.map(f => f.following).filter(Boolean);
 
   const filteredFriends = friends.filter(friend =>
     !searchQuery.trim() ||
@@ -60,7 +63,7 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="font-medium mb-2">No friends found</p>
                 <p className="text-sm">
-                  {searchQuery ? 'Try a different search term' : 'Add some friends to start messaging'}
+                  {searchQuery ? 'Try a different search term' : 'Follow some people to start messaging'}
                 </p>
               </div>
             ) : (
