@@ -9,11 +9,12 @@ import Stories from '@/components/Stories';
 import TrendingFeed from '@/components/TrendingFeed';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Users, Hash, UserCheck, Compass, Menu } from 'lucide-react';
+import { TrendingUp, Users, Hash, UserCheck, Compass, Menu, MessageSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import FriendSuggestions from '@/components/FriendSuggestions';
 
 const Feed = () => {
   const navigate = useNavigate();
@@ -52,79 +53,93 @@ const Feed = () => {
 
   // Quick Actions Component (reusable for both sidebar and sheet)
   const QuickActionsContent = () => (
-    <Card className="p-4">
-      <h3 className="font-semibold mb-4 flex items-center gap-2">
-        <Compass className="h-5 w-5" />
-        Quick Actions
-      </h3>
-      <div className="space-y-2">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start" 
-          onClick={() => {
-            navigate('/explore');
-            setIsQuickActionsOpen(false);
-          }}
-        >
-          <Compass className="h-4 w-4 mr-2" />
-          Explore
-        </Button>
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start"
-          onClick={() => {
-            navigate('/friends');
-            setIsQuickActionsOpen(false);
-          }}
-        >
-          <UserCheck className="h-4 w-4 mr-2" />
-          Find Friends
-        </Button>
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start"
-          onClick={() => {
-            navigate('/groups');
-            setIsQuickActionsOpen(false);
-          }}
-        >
-          <Users className="h-4 w-4 mr-2" />
-          Browse Groups
-        </Button>
-      </div>
-    </Card>
+    <div className="space-y-2 p-1">
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start" 
+        onClick={() => {
+          navigate('/messages');
+          setIsQuickActionsOpen(false);
+        }}
+      >
+        <MessageSquare className="h-4 w-4 mr-2" />
+        Messages
+      </Button>
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start" 
+        onClick={() => {
+          navigate('/explore');
+          setIsQuickActionsOpen(false);
+        }}
+      >
+        <Compass className="h-4 w-4 mr-2" />
+        Explore
+      </Button>
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start"
+        onClick={() => {
+          navigate('/friends');
+          setIsQuickActionsOpen(false);
+        }}
+      >
+        <UserCheck className="h-4 w-4 mr-2" />
+        Find Friends
+      </Button>
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start"
+        onClick={() => {
+          navigate('/groups');
+          setIsQuickActionsOpen(false);
+        }}
+      >
+        <Users className="h-4 w-4 mr-2" />
+        Browse Groups
+      </Button>
+    </div>
   );
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
+      {/* Mobile/Tablet Quick Actions - Fixed Top Left */}
+      {isMobile && (
+        <div className="lg:hidden fixed top-16 left-4 z-40">
+          <Sheet open={isQuickActionsOpen} onOpenChange={setIsQuickActionsOpen}>
+            <SheetTrigger asChild>
+              <Button size="icon" className="rounded-full shadow-lg">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-4">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Compass className="h-5 w-5" />
+                Quick Actions
+              </h3>
+              <QuickActionsContent />
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
+      
       <div className="container mx-auto p-4 max-w-7xl">
         <div className="grid lg:grid-cols-12 gap-6">
-          {/* Mobile/Tablet Quick Actions Button */}
-          {isMobile && (
-            <div className="lg:hidden mb-4">
-              <Sheet open={isQuickActionsOpen} onOpenChange={setIsQuickActionsOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <Menu className="h-4 w-4 mr-2" />
-                    Quick Actions
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72">
-                  <QuickActionsContent />
-                </SheetContent>
-              </Sheet>
-            </div>
-          )}
-
           {/* Desktop Left Sidebar - Quick Actions */}
           <div className="hidden lg:block lg:col-span-3 space-y-4">
-            <QuickActionsContent />
+            <Card className="p-4">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Compass className="h-5 w-5" />
+                Quick Actions
+              </h3>
+              <QuickActionsContent />
+            </Card>
           </div>
 
           {/* Main Feed */}
-          <div className="lg:col-span-9 space-y-6">
+          <div className="lg:col-span-6 space-y-6">
             {/* Stories */}
             <Stories />
 
@@ -206,6 +221,11 @@ const Feed = () => {
               ))}
             </div>
             )}
+          </div>
+
+          {/* Desktop Right Sidebar - Friend Suggestions */}
+          <div className="hidden lg:block lg:col-span-3 space-y-4">
+            <FriendSuggestions />
           </div>
         </div>
       </div>
