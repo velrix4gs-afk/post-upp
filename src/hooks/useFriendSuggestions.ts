@@ -28,27 +28,37 @@ export const useFriendSuggestions = () => {
 
   const fetchSuggestions = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
 
-      // Get my friends
+      // Get user's current friends and people they follow
       const { data: myFriends } = await supabase
         .from('friendships')
         .select('requester_id, addressee_id')
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .eq('status', 'accepted');
 
+      const { data: myFollowing } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', user.id);
+
       const myFriendIds = myFriends?.map(f => 
         f.requester_id === user.id ? f.addressee_id : f.requester_id
       ) || [];
 
+      const myFollowingIds = myFollowing?.map(f => f.following_id) || [];
+      
+      // Combine friends and following to exclude from suggestions
+      const excludeIds = [...new Set([...myFriendIds, ...myFollowingIds, user.id])];
+
       if (myFriendIds.length === 0) {
-        // If no friends, suggest popular users
+        // If no friends, suggest popular users not already followed
         const { data: popularUsers } = await supabase
           .from('profiles')
           .select('id, username, display_name, avatar_url')
-          .neq('id', user.id)
+          .not('id', 'in', `(${excludeIds.join(',')})`)
           .limit(10);
 
         setSuggestions((popularUsers || []).map(u => ({
@@ -71,13 +81,13 @@ export const useFriendSuggestions = () => {
       const suggestionMap = new Map<string, Set<string>>();
       
       friendsOfFriends?.forEach(friendship => {
-        const potentialFriend = friendship.requester_id !== user.id && !myFriendIds.includes(friendship.requester_id)
+        const potentialFriend = friendship.requester_id !== user.id && !excludeIds.includes(friendship.requester_id)
           ? friendship.requester_id
-          : friendship.addressee_id !== user.id && !myFriendIds.includes(friendship.addressee_id)
+          : friendship.addressee_id !== user.id && !excludeIds.includes(friendship.addressee_id)
           ? friendship.addressee_id
           : null;
 
-        if (potentialFriend && potentialFriend !== user.id) {
+        if (potentialFriend && !excludeIds.includes(potentialFriend)) {
           if (!suggestionMap.has(potentialFriend)) {
             suggestionMap.set(potentialFriend, new Set());
           }
@@ -96,6 +106,7 @@ export const useFriendSuggestions = () => {
       const suggestionIds = Array.from(suggestionMap.keys()).slice(0, 10);
       
       if (suggestionIds.length === 0) {
+        setSuggestions([]);
         setLoading(false);
         return;
       }

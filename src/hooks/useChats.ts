@@ -100,7 +100,15 @@ export const useChats = () => {
   };
 
   const createChat = async (participantId: string) => {
-    if (!user) return null;
+    if (!user) {
+      console.error('No user found');
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to create a chat',
+        variant: 'destructive'
+      });
+      return null;
+    }
 
     try {
       // Check if chat already exists
@@ -120,6 +128,7 @@ export const useChats = () => {
               .single();
 
             if (otherParticipant?.user_id === participantId) {
+              console.log('Found existing chat:', ec.chat_id);
               return ec.chat_id;
             }
           }
@@ -127,15 +136,27 @@ export const useChats = () => {
       }
 
       // Create new chat
+      console.log('Creating new chat for participant:', participantId);
       const { data: chat, error: chatError } = await supabase
         .from('chats')
         .insert({
-          type: 'private'
+          type: 'private',
+          created_by: user.id
         })
         .select()
         .single();
 
-      if (chatError) throw chatError;
+      if (chatError) {
+        console.error('Chat creation error:', chatError);
+        throw chatError;
+      }
+
+      if (!chat || !chat.id) {
+        console.error('No chat ID returned from insert');
+        throw new Error('No chat ID returned from database');
+      }
+
+      console.log('Chat created with ID:', chat.id);
 
       // Add participants
       const { error: participantsError } = await supabase
@@ -145,14 +166,19 @@ export const useChats = () => {
           { chat_id: chat.id, user_id: participantId, role: 'member' }
         ]);
 
-      if (participantsError) throw participantsError;
+      if (participantsError) {
+        console.error('Participants error:', participantsError);
+        throw participantsError;
+      }
 
+      console.log('Participants added successfully');
       await fetchChats();
       return chat.id;
     } catch (err: any) {
+      console.error('Create chat error:', err);
       toast({
         title: 'Error',
-        description: 'Failed to create chat',
+        description: err.message || 'Failed to create chat',
         variant: 'destructive'
       });
       return null;

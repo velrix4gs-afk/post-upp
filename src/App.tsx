@@ -26,6 +26,7 @@ const EmailVerification = lazy(() => import("./pages/EmailVerification"));
 const HashtagPage = lazy(() => import("./pages/HashtagPage"));
 const AdminSetup = lazy(() => import("./pages/AdminSetup"));
 const AnalyticsDashboard = lazy(() => import("./pages/AnalyticsDashboard"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -161,6 +162,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AnalyticsDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
                   </ProtectedRoute>
                 } 
               />

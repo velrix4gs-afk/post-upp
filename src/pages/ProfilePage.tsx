@@ -30,6 +30,8 @@ import { useFollowers } from '@/hooks/useFollowers';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import CreatePost from '@/components/CreatePost';
 
 const ProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -68,48 +70,64 @@ const ProfilePage = () => {
   };
   
   const handleMessage = async () => {
-    if (!profileUserId) return;
+    if (!profileUserId || !user) return;
     
-    // Create or get existing chat
-    const { data: existingChats } = await supabase
-      .from('chat_participants')
-      .select('chat_id, chats:chat_id(type)')
-      .eq('user_id', user?.id);
+    try {
+      // Create or get existing chat
+      const { data: existingChats } = await supabase
+        .from('chat_participants')
+        .select('chat_id, chats:chat_id(type)')
+        .eq('user_id', user.id);
 
-    if (existingChats) {
-      for (const ec of existingChats) {
-        if (ec.chats?.type === 'private') {
-          const { data: otherParticipant } = await supabase
-            .from('chat_participants')
-            .select('user_id')
-            .eq('chat_id', ec.chat_id)
-            .neq('user_id', user?.id)
-            .single();
+      if (existingChats) {
+        for (const ec of existingChats) {
+          if (ec.chats?.type === 'private') {
+            const { data: otherParticipant } = await supabase
+              .from('chat_participants')
+              .select('user_id')
+              .eq('chat_id', ec.chat_id)
+              .neq('user_id', user.id)
+              .single();
 
-          if (otherParticipant?.user_id === profileUserId) {
-            navigate(`/messages?chat=${ec.chat_id}`);
-            return;
+            if (otherParticipant?.user_id === profileUserId) {
+              navigate(`/messages?chat=${ec.chat_id}`);
+              return;
+            }
           }
         }
       }
-    }
 
-    // Create new chat
-    const { data: chat } = await supabase
-      .from('chats')
-      .insert({ type: 'private' })
-      .select()
-      .single();
+      // Create new chat
+      const { data: chat, error: chatError } = await supabase
+        .from('chats')
+        .insert({ 
+          type: 'private',
+          created_by: user.id
+        })
+        .select()
+        .single();
 
-    if (chat) {
+      if (chatError) throw chatError;
+      
+      if (!chat || !chat.id) {
+        throw new Error('Failed to create chat - no ID returned');
+      }
+
       await supabase
         .from('chat_participants')
         .insert([
-          { chat_id: chat.id, user_id: user?.id, role: 'member' },
+          { chat_id: chat.id, user_id: user.id, role: 'member' },
           { chat_id: chat.id, user_id: profileUserId, role: 'member' }
         ]);
 
       navigate(`/messages?chat=${chat.id}`);
+    } catch (error: any) {
+      console.error('Message error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to start conversation',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -299,19 +317,15 @@ const ProfilePage = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Posts</h2>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Privacy
-              </Button>
-            </div>
           </div>
+
+          {isOwnProfile && <CreatePost />}
 
           {userPosts.length === 0 ? (
             <Card className="p-8 text-center">
               <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
               <p className="text-muted-foreground">
-                Share your first post to get started!
+                {isOwnProfile ? 'Share your first post to get started!' : 'This user hasn\'t posted anything yet.'}
               </p>
             </Card>
           ) : (

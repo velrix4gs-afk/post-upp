@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
-import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart } from 'lucide-react';
+import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings } from 'lucide-react';
 import { useState } from 'react';
 import {
   DropdownMenu,
@@ -195,8 +195,12 @@ const Navigation = () => {
                       Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/analytics')}>
-                      <BarChart className="h-4 w-4 mr-2" />
-                      Analytics
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      <span>Analytics</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/search')} className="md:hidden">
                       <Search className="h-4 w-4 mr-2" />
