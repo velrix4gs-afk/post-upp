@@ -9,7 +9,7 @@ import Stories from '@/components/Stories';
 import TrendingFeed from '@/components/TrendingFeed';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Users, Hash, UserCheck, Compass, Menu, MessageSquare } from 'lucide-react';
+import { TrendingUp, Users, Hash, UserCheck, Compass, Menu, MessageSquare, Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -64,6 +64,17 @@ const Feed = () => {
       >
         <MessageSquare className="h-4 w-4 mr-2" />
         Messages
+      </Button>
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start" 
+        onClick={() => {
+          navigate('/settings');
+          setIsQuickActionsOpen(false);
+        }}
+      >
+        <Settings className="h-4 w-4 mr-2" />
+        Settings
       </Button>
       <Button 
         variant="ghost" 

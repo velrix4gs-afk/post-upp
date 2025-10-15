@@ -104,21 +104,27 @@ const ProfilePage = () => {
           type: 'private',
           created_by: user.id
         })
-        .select()
-        .single();
+        .select('id')
+        .maybeSingle();
 
-      if (chatError) throw chatError;
+      if (chatError) {
+        throw new Error(`Failed to create chat: ${chatError.message}`);
+      }
       
-      if (!chat || !chat.id) {
-        throw new Error('Failed to create chat - no ID returned');
+      if (!chat?.id) {
+        throw new Error('Failed to create chat - no ID returned. Check RLS policies.');
       }
 
-      await supabase
+      const { error: participantsError } = await supabase
         .from('chat_participants')
         .insert([
           { chat_id: chat.id, user_id: user.id, role: 'member' },
           { chat_id: chat.id, user_id: profileUserId, role: 'member' }
         ]);
+
+      if (participantsError) {
+        throw new Error(`Failed to add participants: ${participantsError.message}`);
+      }
 
       navigate(`/messages?chat=${chat.id}`);
     } catch (error: any) {

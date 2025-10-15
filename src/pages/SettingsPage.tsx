@@ -41,8 +41,11 @@ const SettingsPage = () => {
     profile_visibility: 'public',
     post_visibility: 'public',
     friend_requests: 'everyone',
-    online_status: true
+    online_status: true,
+    show_activity: true
   });
+
+  const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
 
   const handleExportData = async () => {
     try {
@@ -270,6 +273,17 @@ const SettingsPage = () => {
                     <Switch
                       checked={privacySettings.online_status}
                       onCheckedChange={(checked) => setPrivacySettings({ ...privacySettings, online_status: checked })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <Label className="text-base">Activity Status</Label>
+                      <p className="text-sm text-muted-foreground">Show your activity to others</p>
+                    </div>
+                    <Switch
+                      checked={privacySettings.show_activity}
+                      onCheckedChange={(checked) => setPrivacySettings({ ...privacySettings, show_activity: checked })}
                     />
                   </div>
                 </div>

@@ -137,43 +137,45 @@ export const useChats = () => {
 
       // Create new chat
       console.log('Creating new chat for participant:', participantId);
-      const { data: chat, error: chatError } = await supabase
+      
+      // Use a transaction-like approach: insert chat and participants together
+      const { data: insertedChat, error: chatError } = await supabase
         .from('chats')
         .insert({
           type: 'private',
           created_by: user.id
         })
-        .select()
-        .single();
+        .select('id')
+        .maybeSingle();
 
       if (chatError) {
         console.error('Chat creation error:', chatError);
-        throw chatError;
+        throw new Error(`Failed to create chat: ${chatError.message}`);
       }
 
-      if (!chat || !chat.id) {
-        console.error('No chat ID returned from insert');
-        throw new Error('No chat ID returned from database');
+      if (!insertedChat?.id) {
+        console.error('No chat ID returned from insert. Data:', insertedChat);
+        throw new Error('No chat ID returned from database. Please check RLS policies.');
       }
 
-      console.log('Chat created with ID:', chat.id);
+      console.log('Chat created with ID:', insertedChat.id);
 
       // Add participants
       const { error: participantsError } = await supabase
         .from('chat_participants')
         .insert([
-          { chat_id: chat.id, user_id: user.id, role: 'member' },
-          { chat_id: chat.id, user_id: participantId, role: 'member' }
+          { chat_id: insertedChat.id, user_id: user.id, role: 'member' },
+          { chat_id: insertedChat.id, user_id: participantId, role: 'member' }
         ]);
 
       if (participantsError) {
         console.error('Participants error:', participantsError);
-        throw participantsError;
+        throw new Error(`Failed to add participants: ${participantsError.message}`);
       }
 
       console.log('Participants added successfully');
       await fetchChats();
-      return chat.id;
+      return insertedChat.id;
     } catch (err: any) {
       console.error('Create chat error:', err);
       toast({
