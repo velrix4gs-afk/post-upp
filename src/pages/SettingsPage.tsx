@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,8 @@ import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff } from 'lucide-react';
+import { showCleanError } from '@/lib/errorHandler';
+import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone } from 'lucide-react';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -25,7 +26,12 @@ const SettingsPage = () => {
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [newPassword, setNewPassword] = useState('');
+  const [newUsername, setNewUsername] = useState('');
 
   // Settings states
   const [notificationSettings, setNotificationSettings] = useState({
@@ -45,7 +51,52 @@ const SettingsPage = () => {
     show_activity: true
   });
 
-  const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data) {
+        setNotificationSettings({
+          push_enabled: true,
+          likes: data.notification_post_reactions ?? true,
+          comments: data.notification_post_reactions ?? true,
+          messages: data.notification_messages ?? true,
+          follows: data.notification_friend_requests ?? true,
+          email_enabled: true
+        });
+        
+        setPrivacySettings({
+          profile_visibility: data.privacy_who_can_view_profile || 'public',
+          post_visibility: 'public',
+          friend_requests: 'everyone',
+          online_status: true,
+          show_activity: true
+        });
+      }
+    };
+    
+    loadSettings();
+  }, [user]);
+
+  const handleSettingChange = async (table: string, updates: any) => {
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .update(updates)
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+    } catch (error) {
+      showCleanError(error, toast);
+    }
+  };
 
   const handleExportData = async () => {
     try {
@@ -70,16 +121,9 @@ const SettingsPage = () => {
       a.download = `account-data-${new Date().toISOString()}.json`;
       a.click();
 
-      toast({
-        title: 'Success',
-        description: 'Your data has been exported successfully',
-      });
+      toast({ description: 'Data exported successfully' });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to export data',
-        variant: 'destructive',
-      });
+      showCleanError(error, toast);
     } finally {
       setIsLoading(false);
     }
@@ -88,19 +132,11 @@ const SettingsPage = () => {
   const handleDeactivateAccount = async () => {
     try {
       setIsLoading(true);
-      // Just sign out for now - deactivation would need backend support
-      toast({
-        title: 'Account Deactivated',
-        description: 'Your account has been temporarily deactivated',
-      });
+      toast({ description: 'Account deactivated' });
       await signOut();
       navigate('/auth');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to deactivate account',
-        variant: 'destructive',
-      });
+      showCleanError(error, toast);
     } finally {
       setIsLoading(false);
     }
@@ -109,24 +145,14 @@ const SettingsPage = () => {
   const handleDeleteAccount = async () => {
     try {
       setIsLoading(true);
-      
-      // Delete user data
       await supabase.from('posts').delete().eq('user_id', user?.id);
       await supabase.from('profiles').delete().eq('id', user?.id);
-      
-      toast({
-        title: 'Account Deleted',
-        description: 'Your account has been permanently deleted',
-      });
-      
+      await supabase.auth.admin.deleteUser(user?.id!);
+      toast({ description: 'Account deleted' });
       await signOut();
       navigate('/auth');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete account',
-        variant: 'destructive',
-      });
+      showCleanError(error, toast);
     } finally {
       setIsLoading(false);
     }
@@ -135,17 +161,40 @@ const SettingsPage = () => {
   const handleLogoutAllSessions = async () => {
     try {
       await supabase.auth.signOut({ scope: 'global' });
-      toast({
-        title: 'Success',
-        description: 'Logged out from all sessions',
-      });
+      toast({ description: 'Logged out from all sessions' });
       navigate('/auth');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to logout from all sessions',
-        variant: 'destructive',
-      });
+      showCleanError(error, toast);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ description: 'Password changed successfully' });
+      setShowPasswordDialog(false);
+      setNewPassword('');
+    } catch (error) {
+      showCleanError(error, toast);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChangeUsername = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.from('profiles').update({ username: newUsername }).eq('id', user?.id);
+      if (error) throw error;
+      toast({ description: 'Username changed successfully' });
+      setShowUsernameDialog(false);
+      setNewUsername('');
+    } catch (error) {
+      showCleanError(error, toast);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -236,7 +285,13 @@ const SettingsPage = () => {
                       <Label className="text-base">Profile Visibility</Label>
                       <p className="text-sm text-muted-foreground">Control who can view your profile</p>
                     </div>
-                    <Select value={privacySettings.profile_visibility} onValueChange={(value) => setPrivacySettings({ ...privacySettings, profile_visibility: value })}>
+                    <Select 
+                      value={privacySettings.profile_visibility} 
+                      onValueChange={(value) => {
+                        setPrivacySettings({ ...privacySettings, profile_visibility: value });
+                        handleSettingChange('user_settings', { privacy_who_can_view_profile: value });
+                      }}
+                    >
                       <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
@@ -253,7 +308,12 @@ const SettingsPage = () => {
                       <Label className="text-base">Friend Requests</Label>
                       <p className="text-sm text-muted-foreground">Who can send you friend requests</p>
                     </div>
-                    <Select value={privacySettings.friend_requests} onValueChange={(value) => setPrivacySettings({ ...privacySettings, friend_requests: value })}>
+                    <Select 
+                      value={privacySettings.friend_requests} 
+                      onValueChange={(value) => {
+                        setPrivacySettings({ ...privacySettings, friend_requests: value });
+                      }}
+                    >
                       <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
@@ -272,7 +332,9 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={privacySettings.online_status}
-                      onCheckedChange={(checked) => setPrivacySettings({ ...privacySettings, online_status: checked })}
+                      onCheckedChange={(checked) => {
+                        setPrivacySettings({ ...privacySettings, online_status: checked });
+                      }}
                     />
                   </div>
 
@@ -283,7 +345,9 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={privacySettings.show_activity}
-                      onCheckedChange={(checked) => setPrivacySettings({ ...privacySettings, show_activity: checked })}
+                      onCheckedChange={(checked) => {
+                        setPrivacySettings({ ...privacySettings, show_activity: checked });
+                      }}
                     />
                   </div>
                 </div>
@@ -304,7 +368,9 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={notificationSettings.push_enabled}
-                      onCheckedChange={(checked) => setNotificationSettings({ ...notificationSettings, push_enabled: checked })}
+                      onCheckedChange={(checked) => {
+                        setNotificationSettings({ ...notificationSettings, push_enabled: checked });
+                      }}
                     />
                   </div>
 
@@ -317,7 +383,10 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={notificationSettings.likes}
-                      onCheckedChange={(checked) => setNotificationSettings({ ...notificationSettings, likes: checked })}
+                      onCheckedChange={(checked) => {
+                        setNotificationSettings({ ...notificationSettings, likes: checked });
+                        handleSettingChange('user_settings', { notification_post_reactions: checked });
+                      }}
                     />
                   </div>
 
@@ -328,7 +397,10 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={notificationSettings.comments}
-                      onCheckedChange={(checked) => setNotificationSettings({ ...notificationSettings, comments: checked })}
+                      onCheckedChange={(checked) => {
+                        setNotificationSettings({ ...notificationSettings, comments: checked });
+                        handleSettingChange('user_settings', { notification_post_reactions: checked });
+                      }}
                     />
                   </div>
 
@@ -339,7 +411,10 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={notificationSettings.messages}
-                      onCheckedChange={(checked) => setNotificationSettings({ ...notificationSettings, messages: checked })}
+                      onCheckedChange={(checked) => {
+                        setNotificationSettings({ ...notificationSettings, messages: checked });
+                        handleSettingChange('user_settings', { notification_messages: checked });
+                      }}
                     />
                   </div>
 
@@ -350,7 +425,10 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={notificationSettings.follows}
-                      onCheckedChange={(checked) => setNotificationSettings({ ...notificationSettings, follows: checked })}
+                      onCheckedChange={(checked) => {
+                        setNotificationSettings({ ...notificationSettings, follows: checked });
+                        handleSettingChange('user_settings', { notification_friend_requests: checked });
+                      }}
                     />
                   </div>
 
@@ -363,7 +441,9 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={notificationSettings.email_enabled}
-                      onCheckedChange={(checked) => setNotificationSettings({ ...notificationSettings, email_enabled: checked })}
+                      onCheckedChange={(checked) => {
+                        setNotificationSettings({ ...notificationSettings, email_enabled: checked });
+                      }}
                     />
                   </div>
                 </div>
@@ -378,16 +458,23 @@ const SettingsPage = () => {
                 <h3 className="text-lg font-semibold mb-4">Account Management</h3>
                 <div className="space-y-4">
                   <div className="p-4 border rounded-lg">
+                    <Label className="text-base mb-2 block">Username</Label>
+                    <div className="flex items-center gap-2">
+                      <Input value={profile?.username || ''} disabled />
+                      <Button variant="outline" size="sm" onClick={() => setShowUsernameDialog(true)}>
+                        Change
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
                     <Label className="text-base mb-2 block">Email</Label>
                     <Input value={user?.email || ''} disabled />
-                    <Button variant="link" size="sm" className="mt-2 px-0">
-                      Change Email
-                    </Button>
                   </div>
 
                   <div className="p-4 border rounded-lg">
                     <Label className="text-base mb-2 block">Password</Label>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => setShowPasswordDialog(true)}>
                       <Lock className="h-4 w-4 mr-2" />
                       Change Password
                     </Button>
@@ -491,6 +578,57 @@ const SettingsPage = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeactivateAccount}>
               Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Password Change Dialog */}
+      <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Password</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter your new password below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input 
+              type="password" 
+              placeholder="New password" 
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleChangePassword} disabled={!newPassword || isLoading}>
+              Change Password
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Username Change Dialog */}
+      <AlertDialog open={showUsernameDialog} onOpenChange={setShowUsernameDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Username</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter your new username below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input 
+              placeholder="New username" 
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleChangeUsername} disabled={!newUsername || isLoading}>
+              Change Username
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

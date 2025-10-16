@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
+import { showCleanError } from '@/lib/errorHandler';
 
 export interface Chat {
   id: string;
@@ -146,16 +147,16 @@ export const useChats = () => {
           created_by: user.id
         })
         .select('id')
-        .maybeSingle();
+        .single();
 
       if (chatError) {
         console.error('Chat creation error:', chatError);
-        throw new Error(`Failed to create chat: ${chatError.message}`);
+        throw chatError;
       }
 
       if (!insertedChat?.id) {
         console.error('No chat ID returned from insert. Data:', insertedChat);
-        throw new Error('No chat ID returned from database. Please check RLS policies.');
+        throw new Error('no-id-returned');
       }
 
       console.log('Chat created with ID:', insertedChat.id);
@@ -178,11 +179,7 @@ export const useChats = () => {
       return insertedChat.id;
     } catch (err: any) {
       console.error('Create chat error:', err);
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to create chat',
-        variant: 'destructive'
-      });
+      showCleanError(err, toast);
       return null;
     }
   };

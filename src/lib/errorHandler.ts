@@ -88,8 +88,7 @@ export const showCleanError = (error: any, toast: any, customTitle?: string) => 
   const { message, code } = getCleanError(error);
   
   toast({
-    title: customTitle || 'Error',
-    description: `${message} (${code})`,
+    description: `${message} • ${code}`,
     variant: 'destructive'
   });
 };
