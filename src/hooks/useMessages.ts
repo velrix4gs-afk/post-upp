@@ -454,7 +454,7 @@ export const useMessages = (chatId?: string) => {
         }
       }
 
-      // Create new chat via Supabase client with service role
+      // Create new chat via Supabase client
       const { data: chat, error: chatError } = await supabase
         .from('chats')
         .insert({
@@ -462,12 +462,16 @@ export const useMessages = (chatId?: string) => {
           type: isGroup ? 'group' : 'private',
           created_by: user.id
         })
-        .select()
-        .single();
+        .select('id')
+        .maybeSingle();
 
       if (chatError) {
         console.error('Chat creation error:', chatError);
-        throw new Error(`Failed to create chat: ${chatError.message}`);
+        throw new Error(`Chat Error: ${chatError.message}`);
+      }
+
+      if (!chat?.id) {
+        throw new Error('Chat creation failed - Check permissions');
       }
 
       // Add current user as admin

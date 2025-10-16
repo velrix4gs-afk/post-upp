@@ -290,6 +290,36 @@ const MessagesPage = () => {
 
             <ScrollArea className="flex-1">
               <div className="p-2">
+                {/* Following Section */}
+                {!searchQuery && following.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase px-3 mb-2">
+                      Following ({following.length})
+                    </h3>
+                    <div className="space-y-1">
+                      {following.slice(0, 5).map((follow) => (
+                        <div
+                          key={follow.id}
+                          className="p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                          onClick={() => handleCreateNewChat(follow.following_id)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={follow.following?.avatar_url} />
+                              <AvatarFallback>
+                                {follow.following?.display_name?.[0] || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">
+                              {follow.following?.display_name || 'User'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {loading ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map(i => (
@@ -304,11 +334,16 @@ const MessagesPage = () => {
                       </div>
                     ))}
                   </div>
+                ) : filteredChats.length === 0 && searchQuery ? (
+                  <div className="text-center py-8 px-4 text-muted-foreground">
+                    <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">No results found</p>
+                  </div>
                 ) : filteredChats.length === 0 ? (
                   <div className="text-center py-12 px-4 text-muted-foreground">
                     <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="font-medium mb-2">No conversations yet</p>
-                    <p className="text-sm">Visit a friend's profile to start messaging</p>
+                    <p className="text-sm">Click on a friend above to start messaging</p>
                   </div>
                 ) : (
                   filteredChats.map(chat => {

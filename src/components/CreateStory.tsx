@@ -34,7 +34,14 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
   };
 
   const handleCreateStory = async () => {
-    if (!selectedFile || !user) return;
+    if (!selectedFile || !user) {
+      toast({
+        title: 'Error',
+        description: 'Please select a file',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -44,9 +51,15 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       
       const { error: uploadError } = await supabase.storage
         .from('posts')
-        .upload(fileName, selectedFile);
+        .upload(fileName, selectedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error('Upload failed - ' + uploadError.message);
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('posts')
@@ -62,11 +75,14 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
           content: content.trim() || null
         });
 
-      if (storyError) throw storyError;
+      if (storyError) {
+        console.error('Story creation error:', storyError);
+        throw new Error('Story creation failed');
+      }
 
       toast({
         title: 'Success',
-        description: 'Story created successfully!'
+        description: 'Story created!'
       });
 
       // Reset form
@@ -76,8 +92,9 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       setIsOpen(false);
       onStoryCreated?.();
     } catch (error: any) {
+      console.error('Story error:', error);
       toast({
-        title: 'Error',
+        title: 'Story Error',
         description: error.message || 'Failed to create story',
         variant: 'destructive'
       });

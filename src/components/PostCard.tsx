@@ -102,10 +102,24 @@ export const PostCard = ({ post }: PostCardProps) => {
     
     try {
       await toggleReaction(post.id, 'like');
+      // Force refetch to ensure count is in sync
+      const { data } = await supabase
+        .from('posts')
+        .select('reactions_count')
+        .eq('id', post.id)
+        .single();
+      if (data) {
+        setLocalReactionCount(data.reactions_count);
+      }
     } catch (err) {
       // Revert on error
       setIsLiked(!newLikedState);
       setLocalReactionCount(post.reactions_count);
+      toast({
+        title: 'Error',
+        description: 'Failed to update like',
+        variant: 'destructive'
+      });
     }
   };
 
