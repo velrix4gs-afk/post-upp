@@ -21,7 +21,9 @@
     <link rel="dns-prefetch" href="https://ccyyxkjpgebjnstevgkw.supabase.co" />
     
     <!-- Preload critical resources -->
-    <link rel="preload" as="style" href="/src/index.css" />
+    <link rel="preload" as="style" href="/src/index.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/src/index.css" /></noscript>
+    
     <meta property="og:title" content="POST UP - Connect with Friends Around the World">
   <meta name="twitter:title" content="POST UP - Connect with Friends Around the World">
   <meta property="og:description" content="Join POST UP to connect with friends, share moments, and discover communities. Experience social media reimagined with real-time messaging, stories, and more.">
