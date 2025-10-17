@@ -225,11 +225,11 @@ const Auth = () => {
       <Card className="w-full max-w-md bg-gradient-card border-0 shadow-xl">
         <div className="p-8">
           <div className="text-center mb-8">
-            <div className="mb-3">
-              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-                POST UP
+            <div className="mb-3 bg-gradient-primary rounded-xl p-6">
+              <h1 className="text-4xl font-bold text-white mb-2">
+                POST-UPP
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-white/90">
                 Connect with real people, share real moments
               </p>
             </div>

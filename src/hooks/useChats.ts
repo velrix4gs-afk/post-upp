@@ -136,47 +136,29 @@ export const useChats = () => {
         }
       }
 
-      // Create new chat
+      // Create new chat using edge function to bypass RLS complexity
       console.log('Creating new chat for participant:', participantId);
       
-      // Use a transaction-like approach: insert chat and participants together
-      const { data: insertedChat, error: chatError } = await supabase
-        .from('chats')
-        .insert({
-          type: 'private',
-          created_by: user.id
-        })
-        .select('id')
-        .single();
+      const { data: chatData, error: chatError } = await supabase.functions.invoke('friendships', {
+        body: {
+          action: 'create_chat',
+          participant_id: participantId
+        }
+      });
 
       if (chatError) {
         console.error('Chat creation error:', chatError);
         throw chatError;
       }
 
-      if (!insertedChat?.id) {
-        console.error('No chat ID returned from insert. Data:', insertedChat);
+      if (!chatData?.chat_id) {
+        console.error('No chat ID returned from function. Data:', chatData);
         throw new Error('no-id-returned');
       }
 
-      console.log('Chat created with ID:', insertedChat.id);
-
-      // Add participants
-      const { error: participantsError } = await supabase
-        .from('chat_participants')
-        .insert([
-          { chat_id: insertedChat.id, user_id: user.id, role: 'member' },
-          { chat_id: insertedChat.id, user_id: participantId, role: 'member' }
-        ]);
-
-      if (participantsError) {
-        console.error('Participants error:', participantsError);
-        throw new Error(`Failed to add participants: ${participantsError.message}`);
-      }
-
-      console.log('Participants added successfully');
+      console.log('Chat created with ID:', chatData.chat_id);
       await fetchChats();
-      return insertedChat.id;
+      return chatData.chat_id;
     } catch (err: any) {
       console.error('Create chat error:', err);
       showCleanError(err, toast);

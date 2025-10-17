@@ -79,7 +79,72 @@ serve(async (req) => {
 
     if (method === 'POST') {
       const body = await req.json();
-      const { addressee_id, action } = body;
+      const { addressee_id, action, participant_id } = body;
+
+      // Handle chat creation
+      if (action === 'create_chat') {
+        if (!participant_id) {
+          throw new Error('participant_id is required');
+        }
+
+        // Check if chat already exists between these users
+        const { data: existingParticipants } = await supabaseClient
+          .from('chat_participants')
+          .select('chat_id')
+          .eq('user_id', user.id);
+
+        if (existingParticipants) {
+          for (const ep of existingParticipants) {
+            const { data: chatInfo } = await supabaseClient
+              .from('chats')
+              .select('type')
+              .eq('id', ep.chat_id)
+              .single();
+
+            if (chatInfo?.type === 'private') {
+              const { data: otherParticipant } = await supabaseClient
+                .from('chat_participants')
+                .select('user_id')
+                .eq('chat_id', ep.chat_id)
+                .neq('user_id', user.id)
+                .maybeSingle();
+
+              if (otherParticipant?.user_id === participant_id) {
+                return new Response(JSON.stringify({ chat_id: ep.chat_id, existing: true }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                });
+              }
+            }
+          }
+        }
+
+        // Create new chat
+        const { data: newChat, error: chatError } = await supabaseClient
+          .from('chats')
+          .insert({
+            type: 'private',
+            created_by: user.id
+          })
+          .select('id')
+          .single();
+
+        if (chatError) throw chatError;
+        if (!newChat?.id) throw new Error('Failed to create chat');
+
+        // Add participants
+        const { error: participantsError } = await supabaseClient
+          .from('chat_participants')
+          .insert([
+            { chat_id: newChat.id, user_id: user.id, role: 'member' },
+            { chat_id: newChat.id, user_id: participant_id, role: 'member' }
+          ]);
+
+        if (participantsError) throw participantsError;
+
+        return new Response(JSON.stringify({ chat_id: newChat.id, existing: false }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       if (!addressee_id) {
         throw new Error('addressee_id is required');
