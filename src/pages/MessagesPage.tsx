@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -290,33 +291,62 @@ const MessagesPage = () => {
 
             <ScrollArea className="flex-1">
               <div className="p-2">
+                {/* Search in Following */}
+                {!selectedChatId && (
+                  <div className="mb-4">
+                    <Input
+                      placeholder="Search friends to message..."
+                      value={newChatSearch}
+                      onChange={(e) => setNewChatSearch(e.target.value)}
+                      className="mb-2"
+                    />
+                  </div>
+                )}
+
                 {/* Following Section */}
-                {!searchQuery && following.length > 0 && (
+                {!selectedChatId && following.length > 0 && (
                   <div className="mb-4">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase px-3 mb-2">
-                      Following ({following.length})
+                      Following ({following.filter(f => 
+                        !newChatSearch || 
+                        f.following?.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
+                        f.following?.username?.toLowerCase().includes(newChatSearch.toLowerCase())
+                      ).length})
                     </h3>
                     <div className="space-y-1">
-                      {following.slice(0, 5).map((follow) => (
+                      {following
+                        .filter(f => 
+                          !newChatSearch || 
+                          f.following?.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
+                          f.following?.username?.toLowerCase().includes(newChatSearch.toLowerCase())
+                        )
+                        .slice(0, 10).map((follow) => (
                         <div
                           key={follow.id}
                           className="p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors"
                           onClick={() => handleCreateNewChat(follow.following_id)}
                         >
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
+                            <Avatar className="h-10 w-10">
                               <AvatarImage src={follow.following?.avatar_url} />
                               <AvatarFallback>
                                 {follow.following?.display_name?.[0] || 'U'}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium">
-                              {follow.following?.display_name || 'User'}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {follow.following?.display_name || 'User'}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                @{follow.following?.username || 'username'}
+                              </p>
+                            </div>
+                            <MessageCircle className="h-4 w-4 text-muted-foreground" />
                           </div>
                         </div>
                       ))}
                     </div>
+                    <Separator className="my-4" />
                   </div>
                 )}
 

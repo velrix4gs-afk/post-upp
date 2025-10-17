@@ -126,10 +126,19 @@ const Feed = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-4">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Compass className="h-5 w-5" />
-                Quick Actions
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Compass className="h-5 w-5" />
+                  Quick Actions
+                </h3>
+                <Button 
+                  size="icon" 
+                  variant="ghost"
+                  onClick={() => setIsQuickActionsOpen(false)}
+                >
+                  ✕
+                </Button>
+              </div>
               <QuickActionsContent />
             </SheetContent>
           </Sheet>
