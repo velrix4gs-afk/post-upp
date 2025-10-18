@@ -102,6 +102,48 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
+      // Check if this is a delete action
+      if (body.action === 'delete') {
+        const { postId } = body;
+        console.log('Deleting post:', postId, 'for user:', user.id);
+
+        if (!postId) {
+          throw new Error('Post ID is required');
+        }
+
+        // First check if post exists and belongs to user
+        const { data: existingPost, error: checkError } = await supabaseClient
+          .from('posts')
+          .select('id, user_id')
+          .eq('id', postId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (checkError || !existingPost) {
+          throw new Error('Post not found or you do not have permission to delete it');
+        }
+
+        // Delete the post
+        const { error } = await supabaseClient
+          .from('posts')
+          .delete()
+          .eq('id', postId)
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error deleting post:', error);
+          throw error;
+        }
+
+        console.log('Post deleted successfully:', postId);
+
+        return new Response(JSON.stringify({ success: true, message: 'Post deleted successfully' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+
+      // Regular post creation
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
       console.log('Post data received:', { content, media_url, media_type });

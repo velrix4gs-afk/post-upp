@@ -141,24 +141,11 @@ export const usePosts = () => {
     }
 
     try {
-      // Use fetch with DELETE method for edge function
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/posts`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ postId }),
-        }
-      );
+      const { error } = await supabase.functions.invoke('posts', {
+        body: { postId, action: 'delete' },
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete post');
-      }
+      if (error) throw error;
 
       // Remove post from local state
       setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));

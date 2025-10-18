@@ -139,24 +139,32 @@ export const useChats = () => {
       // Create new chat using edge function to bypass RLS complexity
       console.log('Creating new chat for participant:', participantId);
       
-      const { data: chatData, error: chatError } = await supabase.functions.invoke('friendships', {
+      const response = await supabase.functions.invoke('friendships', {
         body: {
           action: 'create_chat',
           participant_id: participantId
         }
       });
 
-      if (chatError) {
-        console.error('Chat creation error:', chatError);
-        throw chatError;
+      console.log('Full response:', response);
+
+      if (response.error) {
+        console.error('Chat creation error:', response.error);
+        throw new Error(response.error.message || 'Failed to create chat');
       }
 
-      if (!chatData?.chat_id) {
-        console.error('No chat ID returned from function. Data:', chatData);
-        throw new Error('no-id-returned');
+      const chatData = response.data;
+      if (!chatData) {
+        console.error('No data in response');
+        throw new Error('No response data from server');
       }
 
-      console.log('Chat created with ID:', chatData.chat_id);
+      if (!chatData.chat_id) {
+        console.error('No chat_id in response. Full data:', chatData);
+        throw new Error('Server did not return chat ID');
+      }
+
+      console.log('Chat created successfully with ID:', chatData.chat_id);
       await fetchChats();
       return chatData.chat_id;
     } catch (err: any) {
