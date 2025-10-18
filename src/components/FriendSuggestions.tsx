@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, UserCheck, Users } from 'lucide-react';
 import { useFriendSuggestions } from '@/hooks/useFriendSuggestions';
 import { useFollowers } from '@/hooks/useFollowers';
 import { useNavigate } from 'react-router-dom';
@@ -10,11 +10,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 const FriendSuggestions = () => {
   const navigate = useNavigate();
   const { suggestions, loading } = useFriendSuggestions();
-  const { followUser } = useFollowers();
+  const { followUser, unfollowUser, following } = useFollowers();
 
-  const handleFollow = async (userId: string, e: React.MouseEvent) => {
+  const isFollowing = (userId: string) => {
+    return following.some(f => f.following?.id === userId);
+  };
+
+  const handleFollowToggle = async (userId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await followUser(userId, false);
+    if (isFollowing(userId)) {
+      await unfollowUser(userId);
+    } else {
+      await followUser(userId, false);
+    }
   };
 
   if (loading) {
@@ -76,11 +84,21 @@ const FriendSuggestions = () => {
             </div>
             <Button 
               size="sm" 
-              variant="outline"
-              onClick={(e) => handleFollow(suggestion.id, e)}
+              variant={isFollowing(suggestion.id) ? "outline" : "default"}
+              className="gap-1"
+              onClick={(e) => handleFollowToggle(suggestion.id, e)}
             >
-              <UserPlus className="h-3 w-3 mr-1" />
-              Add
+              {isFollowing(suggestion.id) ? (
+                <>
+                  <UserCheck className="h-3 w-3" />
+                  Following
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-3 w-3" />
+                  Follow
+                </>
+              )}
             </Button>
           </div>
         ))}

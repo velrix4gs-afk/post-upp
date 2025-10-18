@@ -46,11 +46,8 @@ export const usePosts = () => {
       setPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load posts',
-        variant: 'destructive',
-      });
+      // Silently fail for initial load to not block sign in
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -94,8 +91,7 @@ export const usePosts = () => {
     } catch (error: any) {
       console.error('Error creating post:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create post',
+        description: `Could not create post • ERR002`,
         variant: 'destructive',
       });
       throw error;
@@ -132,8 +128,7 @@ export const usePosts = () => {
     } catch (error: any) {
       console.error('Error updating post:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update post',
+        description: `Could not update post • ERR003`,
         variant: 'destructive',
       });
       throw error;
@@ -146,22 +141,37 @@ export const usePosts = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('posts', {
-        body: { postId },
-        method: 'DELETE'
-      });
+      // Use fetch with DELETE method for edge function
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/posts`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ postId }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete post');
+      }
 
       // Remove post from local state
       setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
       
-      return data;
+      toast({
+        description: 'Post deleted',
+      });
+
+      return { success: true };
     } catch (error: any) {
       console.error('Error deleting post:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to delete post',
+        description: `Could not delete • ERR001`,
         variant: 'destructive',
       });
       throw error;
@@ -232,8 +242,7 @@ export const usePosts = () => {
     } catch (error) {
       console.error('Error toggling reaction:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update reaction',
+        description: `Could not update reaction • ERR004`,
         variant: 'destructive',
       });
       throw error;

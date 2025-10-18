@@ -80,14 +80,18 @@ const Dashboard = () => {
                     Events
                   </Button>
                 </Link>
-                <Button variant="ghost" className="w-full justify-start">
-                  <TrendingUp className="h-4 w-4 mr-3" />
-                  Trending
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Plus className="h-4 w-4 mr-3" />
-                  Create Group
-                </Button>
+                <Link to="/explore">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <TrendingUp className="h-4 w-4 mr-3" />
+                    Explore
+                  </Button>
+                </Link>
+                <Link to="/groups">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Plus className="h-4 w-4 mr-3" />
+                    Groups
+                  </Button>
+                </Link>
               </div>
             </Card>
           </div>

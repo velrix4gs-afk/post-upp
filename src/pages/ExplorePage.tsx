@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, Users, Hash, Sparkles, UserPlus } from 'lucide-react';
+import { TrendingUp, Users, Hash, Sparkles, UserPlus, UserCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
 import { useFollowers } from '@/hooks/useFollowers';
@@ -28,7 +28,7 @@ const ExplorePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { posts, loading: postsLoading } = usePosts();
-  const { followUser } = useFollowers();
+  const { followUser, unfollowUser, following } = useFollowers();
   const { trending: trendingHashtags, loading: hashtagsLoading } = useHashtags();
   const [trendingUsers, setTrendingUsers] = useState<TrendingUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -73,8 +73,16 @@ const ExplorePage = () => {
     }
   };
 
-  const handleFollowUser = async (userId: string, isPrivate: boolean) => {
-    await followUser(userId, isPrivate);
+  const isFollowing = (userId: string) => {
+    return following.some(f => f.following?.id === userId);
+  };
+
+  const handleFollowToggle = async (userId: string, isPrivate: boolean) => {
+    if (isFollowing(userId)) {
+      await unfollowUser(userId);
+    } else {
+      await followUser(userId, isPrivate);
+    }
     fetchTrendingUsers();
   };
 
@@ -204,13 +212,23 @@ const ExplorePage = () => {
                       </div>
                       <Button
                         size="sm"
+                        variant={isFollowing(trendingUser.id) ? "outline" : "default"}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleFollowUser(trendingUser.id, false);
+                          handleFollowToggle(trendingUser.id, false);
                         }}
                       >
-                        <UserPlus className="h-4 w-4 mr-1" />
-                        Follow
+                        {isFollowing(trendingUser.id) ? (
+                          <>
+                            <UserCheck className="h-4 w-4 mr-1" />
+                            Following
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Follow
+                          </>
+                        )}
                       </Button>
                     </div>
                   </Card>

@@ -222,16 +222,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gradient-card border-0 shadow-xl">
-        <div className="p-8">
+      <Card className="w-full max-w-md md:max-w-lg bg-gradient-card border-0 shadow-xl">
+        <div className="p-6 md:p-8">
           <div className="text-center mb-8">
             <div className="mb-3 bg-gradient-primary rounded-xl p-6">
-              <h1 className="text-4xl font-bold text-white mb-2">
+              <h1 className="text-4xl font-bold text-white">
                 POST-UPP
               </h1>
-              <p className="text-white/90">
-                Connect with real people, share real moments
-              </p>
             </div>
           </div>
 
