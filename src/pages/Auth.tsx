@@ -41,15 +41,7 @@ const Auth = () => {
   });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/feed');
-      }
-    };
-    checkUser();
-  }, [navigate]);
+  // Navigation is handled by Index.tsx and ProtectedRoute - no redirect needed here
 
   const handleGoogleSignIn = async () => {
     try {

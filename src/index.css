@@ -277,6 +277,11 @@ All colors MUST be HSL.
   .delay-200 {
     animation-delay: 0.2s;
   }
+  
+  /* Gradient subtle background */
+  .bg-gradient-subtle {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+  }
 }
 
 @keyframes bounce {
@@ -286,4 +291,50 @@ All colors MUST be HSL.
   40% {
     transform: translateY(-5px);
   }
+}
+
+/* Display Settings - Font Sizes */
+[data-font-size="small"] {
+  font-size: 14px;
+}
+
+[data-font-size="medium"] {
+  font-size: 16px;
+}
+
+[data-font-size="large"] {
+  font-size: 18px;
+}
+
+[data-font-size="small"] .text-base {
+  font-size: 0.875rem;
+}
+
+[data-font-size="large"] .text-base {
+  font-size: 1.125rem;
+}
+
+/* Display Settings - Layout */
+[data-layout="compact"] {
+  --spacing-multiplier: 0.75;
+}
+
+[data-layout="spacious"] {
+  --spacing-multiplier: 1.25;
+}
+
+[data-layout="compact"] .space-y-4 > * + * {
+  margin-top: calc(1rem * 0.75);
+}
+
+[data-layout="spacious"] .space-y-4 > * + * {
+  margin-top: calc(1rem * 1.25);
+}
+
+[data-layout="compact"] .p-4 {
+  padding: 0.75rem;
+}
+
+[data-layout="spacious"] .p-4 {
+  padding: 1.5rem;
 }

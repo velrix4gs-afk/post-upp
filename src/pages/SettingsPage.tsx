@@ -90,8 +90,23 @@ const SettingsPage = () => {
         .maybeSingle();
       
       if (data) {
-        setFontSize(data.font_size || 'medium');
-        setLayoutMode(data.layout_mode || 'spacious');
+        const loadedFontSize = data.font_size || 'medium';
+        const loadedLayoutMode = data.layout_mode || 'spacious';
+        const loadedAccentColor = data.accent_color || 'blue';
+        
+        setFontSize(loadedFontSize);
+        setLayoutMode(loadedLayoutMode);
+        setAccentColor(loadedAccentColor);
+        
+        // Apply font size to document
+        document.documentElement.setAttribute('data-font-size', loadedFontSize);
+        
+        // Apply layout mode to document
+        document.documentElement.setAttribute('data-layout', loadedLayoutMode);
+        
+        // Apply accent color to document
+        document.documentElement.setAttribute('data-accent', loadedAccentColor);
+        
         setPrivacySettings(prev => ({
           ...prev,
           profile_visibility: data.privacy_who_can_view_profile || 'public',
@@ -442,6 +457,7 @@ const SettingsPage = () => {
                     </div>
                     <Select value={accentColor} onValueChange={(value) => {
                       setAccentColor(value);
+                      document.documentElement.setAttribute('data-accent', value);
                       handleSettingUpdate({ accent_color: value });
                     }}>
                       <SelectTrigger className="w-32">
@@ -463,6 +479,7 @@ const SettingsPage = () => {
                     </div>
                     <Select value={fontSize} onValueChange={(value) => {
                       setFontSize(value);
+                      document.documentElement.setAttribute('data-font-size', value);
                       handleSettingUpdate({ font_size: value });
                     }}>
                       <SelectTrigger className="w-32">
@@ -483,6 +500,7 @@ const SettingsPage = () => {
                     </div>
                     <Select value={layoutMode} onValueChange={(value) => {
                       setLayoutMode(value);
+                      document.documentElement.setAttribute('data-layout', value);
                       handleSettingUpdate({ layout_mode: value });
                     }}>
                       <SelectTrigger className="w-32">

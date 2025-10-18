@@ -263,17 +263,17 @@ const MessagesPage = () => {
       <Navigation />
       
       <div className="container mx-auto px-0 md:px-4 h-[calc(100dvh-80px)]">
-        <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x">
+        <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}
-          <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r flex-col`}>
-            <div className="p-3 md:p-4 border-b space-y-3 bg-background">
+          <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
+            <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-bold">Messages</h2>
+                <h2 className="text-lg md:text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">Messages</h2>
                 <Button 
                   size="icon"
                   variant="ghost"
                   onClick={() => setShowNewChatDialog(true)}
-                  className="h-10 w-10"
+                  className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
                 >
                   <Plus className="h-5 w-5" />
                 </Button>
@@ -282,7 +282,7 @@ const MessagesPage = () => {
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder={selectedChatId ? "Search in conversation..." : "Search messages..."}
-                  className="pl-9"
+                  className="pl-9 bg-background/50 border-primary/20 focus:border-primary transition-colors"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -323,25 +323,25 @@ const MessagesPage = () => {
                         .slice(0, 10).map((follow) => (
                         <div
                           key={follow.id}
-                          className="p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                          onClick={() => handleCreateNewChat(follow.following_id)}
+                          className="p-2 rounded-lg cursor-pointer hover:bg-primary/10 transition-all duration-200 group border border-transparent hover:border-primary/20"
+                          onClick={() => handleCreateNewChat(follow.following?.id || follow.following_id)}
                         >
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-10 w-10">
+                            <Avatar className="h-10 w-10 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
                               <AvatarImage src={follow.following?.avatar_url} />
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-gradient-primary text-white">
                                 {follow.following?.display_name?.[0] || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
+                              <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                                 {follow.following?.display_name || 'User'}
                               </p>
                               <p className="text-xs text-muted-foreground truncate">
                                 @{follow.following?.username || 'username'}
                               </p>
                             </div>
-                            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                            <MessageCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                           </div>
                         </div>
                       ))}
@@ -384,22 +384,28 @@ const MessagesPage = () => {
                     return (
                       <div
                         key={chat.id}
-                        className={`p-3 rounded-lg cursor-pointer hover:bg-muted active:bg-muted/80 transition-colors ${
-                          selectedChatId === chat.id ? 'bg-muted' : ''
+                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
+                          selectedChatId === chat.id 
+                            ? 'bg-gradient-primary/10 border-primary/30 shadow-md' 
+                            : 'hover:bg-primary/5 border-transparent hover:border-primary/10'
                         }`}
                         onClick={() => setSelectedChatId(chat.id)}
                       >
                         <div className="flex gap-3">
                           <div className="relative flex-shrink-0">
-                            <Avatar className="h-12 w-12">
+                            <Avatar className={`h-12 w-12 ring-2 transition-all ${
+                              selectedChatId === chat.id ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'
+                            }`}>
                               <AvatarImage src={avatar} />
-                              <AvatarFallback>{chatName[0]}</AvatarFallback>
+                              <AvatarFallback className={selectedChatId === chat.id ? "bg-gradient-primary text-white" : "bg-muted"}>{chatName[0]}</AvatarFallback>
                             </Avatar>
-                            <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
+                            <div className="absolute bottom-0 right-0 h-3 w-3 bg-success rounded-full border-2 border-background" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <p className="font-medium truncate text-sm md:text-base">{chatName}</p>
+                              <p className={`font-medium truncate text-sm md:text-base transition-colors ${
+                                selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
+                              }`}>{chatName}</p>
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground truncate">
                               {chat.is_group ? `${chat.participants.length} members` : 'Direct message'}
@@ -417,37 +423,45 @@ const MessagesPage = () => {
           {/* NewChatDialog is rendered at bottom of component */}
 
           {/* Chat Area */}
-          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
+          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-gradient-to-br from-background to-primary/5`}>
             {selectedChat ? (
               <>
                 {/* Chat Header */}
-                <div className="p-3 md:p-4 border-b flex items-center justify-between bg-background sticky top-0 z-10">
+                <div className="p-3 md:p-4 border-b border-primary/10 flex items-center justify-between bg-gradient-subtle backdrop-blur-sm sticky top-0 z-10">
                   <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="md:hidden flex-shrink-0 h-10 w-10"
+                      className="md:hidden flex-shrink-0 h-10 w-10 hover:bg-primary/10"
                       onClick={() => setSelectedChatId(null)}
                     >
                       ←
                     </Button>
-                    <Avatar className="h-10 w-10 flex-shrink-0">
+                    <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/30">
                       <AvatarImage src={selectedChat.avatar_url} />
-                      <AvatarFallback>{selectedChat.name?.[0] || 'C'}</AvatarFallback>
+                      <AvatarFallback className="bg-gradient-primary text-white">{selectedChat.name?.[0] || 'C'}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{selectedChat.name || 'Chat'}</p>
-                      <p className="text-xs md:text-sm text-muted-foreground">Online</p>
+                      <p className="text-xs md:text-sm text-success">Online</p>
                     </div>
                   </div>
                   <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                    <Button size="icon" variant="ghost" className="h-10 w-10">
+                    <Button size="icon" variant="ghost" className="h-10 w-10 hover:bg-primary/10 hover:text-primary" disabled>
                       <Phone className="h-5 w-5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-10 w-10 hidden md:flex">
+                    <Button size="icon" variant="ghost" className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary" disabled>
                       <Video className="h-5 w-5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-10 w-10">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
+                      onClick={() => setShowStarredDialog(true)}
+                    >
+                      <Star className="h-5 w-5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-10 w-10 hover:bg-primary/10 hover:text-primary">
                       <MoreVertical className="h-5 w-5" />
                     </Button>
                   </div>
@@ -552,7 +566,7 @@ const MessagesPage = () => {
                     />
                   </div>
                 ) : (
-                  <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t bg-background">
+                  <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t border-primary/10 bg-gradient-subtle backdrop-blur-sm">
                     <div className="flex gap-1.5 md:gap-2 items-end">
                       <input
                         ref={fileInputRef}
@@ -566,7 +580,7 @@ const MessagesPage = () => {
                         size="icon"
                         variant="ghost"
                         onClick={() => fileInputRef.current?.click()}
-                        className="h-10 w-10 flex-shrink-0"
+                        className="h-10 w-10 flex-shrink-0 hover:bg-primary/10 hover:text-primary"
                       >
                         <ImageIcon className="h-5 w-5" />
                       </Button>
@@ -575,7 +589,7 @@ const MessagesPage = () => {
                         size="icon"
                         variant="ghost"
                         onClick={() => setIsRecordingVoice(true)}
-                        className="h-10 w-10 flex-shrink-0 hidden md:flex"
+                        className="h-10 w-10 flex-shrink-0 hidden md:flex hover:bg-primary/10 hover:text-primary"
                       >
                         <Mic className="h-5 w-5" />
                       </Button>
@@ -586,7 +600,7 @@ const MessagesPage = () => {
                           setMessageText(e.target.value);
                           handleTyping();
                         }}
-                        className="flex-1 h-10 text-base"
+                        className="flex-1 h-10 text-base bg-background/50 border-primary/20 focus:border-primary transition-colors"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
@@ -620,7 +634,7 @@ const MessagesPage = () => {
                         type="submit" 
                         size="icon"
                         disabled={!messageText.trim() && !selectedImage}
-                        className="h-10 w-10 flex-shrink-0"
+                        className="h-10 w-10 flex-shrink-0 bg-gradient-primary hover:shadow-glow transition-all duration-300"
                       >
                         <Send className="h-5 w-5" />
                       </Button>
@@ -630,15 +644,22 @@ const MessagesPage = () => {
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center max-w-md px-6">
-                  <MessageCircle className="h-20 w-20 mx-auto mb-6 opacity-20" />
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">Your Messages</h3>
-                  <p className="text-sm mb-4">
+                <div className="text-center max-w-md px-6 space-y-4 animate-fade-in">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl rounded-full"></div>
+                    <MessageCircle className="h-20 w-20 mx-auto text-primary relative z-10" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground bg-gradient-primary bg-clip-text text-transparent">Your Messages</h3>
+                  <p className="text-sm text-muted-foreground">
                     Send private messages to friends and connect with others in your network
                   </p>
-                  <p className="text-xs">
-                    Select a conversation from the list or visit a profile to start messaging
-                  </p>
+                  <Button 
+                    onClick={() => setShowNewChatDialog(true)}
+                    className="mt-4 bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Start New Chat
+                  </Button>
                 </div>
               </div>
             )}
