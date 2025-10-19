@@ -79,12 +79,46 @@ serve(async (req) => {
 
     if (method === 'POST') {
       const body = await req.json();
-      const { addressee_id, action, participant_id } = body;
+      const { addressee_id, action, participant_id, participant_uuid } = body;
 
-      // Handle chat creation
+      // Handle chat creation - accepts both participant_id and participant_uuid
       if (action === 'create_chat') {
-        if (!participant_id) {
-          throw new Error('participant_id is required');
+        const targetUserId = participant_uuid || participant_id;
+        
+        if (!targetUserId) {
+          return new Response(JSON.stringify({ 
+            error: 'CHAT_001: participant_uuid is required',
+            code: 'CHAT_001',
+            message: 'Missing participant UUID for chat creation'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(targetUserId)) {
+          return new Response(JSON.stringify({ 
+            error: 'CHAT_002: Invalid UUID format',
+            code: 'CHAT_002',
+            message: 'Participant UUID must be a valid UUID'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Check if trying to chat with self
+        if (targetUserId === user.id) {
+          return new Response(JSON.stringify({ 
+            error: 'CHAT_003: Cannot create chat with yourself',
+            code: 'CHAT_003',
+            message: 'Cannot create a chat with yourself'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
         }
 
         // Check if chat already exists between these users
@@ -99,7 +133,7 @@ serve(async (req) => {
               .from('chats')
               .select('type')
               .eq('id', ep.chat_id)
-              .single();
+              .maybeSingle();
 
             if (chatInfo?.type === 'private') {
               const { data: otherParticipant } = await supabaseClient
@@ -109,8 +143,12 @@ serve(async (req) => {
                 .neq('user_id', user.id)
                 .maybeSingle();
 
-              if (otherParticipant?.user_id === participant_id) {
-                return new Response(JSON.stringify({ chat_id: ep.chat_id, existing: true }), {
+              if (otherParticipant?.user_id === targetUserId) {
+                return new Response(JSON.stringify({ 
+                  chat_id: ep.chat_id, 
+                  existing: true,
+                  message: 'Chat already exists'
+                }), {
                   headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 });
               }
@@ -128,20 +166,54 @@ serve(async (req) => {
           .select('id')
           .single();
 
-        if (chatError) throw chatError;
-        if (!newChat?.id) throw new Error('Failed to create chat');
+        if (chatError) {
+          return new Response(JSON.stringify({ 
+            error: `CHAT_004: ${chatError.message}`,
+            code: 'CHAT_004',
+            message: 'Failed to create chat - check RLS policies',
+            details: chatError
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        
+        if (!newChat?.id) {
+          return new Response(JSON.stringify({ 
+            error: 'CHAT_005: No chat ID returned',
+            code: 'CHAT_005',
+            message: 'Chat created but no ID returned - RLS policy issue'
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
 
         // Add participants
         const { error: participantsError } = await supabaseClient
           .from('chat_participants')
           .insert([
             { chat_id: newChat.id, user_id: user.id, role: 'member' },
-            { chat_id: newChat.id, user_id: participant_id, role: 'member' }
+            { chat_id: newChat.id, user_id: targetUserId, role: 'member' }
           ]);
 
-        if (participantsError) throw participantsError;
+        if (participantsError) {
+          return new Response(JSON.stringify({ 
+            error: `CHAT_006: ${participantsError.message}`,
+            code: 'CHAT_006',
+            message: 'Failed to add participants - check RLS policies',
+            details: participantsError
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
 
-        return new Response(JSON.stringify({ chat_id: newChat.id, existing: false }), {
+        return new Response(JSON.stringify({ 
+          chat_id: newChat.id, 
+          existing: false,
+          message: 'Chat created successfully'
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }

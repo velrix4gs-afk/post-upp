@@ -100,12 +100,22 @@ export const useChats = () => {
     }
   };
 
-  const createChat = async (participantId: string) => {
+  const createChat = async (participantUuid: string) => {
     if (!user) {
-      console.error('No user found');
       toast({
-        title: 'Error',
-        description: 'You must be logged in to create a chat',
+        title: 'AUTH_001',
+        description: 'Please log in to start a chat',
+        variant: 'destructive'
+      });
+      return null;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(participantUuid)) {
+      toast({
+        title: 'CHAT_002',
+        description: 'Invalid user ID format',
         variant: 'destructive'
       });
       return null;
@@ -126,50 +136,68 @@ export const useChats = () => {
               .select('user_id')
               .eq('chat_id', ec.chat_id)
               .neq('user_id', user.id)
-              .single();
+              .maybeSingle();
 
-            if (otherParticipant?.user_id === participantId) {
-              console.log('Found existing chat:', ec.chat_id);
+            if (otherParticipant?.user_id === participantUuid) {
+              console.log('[CHAT] Existing chat found:', ec.chat_id);
               return ec.chat_id;
             }
           }
         }
       }
 
-      // Create new chat using edge function to bypass RLS complexity
-      console.log('Creating new chat for participant:', participantId);
+      console.log('[CHAT] Creating new chat with UUID:', participantUuid);
       
       const response = await supabase.functions.invoke('friendships', {
         body: {
           action: 'create_chat',
-          participant_id: participantId
+          participant_uuid: participantUuid
         }
       });
 
-      console.log('Full response:', response);
-
       if (response.error) {
-        console.error('Chat creation error:', response.error);
-        throw new Error(response.error.message || 'Failed to create chat');
+        const errorData = response.error as any;
+        const errorCode = errorData.code || 'CHAT_ERROR';
+        const errorMsg = errorData.message || errorData.toString();
+        
+        toast({
+          title: errorCode,
+          description: errorMsg,
+          variant: 'destructive'
+        });
+        return null;
       }
 
       const chatData = response.data;
-      if (!chatData) {
-        console.error('No data in response');
-        throw new Error('No response data from server');
+      
+      if (chatData?.error) {
+        toast({
+          title: chatData.code || 'CHAT_ERROR',
+          description: chatData.message || chatData.error,
+          variant: 'destructive'
+        });
+        return null;
       }
 
-      if (!chatData.chat_id) {
-        console.error('No chat_id in response. Full data:', chatData);
-        throw new Error('Server did not return chat ID');
+      if (!chatData?.chat_id) {
+        toast({
+          title: 'CHAT_005',
+          description: 'Chat creation failed - no ID returned',
+          variant: 'destructive'
+        });
+        return null;
       }
 
-      console.log('Chat created successfully with ID:', chatData.chat_id);
+      console.log('[CHAT] Created successfully:', chatData.chat_id);
       await fetchChats();
       return chatData.chat_id;
     } catch (err: any) {
-      console.error('Create chat error:', err);
-      showCleanError(err, toast);
+      console.error('[CHAT] Error:', err);
+      toast({
+        title: 'CHAT_ERROR',
+        description: err.message || 'Failed to create chat',
+        variant: 'destructive'
+      });
       return null;
     }
   };

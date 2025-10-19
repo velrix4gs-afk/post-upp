@@ -464,10 +464,13 @@ const SettingsPage = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="default">Default (Purple)</SelectItem>
                         <SelectItem value="blue">Blue</SelectItem>
                         <SelectItem value="purple">Purple</SelectItem>
                         <SelectItem value="green">Green</SelectItem>
+                        <SelectItem value="orange">Orange</SelectItem>
                         <SelectItem value="red">Red</SelectItem>
+                        <SelectItem value="pink">Pink</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

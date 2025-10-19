@@ -1700,6 +1700,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
+          is_deleted: boolean
           is_published: boolean | null
           media_type: string | null
           media_url: string | null
@@ -1715,6 +1716,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          is_deleted?: boolean
           is_published?: boolean | null
           media_type?: string | null
           media_url?: string | null
@@ -1730,6 +1732,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          is_deleted?: boolean
           is_published?: boolean | null
           media_type?: string | null
           media_url?: string | null

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
-import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings } from 'lucide-react';
+import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star } from 'lucide-react';
 import { useState } from 'react';
 import {
   DropdownMenu,
@@ -114,6 +114,16 @@ const Navigation = () => {
                   >
                     <Bookmark className="h-4 w-4" />
                     Saved
+                  </Button>
+                </Link>
+                <Link to="/verification">
+                  <Button 
+                    variant={isActive('/verification') ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="gap-2"
+                  >
+                    <Star className="h-4 w-4" />
+                    Verify
                   </Button>
                 </Link>
               </div>

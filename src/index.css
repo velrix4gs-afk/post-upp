@@ -148,6 +148,42 @@ All colors MUST be HSL.
   }
 }
 
+/* Accent color variants */
+:root[data-accent="default"],
+:root[data-accent="purple"] {
+  --primary: 262 83% 58%;
+  --primary-glow: 262 83% 75%;
+}
+:root[data-accent="blue"] {
+  --primary: 221 83% 53%;
+  --primary-glow: 221 83% 70%;
+}
+:root[data-accent="green"] {
+  --primary: 142 76% 36%;
+  --primary-glow: 142 76% 55%;
+}
+:root[data-accent="orange"] {
+  --primary: 25 95% 53%;
+  --primary-glow: 25 95% 70%;
+}
+:root[data-accent="red"] {
+  --primary: 0 84% 60%;
+  --primary-glow: 0 84% 75%;
+}
+:root[data-accent="pink"] {
+  --primary: 330 81% 60%;
+  --primary-glow: 330 81% 75%;
+}
+
+/* Font size variants */
+:root[data-font-size="small"] { font-size: 14px; }
+:root[data-font-size="medium"] { font-size: 16px; }
+:root[data-font-size="large"] { font-size: 18px; }
+
+/* Layout variants */
+:root[data-layout="compact"] { --spacing-unit: 0.75rem; }
+:root[data-layout="comfortable"] { --spacing-unit: 1rem; }
+
 @layer base {
   * {
     @apply border-border;
