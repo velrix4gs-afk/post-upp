@@ -18,6 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { usePosts } from "@/hooks/usePosts";
 import { useFriends } from "@/hooks/useFriends";
+import { useHashtags } from "@/hooks/useHashtags";
+import { useFriendSuggestions } from "@/hooks/useFriendSuggestions";
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
@@ -27,6 +29,9 @@ const Dashboard = () => {
   const { profile } = useProfile();
   const { posts, loading: postsLoading } = usePosts();
   const { friends } = useFriends();
+  const { trending, loading: hashtagsLoading } = useHashtags();
+  const { suggestions, loading: suggestionsLoading } = useFriendSuggestions();
+  
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -144,17 +149,24 @@ const Dashboard = () => {
             <Card className="bg-gradient-card border-0 p-4">
               <h3 className="font-semibold mb-3">Trending Topics</h3>
               <div className="space-y-3">
-                {[
-                  { tag: "#TechConf2024", posts: "12.5K posts" },
-                  { tag: "#MondayMotivation", posts: "8.2K posts" },
-                  { tag: "#WebDevelopment", posts: "5.8K posts" },
-                  { tag: "#DesignTips", posts: "3.4K posts" }
-                ].map((topic) => (
-                  <div key={topic.tag} className="cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors">
-                    <div className="font-medium text-sm text-primary">{topic.tag}</div>
-                    <div className="text-xs text-muted-foreground">{topic.posts}</div>
-                  </div>
-                ))}
+                {hashtagsLoading ? (
+                  <div className="text-center py-4 text-sm text-muted-foreground">Loading...</div>
+                ) : trending.length === 0 ? (
+                  <div className="text-center py-4 text-sm text-muted-foreground">No trending topics yet</div>
+                ) : (
+                  trending.slice(0, 4).map((hashtag) => (
+                    <Link 
+                      key={hashtag.id} 
+                      to={`/hashtag/${hashtag.tag}`}
+                      className="block cursor-pointer hover:bg-muted/20 p-2 rounded transition-colors"
+                    >
+                      <div className="font-medium text-sm text-primary">#{hashtag.tag}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {hashtag.usage_count.toLocaleString()} {hashtag.usage_count === 1 ? 'post' : 'posts'}
+                      </div>
+                    </Link>
+                  ))
+                )}
               </div>
             </Card>
 
@@ -162,29 +174,35 @@ const Dashboard = () => {
             <Card className="bg-gradient-card border-0 p-4">
               <h3 className="font-semibold mb-3">People You May Know</h3>
               <div className="space-y-3">
-                {[
-                  { name: "Jessica Lee", mutualFriends: 5 },
-                  { name: "David Park", mutualFriends: 3 },
-                  { name: "Maria Garcia", mutualFriends: 8 }
-                ].map((person) => (
-                  <div key={person.name} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src="/placeholder.svg" />
-                        <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                          {person.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-sm">{person.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {person.mutualFriends} mutual friends
-                        </p>
-                      </div>
+                {suggestionsLoading ? (
+                  <div className="text-center py-4 text-sm text-muted-foreground">Loading...</div>
+                ) : suggestions.length === 0 ? (
+                  <div className="text-center py-4 text-sm text-muted-foreground">No suggestions available</div>
+                ) : (
+                  suggestions.slice(0, 3).map((person) => (
+                    <div key={person.id} className="flex items-center justify-between">
+                      <Link to={`/profile/${person.id}`} className="flex items-center space-x-3 flex-1">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={person.avatar_url} />
+                          <AvatarFallback className="bg-gradient-primary text-white text-sm">
+                            {person.display_name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{person.display_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {person.mutual_friends_count > 0 
+                              ? `${person.mutual_friends_count} mutual ${person.mutual_friends_count === 1 ? 'friend' : 'friends'}`
+                              : 'Suggested for you'}
+                          </p>
+                        </div>
+                      </Link>
+                      <Link to={`/profile/${person.id}`}>
+                        <Button size="sm" variant="outline">View</Button>
+                      </Link>
                     </div>
-                    <Button size="sm" variant="outline">Add</Button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </Card>
           </div>

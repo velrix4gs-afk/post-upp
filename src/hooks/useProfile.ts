@@ -94,57 +94,77 @@ export const useProfile = (userId?: string) => {
   };
 
   const uploadAvatar = async (file: File) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: 'AUTH_001',
+        description: 'You must be logged in to upload a profile picture',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     try {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        throw new Error('File size must be less than 5MB');
+        throw new Error('UPLOAD_001: File size must be less than 5MB');
       }
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        throw new Error('File must be an image');
+        throw new Error('UPLOAD_002: File must be an image');
       }
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
       
+      console.log('[AVATAR] Uploading to path:', filePath);
+      
       // Delete old avatar if exists
       if (profile?.avatar_url) {
         const oldPath = profile.avatar_url.split('/avatars/').pop();
         if (oldPath) {
+          console.log('[AVATAR] Removing old avatar:', oldPath);
           await supabase.storage.from('avatars').remove([oldPath]);
         }
       }
 
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('[AVATAR] Upload error:', uploadError);
+        throw new Error(`UPLOAD_003: ${uploadError.message}`);
+      }
+
+      console.log('[AVATAR] Upload successful:', uploadData);
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      console.log('[AVATAR] Public URL:', publicUrl);
+
       await updateProfile({ avatar_url: publicUrl });
       
       toast({
         title: 'Success',
-        description: 'Avatar updated successfully'
+        description: 'Profile picture updated successfully!'
       });
       
       return publicUrl;
     } catch (err: any) {
-      console.error('Avatar upload error:', err);
+      console.error('[AVATAR] Error:', err);
+      const errorCode = err.message?.split(':')[0] || 'UPLOAD_ERROR';
+      const errorMsg = err.message?.split(':')[1]?.trim() || err.message || 'Failed to upload profile picture';
+      
       toast({
-        title: 'Error',
-        description: err.message || 'Failed to upload avatar',
+        title: errorCode,
+        description: errorMsg,
         variant: 'destructive'
       });
       throw err;

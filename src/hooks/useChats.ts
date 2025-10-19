@@ -155,10 +155,14 @@ export const useChats = () => {
         }
       });
 
+      console.log('[CHAT] Edge function response:', response);
+
       if (response.error) {
         const errorData = response.error as any;
         const errorCode = errorData.code || 'CHAT_ERROR';
         const errorMsg = errorData.message || errorData.toString();
+        
+        console.error('[CHAT] Edge function error:', errorData);
         
         toast({
           title: errorCode,
@@ -169,8 +173,20 @@ export const useChats = () => {
       }
 
       const chatData = response.data;
+      console.log('[CHAT] Chat data received:', chatData);
       
-      if (chatData?.error) {
+      if (!chatData) {
+        console.error('[CHAT] No data returned from edge function');
+        toast({
+          title: 'CHAT_006',
+          description: 'No response from server',
+          variant: 'destructive'
+        });
+        return null;
+      }
+      
+      if (chatData.error) {
+        console.error('[CHAT] Server returned error:', chatData);
         toast({
           title: chatData.code || 'CHAT_ERROR',
           description: chatData.message || chatData.error,
@@ -179,10 +195,11 @@ export const useChats = () => {
         return null;
       }
 
-      if (!chatData?.chat_id) {
+      if (!chatData.chat_id) {
+        console.error('[CHAT] No chat_id in response:', chatData);
         toast({
           title: 'CHAT_005',
-          description: 'Chat creation failed - no ID returned',
+          description: 'Chat creation failed - no ID returned. Please try again.',
           variant: 'destructive'
         });
         return null;
@@ -190,6 +207,10 @@ export const useChats = () => {
 
       console.log('[CHAT] Created successfully:', chatData.chat_id);
       await fetchChats();
+      toast({
+        title: 'Success',
+        description: 'Chat created successfully!',
+      });
       return chatData.chat_id;
     } catch (err: any) {
       console.error('[CHAT] Error:', err);
