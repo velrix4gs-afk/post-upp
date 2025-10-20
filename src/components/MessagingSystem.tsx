@@ -17,6 +17,7 @@ import {
   Mic
 } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
+import { useChats } from '@/hooks/useChats';
 import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/hooks/useAuth';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
@@ -41,9 +42,10 @@ const MessagingSystem = () => {
     chats, 
     loading, 
     sendMessage, 
-    createChat,
     markMessageRead
   } = useMessages(selectedChatId || undefined);
+  
+  const { createChat: createChatByUuid } = useChats();
 
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
   const { onlineUsers, isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
@@ -131,7 +133,19 @@ const MessagingSystem = () => {
   };
 
   const handleStartNewChat = async (friendId: string) => {
-    const chatId = await createChat([friendId]);
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(friendId)) {
+      console.error('[MessagingSystem] Invalid UUID:', friendId);
+      toast({
+        title: 'Error',
+        description: 'Invalid user ID format',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    const chatId = await createChatByUuid(friendId);
     if (chatId) {
       setSelectedChatId(chatId);
     }

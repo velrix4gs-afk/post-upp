@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
+import { useChats } from '@/hooks/useChats';
 import { useFollowers } from '@/hooks/useFollowers';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
@@ -44,7 +45,6 @@ const MessagesPage = () => {
     sendMessage, 
     editMessage, 
     deleteMessage, 
-    createChat, 
     reactToMessage,
     unreactToMessage,
     starMessage,
@@ -54,6 +54,7 @@ const MessagesPage = () => {
     refetchChats, 
     refetchMessages 
   } = useMessages(selectedChatId || undefined);
+  const { createChat: createChatByUuid } = useChats();
   const { following } = useFollowers();
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
   const [messageText, setMessageText] = useState('');
@@ -214,30 +215,29 @@ const MessagesPage = () => {
 
   const handleCreateNewChat = async (friendId: string) => {
     try {
-      console.log('Creating chat with friend:', friendId);
-      const chatId = await createChat([friendId], false);
-      console.log('Chat created with ID:', chatId);
+      console.log('[MessagesPage] Creating chat with friend UUID:', friendId);
+      
+      // Validate UUID format before calling
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(friendId)) {
+        throw new Error('CHAT_002: Invalid user ID format');
+      }
+      
+      const chatId = await createChatByUuid(friendId);
+      console.log('[MessagesPage] Chat created with ID:', chatId);
       
       if (chatId) {
         setSelectedChatId(chatId);
         setSearchQuery('');
         setShowNewChatDialog(false);
         await refetchChats();
-        toast({
-          title: 'Success',
-          description: 'Chat created successfully'
-        });
       } else {
-        throw new Error('Failed to create chat - no ID returned');
+        throw new Error('CHAT_005: Failed to create chat - no ID returned');
       }
     } catch (error: any) {
-      console.error('Create new chat error:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create chat. Please try again.',
-        variant: 'destructive'
-      });
-      throw error; // Re-throw so NewChatDialog knows it failed
+      console.error('[MessagesPage] Create new chat error:', error);
+      // Error already shown by useChats, just re-throw
+      throw error;
     }
   };
 

@@ -154,6 +154,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           created_by: string | null
+          creator_id: string | null
           id: string
           name: string | null
           type: string
@@ -163,6 +164,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           created_by?: string | null
+          creator_id?: string | null
           id?: string
           name?: string | null
           type?: string
@@ -172,6 +174,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           created_by?: string | null
+          creator_id?: string | null
           id?: string
           name?: string | null
           type?: string
@@ -198,6 +201,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_settings_view"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "chats_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["sender_id"]
+          },
+          {
+            foreignKeyName: "chats_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "comments_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "chats_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "user_status_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "chats_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2333,6 +2364,7 @@ export type Database = {
           last_seen: string | null
           password_hash: string
           phone: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
@@ -2343,6 +2375,7 @@ export type Database = {
           last_seen?: string | null
           password_hash: string
           phone?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
@@ -2353,6 +2386,7 @@ export type Database = {
           last_seen?: string | null
           password_hash?: string
           phone?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3248,6 +3282,13 @@ export type Database = {
         }
         Returns: string
       }
+      create_private_chat: {
+        Args: { _user1: string; _user2: string }
+        Returns: {
+          chat_id: string
+          target_user: string
+        }[]
+      }
       extract_hashtags: {
         Args: { post_content: string }
         Returns: string[]
@@ -3262,6 +3303,10 @@ export type Database = {
       is_chat_participant: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
+      }
+      send_message: {
+        Args: { _chat_id: string; _content: string; _sender_id: string }
+        Returns: string
       }
     }
     Enums: {

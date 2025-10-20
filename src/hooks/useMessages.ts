@@ -420,110 +420,9 @@ export const useMessages = (chatId?: string) => {
     }
   };
 
-  const createChat = async (participantIds: string[], isGroup = false, name?: string) => {
-    try {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Check if private chat already exists
-      if (!isGroup && participantIds.length === 1) {
-        const { data: myChats } = await supabase
-          .from('chat_participants')
-          .select('chat_id')
-          .eq('user_id', user.id);
-
-        if (myChats && myChats.length > 0) {
-          for (const myChat of myChats) {
-            const { data: participants } = await supabase
-              .from('chat_participants')
-              .select('user_id, chats!inner(type)')
-              .eq('chat_id', myChat.chat_id);
-
-            if (participants && participants.length === 2) {
-              const chat = participants[0].chats as any;
-              if (chat.type === 'private') {
-                const otherUserId = participants.find(p => p.user_id !== user.id)?.user_id;
-                if (otherUserId === participantIds[0]) {
-                  await fetchChats();
-                  return myChat.chat_id;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Create new chat via Supabase client
-      const { data: chat, error: chatError } = await supabase
-        .from('chats')
-        .insert({
-          name: name || null,
-          type: isGroup ? 'group' : 'private',
-          created_by: user.id
-        })
-        .select('id')
-        .maybeSingle();
-
-      if (chatError) {
-        console.error('Chat creation error:', chatError);
-        throw new Error(`Chat Error: ${chatError.message}`);
-      }
-
-      if (!chat?.id) {
-        throw new Error('Chat creation failed - Check permissions');
-      }
-
-      // Add current user as admin
-      const { error: adminError } = await supabase
-        .from('chat_participants')
-        .insert({
-          chat_id: chat.id,
-          user_id: user.id,
-          role: 'admin'
-        });
-
-      if (adminError) {
-        console.error('Admin participant error:', adminError);
-        throw new Error(`Failed to add admin: ${adminError.message}`);
-      }
-
-      // Add other participants
-      if (participantIds.length > 0) {
-        const { error: participantsError } = await supabase
-          .from('chat_participants')
-          .insert(
-            participantIds.map(id => ({
-              chat_id: chat.id,
-              user_id: id,
-              role: 'member'
-            }))
-          );
-
-        if (participantsError) {
-          console.error('Other participants error:', participantsError);
-          throw new Error(`Failed to add participants: ${participantsError.message}`);
-        }
-      }
-
-      await fetchChats();
-      
-      toast({
-        title: 'Success',
-        description: 'Chat created successfully'
-      });
-
-      return chat.id;
-    } catch (err: any) {
-      console.error('Create chat error:', err);
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to create chat',
-        variant: 'destructive'
-      });
-      return undefined;
-    }
-  };
+  // NOTE: Chat creation removed from useMessages hook
+  // All chat creation should use the useChats hook instead
+  // This ensures consistent UUID-based chat creation via the friendships edge function
 
   return {
     messages,
@@ -532,7 +431,6 @@ export const useMessages = (chatId?: string) => {
     sendMessage,
     editMessage,
     deleteMessage,
-    createChat,
     reactToMessage,
     unreactToMessage,
     starMessage,

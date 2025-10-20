@@ -76,9 +76,19 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
                       if (creating) return;
                       setCreating(true);
                       try {
+                        // Validate UUID format before passing
+                        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                        if (!uuidRegex.test(friend.id)) {
+                          console.error('[NewChatDialog] Invalid UUID:', friend.id);
+                          throw new Error('Invalid user ID format');
+                        }
+                        
+                        console.log('[NewChatDialog] Creating chat with UUID:', friend.id);
                         await onSelectFriend(friend.id);
                         setSearchQuery('');
                         onClose();
+                      } catch (error) {
+                        console.error('[NewChatDialog] Error:', error);
                       } finally {
                         setCreating(false);
                       }
