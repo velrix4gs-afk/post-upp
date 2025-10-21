@@ -112,8 +112,17 @@ export const useFollowers = (userId?: string) => {
     }
   };
 
-  const followUser = async (followingId: string, isPrivate: boolean) => {
+  const followUser = async (followingId: string, isPrivate: boolean = false) => {
     if (!user) return;
+
+    // Optimistic update
+    setFollowing(prev => [...prev, {
+      id: 'temp',
+      follower_id: user.id,
+      following_id: followingId,
+      status: 'accepted' as const,
+      created_at: new Date().toISOString()
+    }]);
 
     try {
       // Add to followers table (the trigger will auto-create friendship)
@@ -125,18 +134,24 @@ export const useFollowers = (userId?: string) => {
           status: isPrivate ? 'pending' : 'accepted'
         });
 
-      if (followError) throw followError;
+      if (followError) {
+        // Revert optimistic update
+        setFollowing(prev => prev.filter(f => f.id !== 'temp'));
+        throw followError;
+      }
 
       toast({
-        title: 'Success',
-        description: isPrivate ? 'Follow request sent' : 'Now following'
+        description: isPrivate ? 'Follow request sent' : 'Following'
       });
 
-      fetchFollowers();
+      // Fetch to get the real record
+      await fetchFollowers();
     } catch (err: any) {
+      console.error('Error following user:', err);
       toast({
-        title: 'Error',
-        description: err.message,
+        description: err.message?.includes('duplicate') 
+          ? 'Already following' 
+          : 'Failed to follow',
         variant: 'destructive'
       });
     }
@@ -144,6 +159,9 @@ export const useFollowers = (userId?: string) => {
 
   const unfollowUser = async (followingId: string) => {
     if (!user) return;
+
+    // Optimistic update
+    setFollowing(prev => prev.filter(f => f.following_id !== followingId));
 
     try {
       // Remove from followers table (the trigger will auto-remove friendship)
@@ -153,18 +171,19 @@ export const useFollowers = (userId?: string) => {
         .eq('follower_id', user.id)
         .eq('following_id', followingId);
 
-      if (followError) throw followError;
+      if (followError) {
+        // Revert optimistic update
+        await fetchFollowers();
+        throw followError;
+      }
 
       toast({
-        title: 'Success',
         description: 'Unfollowed'
       });
-
-      fetchFollowers();
     } catch (err: any) {
+      console.error('Error unfollowing user:', err);
       toast({
-        title: 'Error',
-        description: err.message,
+        description: 'Failed to unfollow',
         variant: 'destructive'
       });
     }

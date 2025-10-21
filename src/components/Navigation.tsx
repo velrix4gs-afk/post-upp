@@ -208,6 +208,10 @@ const Navigation = () => {
                       <BarChart3 className="mr-2 h-4 w-4" />
                       <span>Analytics</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/verification')} className="lg:hidden">
+                      <Star className="h-4 w-4 mr-2 text-warning" />
+                      Get Verified
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
@@ -215,6 +219,30 @@ const Navigation = () => {
                     <DropdownMenuItem onClick={() => navigate('/search')} className="md:hidden">
                       <Search className="h-4 w-4 mr-2" />
                       Search
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/messages')} className="lg:hidden">
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Messages
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/friends')} className="lg:hidden">
+                      <Users className="h-4 w-4 mr-2" />
+                      Friends
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/groups')} className="lg:hidden">
+                      <UsersRound className="h-4 w-4 mr-2" />
+                      Groups
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/events')} className="lg:hidden">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Events
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/explore')} className="lg:hidden">
+                      <Compass className="h-4 w-4 mr-2" />
+                      Explore
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/bookmarks')} className="lg:hidden">
+                      <Bookmark className="h-4 w-4 mr-2" />
+                      Saved
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="h-4 w-4 mr-2" />

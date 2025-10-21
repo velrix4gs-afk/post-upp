@@ -41,13 +41,19 @@ export const usePosts = () => {
         method: 'GET',
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching posts:', error);
+        // Silently fail on auth errors to not block UI
+        if (!error.message?.includes('token')) {
+          throw error;
+        }
+        return;
+      }
 
       setPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
       // Silently fail for initial load to not block sign in
-      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -169,6 +175,42 @@ export const usePosts = () => {
     if (!session?.access_token) return;
 
     try {
+      // Optimistic update first
+      const currentUserId = session.user?.id;
+      setPosts(prevPosts =>
+        prevPosts.map(post => {
+          if (post.id === postId) {
+            const hasUserReaction = post.reactions?.some(r => r.user_id === currentUserId && r.reaction_type === reactionType);
+            
+            let newReactions = [...(post.reactions || [])];
+            let newCount = post.reactions_count;
+            
+            if (hasUserReaction) {
+              // Remove reaction
+              newReactions = newReactions.filter(r => !(r.user_id === currentUserId && r.reaction_type === reactionType));
+              newCount = Math.max(0, newCount - 1);
+            } else {
+              // Add reaction (remove other reactions from same user first)
+              newReactions = newReactions.filter(r => r.user_id !== currentUserId);
+              newReactions.push({
+                id: 'temp',
+                user_id: currentUserId || '',
+                reaction_type: reactionType
+              });
+              newCount = newCount + 1;
+            }
+            
+            return {
+              ...post,
+              reactions_count: newCount,
+              reactions: newReactions
+            };
+          }
+          return post;
+        })
+      );
+
+      // Call API
       const { data, error } = await supabase.functions.invoke('reactions', {
         body: {
           target_id: postId,
@@ -182,48 +224,8 @@ export const usePosts = () => {
 
       if (error) throw error;
 
-      // Update local state optimistically
-      setPosts(prevPosts =>
-        prevPosts.map(post => {
-          if (post.id === postId) {
-            const hasUserReaction = post.reactions?.some(r => r.user_id === session.user?.id);
-            
-            if (data.action === 'removed') {
-              // User unliked - decrease count by 1
-              return {
-                ...post,
-                reactions_count: Math.max(0, post.reactions_count - 1),
-                reactions: post.reactions?.filter(r => r.user_id !== session.user?.id) || []
-              };
-            } else if (data.action === 'created') {
-              // User liked for the first time - increase count by 1
-              return {
-                ...post,
-                reactions_count: post.reactions_count + 1,
-                reactions: [
-                  ...(post.reactions || []),
-                  {
-                    id: data.reaction.id,
-                    user_id: session.user?.id || '',
-                    reaction_type: reactionType
-                  }
-                ]
-              };
-            } else if (data.action === 'updated') {
-              // User changed reaction type - count stays the same
-              return {
-                ...post,
-                reactions: post.reactions?.map(r =>
-                  r.user_id === session.user?.id
-                    ? { ...r, reaction_type: reactionType }
-                    : r
-                ) || []
-              };
-            }
-          }
-          return post;
-        })
-      );
+      // Refresh posts to get accurate server state
+      await fetchPosts();
 
       return data;
     } catch (error) {
@@ -232,6 +234,8 @@ export const usePosts = () => {
         description: `Could not update reaction • ERR004`,
         variant: 'destructive',
       });
+      // Revert optimistic update on error
+      fetchPosts();
       throw error;
     }
   };

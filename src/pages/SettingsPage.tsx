@@ -78,7 +78,7 @@ const SettingsPage = () => {
     show_sensitive: false
   });
 
-  // Load settings
+  // Load settings and apply them
   useEffect(() => {
     const loadSettings = async () => {
       if (!user) return;
@@ -97,15 +97,6 @@ const SettingsPage = () => {
         setFontSize(loadedFontSize);
         setLayoutMode(loadedLayoutMode);
         setAccentColor(loadedAccentColor);
-        
-        // Apply font size to document
-        document.documentElement.setAttribute('data-font-size', loadedFontSize);
-        
-        // Apply layout mode to document
-        document.documentElement.setAttribute('data-layout', loadedLayoutMode);
-        
-        // Apply accent color to document
-        document.documentElement.setAttribute('data-accent', loadedAccentColor);
         
         setPrivacySettings(prev => ({
           ...prev,
@@ -131,6 +122,13 @@ const SettingsPage = () => {
     
     loadSettings();
   }, [user]);
+
+  // Apply appearance settings when they change
+  useEffect(() => {
+    document.documentElement.setAttribute('data-font-size', fontSize);
+    document.documentElement.setAttribute('data-layout', layoutMode);
+    document.documentElement.setAttribute('data-accent', accentColor);
+  }, [fontSize, layoutMode, accentColor]);
 
   const handleSettingUpdate = async (updates: any) => {
     try {

@@ -31,20 +31,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    // Get user from JWT using anon client
-    const { data: { user }, error: userError } = await supabaseAnonClient.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (userError || !user) {
-      throw new Error('Invalid or expired token');
-    }
-
-    const url = new URL(req.url);
     const method = req.method;
+    const url = new URL(req.url);
+    
+    // For GET requests, auth is optional (public feed)
+    let user = null;
+    if (method !== 'GET') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        throw new Error('Authorization required');
+      }
+      
+      const { data: { user: authUser }, error: userError } = await supabaseAnonClient.auth.getUser(authHeader.replace('Bearer ', ''));
+      if (userError || !authUser) {
+        throw new Error('Invalid or expired token');
+      }
+      user = authUser;
+    }
 
     // Parse body for non-GET requests
     let body: any = {};

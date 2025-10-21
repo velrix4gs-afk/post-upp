@@ -82,14 +82,37 @@ export const useStories = () => {
       let media_type = null;
 
       if (mediaFile) {
+        // Validate file size (max 10MB)
+        if (mediaFile.size > 10 * 1024 * 1024) {
+          toast({
+            title: 'File Too Large',
+            description: 'Story media must be less than 10MB • UPLOAD_001',
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        // Validate file type
+        if (!mediaFile.type.startsWith('image/') && !mediaFile.type.startsWith('video/')) {
+          toast({
+            title: 'Invalid File',
+            description: 'Please upload an image or video • UPLOAD_002',
+            variant: 'destructive'
+          });
+          return;
+        }
+
         const fileExt = mediaFile.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('posts')
           .upload(fileName, mediaFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error('Failed to upload file • UPLOAD_003');
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('posts')
@@ -111,13 +134,16 @@ export const useStories = () => {
       if (error) throw error;
 
       toast({
-        title: 'Success',
         description: 'Story created successfully!',
       });
+      
+      // Refresh stories
+      await fetchStories();
     } catch (err: any) {
+      console.error('Story creation error:', err);
       toast({
-        title: 'Error',
-        description: 'Failed to create story',
+        title: 'Story Creation Failed',
+        description: err.message || 'Failed to create story • STORY_001',
         variant: 'destructive'
       });
     }
