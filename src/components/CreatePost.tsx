@@ -34,71 +34,109 @@ const CreatePost = () => {
   const { saveDraft } = useDrafts();
   const { processHashtags } = useHashtags();
   const [postContent, setPostContent] = useState("");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [createdPostId, setCreatedPostId] = useState<string | null>(null);
   const [showPollDialog, setShowPollDialog] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date>();
+  const [location, setLocation] = useState('');
+  const [taggedUsers, setTaggedUsers] = useState<string[]>([]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        toast({
-          title: 'Error',
-          description: 'Please select an image or video file',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setSelectedImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
-  const removeImage = () => {
-    setSelectedImage(null);
-    setSelectedFile(null);
-  };
-
-  const uploadPostMedia = async (file: File): Promise<string | null> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('posts')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('posts')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (error) {
+    // Validate max 10 images
+    if (selectedImages.length + files.length > 10) {
       toast({
-        title: 'Error',
-        description: 'Failed to upload image',
+        title: '[POST_001] Too many images',
+        description: 'You can upload maximum 10 images per post',
         variant: 'destructive'
       });
-      return null;
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        toast({
+          title: '[POST_002] Invalid file type',
+          description: `${file.name} is not an image or video`,
+          variant: 'destructive'
+        });
+        return false;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: '[POST_003] File too large',
+          description: `${file.name} exceeds 10MB limit`,
+          variant: 'destructive'
+        });
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    setSelectedImages(prev => [...prev, ...validFiles]);
+    
+    // Generate previews
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewImages(prev => [...prev, e.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadPostMedia = async (files: File[]): Promise<string[]> => {
+    const uploadedUrls: string[] = [];
+    
+    try {
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user?.id}/${Date.now()}-${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('posts')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('[POST_004] Upload error:', uploadError);
+          throw new Error(`[POST_004] Failed to upload ${file.name}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('posts')
+          .getPublicUrl(fileName);
+
+        uploadedUrls.push(publicUrl);
+      }
+      
+      return uploadedUrls;
+    } catch (error: any) {
+      toast({
+        title: 'Upload Error',
+        description: error.message || 'Failed to upload images',
+        variant: 'destructive'
+      });
+      return [];
     }
   };
 
   const handlePost = async () => {
-    if (!postContent.trim() && !selectedFile) {
+    if (!postContent.trim() && selectedImages.length === 0) {
       toast({
-        title: 'Error',
+        title: '[POST_005] Missing content',
         description: 'Please add some content or media to your post',
         variant: 'destructive'
       });
@@ -107,10 +145,10 @@ const CreatePost = () => {
 
     setIsPosting(true);
     try {
-      let mediaUrl = null;
-      if (selectedFile) {
-        mediaUrl = await uploadPostMedia(selectedFile);
-        if (!mediaUrl) {
+      let mediaUrls: string[] = [];
+      if (selectedImages.length > 0) {
+        mediaUrls = await uploadPostMedia(selectedImages);
+        if (mediaUrls.length === 0 && selectedImages.length > 0) {
           setIsPosting(false);
           return;
         }
@@ -124,9 +162,26 @@ const CreatePost = () => {
         postData.content = postContent.trim();
       }
       
-      if (mediaUrl) {
-        postData.media_url = mediaUrl;
-        postData.media_type = selectedFile!.type.startsWith('image/') ? 'image' : 'video';
+      if (mediaUrls.length > 0) {
+        if (mediaUrls.length === 1) {
+          postData.media_url = mediaUrls[0];
+          postData.media_type = selectedImages[0].type.startsWith('image/') ? 'image' : 'video';
+        } else {
+          postData.media_urls = mediaUrls;
+          postData.media_type = 'multiple';
+        }
+      }
+
+      if (location.trim()) {
+        postData.location = location.trim();
+      }
+
+      if (taggedUsers.length > 0) {
+        postData.tagged_users = taggedUsers;
+      }
+
+      if (scheduledDate) {
+        postData.scheduled_for = scheduledDate.toISOString();
       }
 
       const newPostId = await createPost(postData);
@@ -137,48 +192,64 @@ const CreatePost = () => {
         await processHashtags(newPostId, postContent);
       }
 
+      toast({
+        title: 'Success!',
+        description: scheduledDate ? 'Post scheduled successfully' : 'Post created successfully'
+      });
+
       // If poll dialog should be shown, keep expanded
       if (!showPollDialog) {
         // Reset form
         setPostContent("");
-        setSelectedImage(null);
-        setSelectedFile(null);
+        setSelectedImages([]);
+        setPreviewImages([]);
+        setLocation('');
+        setTaggedUsers([]);
         setIsExpanded(false);
         setScheduledDate(undefined);
       }
     } catch (error: any) {
-      console.error('Post creation error:', error);
+      console.error('[POST_006] Post creation error:', error);
+      toast({
+        title: '[POST_006] Error creating post',
+        description: error.message || 'Something went wrong',
+        variant: 'destructive'
+      });
     } finally {
       setIsPosting(false);
     }
   };
 
   const handleSaveDraft = async () => {
-    if (!postContent.trim() && !selectedFile) return;
+    if (!postContent.trim() && selectedImages.length === 0) return;
     
-    let mediaUrl = null;
-    if (selectedFile) {
-      mediaUrl = await uploadPostMedia(selectedFile);
+    let mediaUrls: string[] = [];
+    if (selectedImages.length > 0) {
+      mediaUrls = await uploadPostMedia(selectedImages);
     }
 
     await saveDraft({
       content: postContent.trim(),
-      media_url: mediaUrl,
-      media_type: selectedFile?.type.startsWith('image/') ? 'image' : 'video',
+      media_url: mediaUrls[0] || null,
+      media_type: selectedImages[0]?.type.startsWith('image/') ? 'image' : 'video',
       scheduled_for: scheduledDate?.toISOString()
     });
 
     // Reset form
     setPostContent("");
-    setSelectedImage(null);
-    setSelectedFile(null);
+    setSelectedImages([]);
+    setPreviewImages([]);
+    setLocation('');
+    setTaggedUsers([]);
     setIsExpanded(false);
     setScheduledDate(undefined);
   };
 
   const handleLoadDraft = (draft: any) => {
     setPostContent(draft.content || '');
-    setSelectedImage(draft.media_url);
+    if (draft.media_url) {
+      setPreviewImages([draft.media_url]);
+    }
     if (draft.scheduled_for) {
       setScheduledDate(new Date(draft.scheduled_for));
     }
@@ -208,22 +279,31 @@ const CreatePost = () => {
           </div>
         </div>
 
-        {/* Image Preview */}
-        {selectedImage && (
-          <div className="relative mb-4">
-            <img 
-              src={selectedImage} 
-              alt="Upload preview" 
-              className="w-full max-h-64 object-cover rounded-lg"
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              className="absolute top-2 right-2 h-8 w-8 p-0"
-              onClick={removeImage}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        {/* Images Preview */}
+        {previewImages.length > 0 && (
+          <div className={`grid gap-2 mb-4 ${
+            previewImages.length === 1 ? 'grid-cols-1' :
+            previewImages.length === 2 ? 'grid-cols-2' :
+            previewImages.length === 3 ? 'grid-cols-3' :
+            'grid-cols-2'
+          }`}>
+            {previewImages.map((preview, index) => (
+              <div key={index} className="relative">
+                <img 
+                  src={preview} 
+                  alt={`Preview ${index + 1}`} 
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute top-2 right-2 h-6 w-6 p-0"
+                  onClick={() => removeImage(index)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -237,12 +317,13 @@ const CreatePost = () => {
                 onChange={handleImageUpload}
                 className="hidden"
                 id="image-upload"
+                multiple
               />
               <label htmlFor="image-upload">
                 <Button variant="ghost" size="sm" className="h-9 px-3 cursor-pointer" asChild>
                   <span>
                     <Image className="h-4 w-4 mr-2 text-success" />
-                    <span className="text-xs">Photo/Video</span>
+                    <span className="text-xs">Photo/Video {selectedImages.length > 0 && `(${selectedImages.length})`}</span>
                   </span>
                 </Button>
               </label>
@@ -255,14 +336,25 @@ const CreatePost = () => {
 
             {isExpanded && (
               <>
-                <Button variant="ghost" size="sm" className="h-9 px-3">
-                  <MapPin className="h-4 w-4 mr-2 text-primary" />
-                  <span className="text-xs">Location</span>
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-9 px-3">
+                      <MapPin className="h-4 w-4 mr-2 text-primary" />
+                      <span className="text-xs">{location || 'Location'}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <Input
+                      placeholder="Add location..."
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </PopoverContent>
+                </Popover>
 
                 <Button variant="ghost" size="sm" className="h-9 px-3">
                   <Users className="h-4 w-4 mr-2 text-accent" />
-                  <span className="text-xs">Tag</span>
+                  <span className="text-xs">Tag {taggedUsers.length > 0 && `(${taggedUsers.length})`}</span>
                 </Button>
 
                 <Button 
@@ -303,7 +395,7 @@ const CreatePost = () => {
                   variant="outline" 
                   size="sm"
                   onClick={handleSaveDraft}
-                  disabled={!postContent.trim() && !selectedImage}
+                  disabled={!postContent.trim() && selectedImages.length === 0}
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Save Draft
@@ -313,7 +405,7 @@ const CreatePost = () => {
             <Button 
               size="sm" 
               className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-              disabled={(!postContent.trim() && !selectedImage) || isPosting}
+              disabled={(!postContent.trim() && selectedImages.length === 0) || isPosting}
               onClick={handlePost}
             >
               {isPosting ? 'Posting...' : scheduledDate ? 'Schedule' : 'Post'}
@@ -327,8 +419,10 @@ const CreatePost = () => {
             onPollCreated={() => {
               setShowPollDialog(false);
               setPostContent("");
-              setSelectedImage(null);
-              setSelectedFile(null);
+              setSelectedImages([]);
+              setPreviewImages([]);
+              setLocation('');
+              setTaggedUsers([]);
               setIsExpanded(false);
               setCreatedPostId(null);
             }}

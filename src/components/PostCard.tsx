@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import PollCard from "./PollCard";
 import { PostContent } from "./PostContent";
+import { CommentsSection } from "./CommentsSection";
+import { SharePostDialog } from "./SharePostDialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -62,6 +64,8 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editContent, setEditContent] = useState(post.content || "");
   const [localReactionCount, setLocalReactionCount] = useState(post.reactions_count);
+  const [showComments, setShowComments] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   // Check if user has liked this post
   useEffect(() => {
@@ -136,26 +140,8 @@ export const PostCard = ({ post }: PostCardProps) => {
     toast({ title: "Post deleted" });
   };
 
-  const handleShare = async () => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('post_shares')
-        .insert({ post_id: post.id, user_id: user.id });
-      
-      if (error && !error.message.includes('duplicate')) {
-        throw error;
-      }
-      
-      toast({ title: "Post shared!" });
-    } catch (err: any) {
-      toast({ 
-        title: "Error", 
-        description: err.message,
-        variant: "destructive" 
-      });
-    }
+  const handleShare = () => {
+    setShowShareDialog(true);
   };
 
   const isOwner = user?.id === post.author_id;
@@ -271,12 +257,17 @@ export const PostCard = ({ post }: PostCardProps) => {
                 <span>{localReactionCount}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2"
+                onClick={() => setShowComments(!showComments)}
+              >
                 <MessageCircle className="h-4 w-4" />
                 <span>{post.comments_count}</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="gap-2" onClick={() => handleShare()}>
+              <Button variant="ghost" size="sm" className="gap-2" onClick={handleShare}>
                 <Share className="h-4 w-4" />
                 <span>{post.shares_count || 0}</span>
               </Button>
@@ -290,8 +281,16 @@ export const PostCard = ({ post }: PostCardProps) => {
               <Bookmark className={`h-4 w-4 ${isBookmarked(post.id) ? 'fill-current text-primary' : ''}`} />
             </Button>
           </div>
+
+          {showComments && <CommentsSection postId={post.id} />}
         </div>
       </Card>
+
+      <SharePostDialog
+        postId={post.id}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
     </>
   );
 };

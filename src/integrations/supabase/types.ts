@@ -1733,12 +1733,15 @@ export type Database = {
           id: string
           is_deleted: boolean
           is_published: boolean | null
+          location: string | null
           media_type: string | null
           media_url: string | null
+          media_urls: string[] | null
           privacy: string | null
           reactions_count: number | null
           scheduled_for: string | null
           shares_count: number | null
+          tagged_users: string[] | null
           updated_at: string | null
           user_id: string
         }
@@ -1749,12 +1752,15 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           is_published?: boolean | null
+          location?: string | null
           media_type?: string | null
           media_url?: string | null
+          media_urls?: string[] | null
           privacy?: string | null
           reactions_count?: number | null
           scheduled_for?: string | null
           shares_count?: number | null
+          tagged_users?: string[] | null
           updated_at?: string | null
           user_id: string
         }
@@ -1765,12 +1771,15 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           is_published?: boolean | null
+          location?: string | null
           media_type?: string | null
           media_url?: string | null
+          media_urls?: string[] | null
           privacy?: string | null
           reactions_count?: number | null
           scheduled_for?: string | null
           shares_count?: number | null
+          tagged_users?: string[] | null
           updated_at?: string | null
           user_id?: string
         }

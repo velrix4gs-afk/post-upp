@@ -49,8 +49,13 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
+      // Validate file size (max 10MB)
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        throw new Error('[STORY_001] File size must be less than 10MB');
+      }
+
       const { error: uploadError } = await supabase.storage
-        .from('posts')
+        .from('stories')
         .upload(fileName, selectedFile, {
           cacheControl: '3600',
           upsert: false
@@ -62,7 +67,7 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       }
 
       const { data: { publicUrl } } = supabase.storage
-        .from('posts')
+        .from('stories')
         .getPublicUrl(fileName);
 
       // Create story
