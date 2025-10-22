@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
@@ -14,6 +14,7 @@ import PollCard from "./PollCard";
 import { PostContent } from "./PostContent";
 import { CommentsSection } from "./CommentsSection";
 import { SharePostDialog } from "./SharePostDialog";
+import { TipDialog } from "./premium/TipDialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -84,7 +85,7 @@ export const PostCard = ({ post }: PostCardProps) => {
           setIsLiked(true);
         }
       } catch (err) {
-        console.error('Error checking like status:', err);
+        console.error('[REACT_001] Error checking like status:', err);
       }
     };
 
@@ -120,8 +121,8 @@ export const PostCard = ({ post }: PostCardProps) => {
       setIsLiked(!newLikedState);
       setLocalReactionCount(post.reactions_count);
       toast({
-        title: 'Error',
-        description: 'Failed to update like',
+        title: 'Something went wrong',
+        description: 'Failed to update like • REACT_002',
         variant: 'destructive'
       });
     }
@@ -273,13 +274,22 @@ export const PostCard = ({ post }: PostCardProps) => {
               </Button>
             </div>
 
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => toggleBookmark(post.id)}
-            >
-              <Bookmark className={`h-4 w-4 ${isBookmarked(post.id) ? 'fill-current text-primary' : ''}`} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => toggleBookmark(post.id)}
+              >
+                <Bookmark className={`h-4 w-4 ${isBookmarked(post.id) ? 'fill-current text-primary' : ''}`} />
+              </Button>
+
+              {user?.id !== post.author_id && (
+                <TipDialog 
+                  recipientId={post.author_id}
+                  recipientName={post.author_name}
+                />
+              )}
+            </div>
           </div>
 
           {showComments && <CommentsSection postId={post.id} />}

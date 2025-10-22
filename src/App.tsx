@@ -28,6 +28,7 @@ const AdminSetup = lazy(() => import("./pages/AdminSetup"));
 const AnalyticsDashboard = lazy(() => import("./pages/AnalyticsDashboard"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -170,6 +171,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <SettingsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/premium" 
+                element={
+                  <ProtectedRoute>
+                    <PremiumPage />
                   </ProtectedRoute>
                 } 
               />

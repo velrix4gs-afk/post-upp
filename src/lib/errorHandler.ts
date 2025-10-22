@@ -36,6 +36,19 @@ const ERROR_CODES: Record<string, ErrorCode> = {
   'post-not-found': { code: 'POST001', userMessage: 'Post not found' },
   'post-deleted': { code: 'POST002', userMessage: 'Post was deleted' },
   
+  // Upload errors
+  'file-too-large': { code: 'UPLOAD001', userMessage: 'File too large (max 10MB)' },
+  'invalid-file-type': { code: 'UPLOAD002', userMessage: 'Invalid file type' },
+  'upload-failed': { code: 'UPLOAD003', userMessage: 'Upload failed' },
+  
+  // Tip errors
+  'invalid-amount': { code: 'TIP001', userMessage: 'Invalid tip amount' },
+  'tip-failed': { code: 'TIP002', userMessage: 'Failed to send tip' },
+  
+  // Premium errors
+  'subscription-failed': { code: 'PREMIUM001', userMessage: 'Subscription failed' },
+  'payment-required': { code: 'PREMIUM002', userMessage: 'Premium feature - upgrade required' },
+  
   // Default
   'unknown': { code: 'ERR000', userMessage: 'Something went wrong' }
 };
@@ -88,7 +101,9 @@ export const showCleanError = (error: any, toast: any, customTitle?: string) => 
   const { message, code } = getCleanError(error);
   
   toast({
+    title: customTitle || 'Something went wrong',
     description: `${message} • ${code}`,
-    variant: 'destructive'
+    variant: 'destructive',
+    duration: 5000
   });
 };

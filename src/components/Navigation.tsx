@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
-import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star } from 'lucide-react';
+import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck } from 'lucide-react';
 import { useState } from 'react';
 import {
   DropdownMenu,
@@ -122,8 +122,18 @@ const Navigation = () => {
                     size="sm" 
                     className="gap-2"
                   >
-                    <Star className="h-4 w-4" />
+                    <BadgeCheck className="h-4 w-4" />
                     Verify
+                  </Button>
+                </Link>
+                <Link to="/premium">
+                  <Button 
+                    variant={isActive('/premium') ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="gap-2"
+                  >
+                    <Crown className="h-4 w-4" />
+                    Premium
                   </Button>
                 </Link>
               </div>
@@ -209,8 +219,12 @@ const Navigation = () => {
                       <span>Analytics</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/verification')} className="lg:hidden">
-                      <Star className="h-4 w-4 mr-2 text-warning" />
+                      <BadgeCheck className="h-4 w-4 mr-2 text-warning" />
                       Get Verified
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/premium')} className="lg:hidden">
+                      <Crown className="h-4 w-4 mr-2 text-warning" />
+                      Go Premium
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
