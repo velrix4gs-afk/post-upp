@@ -26,16 +26,39 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
   const handleSendTip = async () => {
     if (!user) {
       toast({
-        description: 'Please sign in to send tips • AUTH_001',
+        title: '⚠️ AUTH_001',
+        description: 'Please sign in to send tips',
         variant: 'destructive'
       });
+      return;
+    }
+
+    // Check if sender is verified
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_verified')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.is_verified) {
+      toast({
+        title: '⚠️ TIP_005',
+        description: 'You must be verified to send tips. Visit /verification to get verified!',
+        variant: 'destructive',
+        duration: 8000
+      });
+      // Redirect after showing toast
+      setTimeout(() => {
+        window.location.href = '/verification';
+      }, 2000);
       return;
     }
 
     const tipAmount = parseFloat(amount);
     if (isNaN(tipAmount) || tipAmount <= 0) {
       toast({
-        description: 'Please enter a valid amount • TIP_001',
+        title: '⚠️ TIP_001',
+        description: 'Please enter a valid amount (minimum $1)',
         variant: 'destructive'
       });
       return;
@@ -55,8 +78,9 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
       if (error) throw error;
 
       toast({
-        title: 'Tip sent successfully!',
-        description: `You sent $${tipAmount} to ${recipientName}`
+        title: '✅ Success',
+        description: `You sent $${tipAmount} to ${recipientName}`,
+        duration: 5000
       });
 
       setOpen(false);
@@ -64,7 +88,7 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
       setMessage('');
     } catch (err: any) {
       console.error('[TIP_002] Error sending tip:', err);
-      showCleanError(err, toast);
+      showCleanError(err, toast, 'Tip Failed');
     } finally {
       setLoading(false);
     }

@@ -5,8 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component, ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 // Lazy load pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -42,7 +43,66 @@ const PageLoader = () => (
 
 const queryClient = new QueryClient();
 
+// Error Boundary Component
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('[APP_ERROR] Uncaught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <div className="max-w-md w-full text-center space-y-4">
+            <div className="text-6xl">⚠️</div>
+            <h1 className="text-2xl font-bold text-destructive">
+              Something Went Wrong [APP_001]
+            </h1>
+            <p className="text-muted-foreground">
+              The application encountered an unexpected error. Please try refreshing the page.
+            </p>
+            {this.state.error && process.env.NODE_ENV === 'development' && (
+              <details className="text-left bg-muted p-4 rounded-lg text-sm">
+                <summary className="cursor-pointer font-medium mb-2">
+                  Error Details (Dev Only)
+                </summary>
+                <pre className="whitespace-pre-wrap break-words text-xs">
+                  {this.state.error.toString()}
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => window.location.reload()}>
+                Reload Page
+              </Button>
+              <Button variant="outline" onClick={() => window.location.href = '/'}>
+                Go Home
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
@@ -190,6 +250,7 @@ const App = () => (
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

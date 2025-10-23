@@ -55,70 +55,87 @@ serve(async (req) => {
         throw new Error('Missing required fields: target_id, target_type, reaction_type');
       }
 
-      // Check if reaction already exists
+      console.log(`[REACT_001] Checking for existing reaction: user=${user.id}, post=${target_id}`);
+
+      // Check if reaction already exists using post_reactions table
       const { data: existingReaction } = await supabaseClient
-        .from('reactions')
+        .from('post_reactions')
         .select('*')
         .eq('user_id', user.id)
-        .eq('target_id', target_id)
-        .eq('target_type', target_type)
+        .eq('post_id', target_id)
         .single();
 
       if (existingReaction) {
         // Update existing reaction or remove if same type
         if (existingReaction.reaction_type === reaction_type) {
-          // Remove reaction
+          console.log(`[REACT_002] Removing existing reaction: ${existingReaction.id}`);
+          // Remove reaction - trigger will handle count update
           const { error } = await supabaseClient
-            .from('reactions')
+            .from('post_reactions')
             .delete()
             .eq('id', existingReaction.id);
 
-          if (error) throw error;
-
-          // Update count in target table
-          if (target_type === 'post') {
-            await supabaseClient.rpc('decrement_post_likes', { post_id: target_id });
+          if (error) {
+            console.error(`[REACT_003] Error removing reaction:`, error);
+            throw new Error(`[REACT_003] ${error.message}`);
           }
 
-          return new Response(JSON.stringify({ action: 'removed', reaction_type }), {
+          return new Response(JSON.stringify({ 
+            action: 'removed', 
+            reaction_type,
+            code: 'SUCCESS',
+            message: 'Reaction removed successfully'
+          }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         } else {
+          console.log(`[REACT_004] Updating reaction type: ${reaction_type}`);
           // Update reaction type
           const { data: reaction, error } = await supabaseClient
-            .from('reactions')
+            .from('post_reactions')
             .update({ reaction_type })
             .eq('id', existingReaction.id)
             .select()
             .single();
 
-          if (error) throw error;
+          if (error) {
+            console.error(`[REACT_005] Error updating reaction:`, error);
+            throw new Error(`[REACT_005] ${error.message}`);
+          }
 
-          return new Response(JSON.stringify({ action: 'updated', reaction }), {
+          return new Response(JSON.stringify({ 
+            action: 'updated', 
+            reaction,
+            code: 'SUCCESS',
+            message: 'Reaction updated successfully'
+          }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
       } else {
-        // Create new reaction
+        console.log(`[REACT_006] Creating new reaction: type=${reaction_type}`);
+        // Create new reaction - trigger will handle count update
         const { data: reaction, error } = await supabaseClient
-          .from('reactions')
+          .from('post_reactions')
           .insert({
             user_id: user.id,
-            target_id,
-            target_type,
+            post_id: target_id,
             reaction_type
           })
           .select()
           .single();
 
-        if (error) throw error;
-
-        // Update count in target table
-        if (target_type === 'post') {
-          await supabaseClient.rpc('increment_post_likes', { post_id: target_id });
+        if (error) {
+          console.error(`[REACT_007] Error creating reaction:`, error);
+          throw new Error(`[REACT_007] ${error.message}`);
         }
 
-        return new Response(JSON.stringify({ action: 'created', reaction }), {
+        return new Response(JSON.stringify({ 
+          action: 'created', 
+          reaction,
+          code: 'SUCCESS',
+          message: 'Reaction created successfully'
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -130,9 +147,15 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Reactions API Error:', error);
+    console.error('[REACT_ERROR] Reactions API Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const errorCode = errorMessage.includes('[REACT_') ? errorMessage.split(']')[0].replace('[', '') : 'REACT_999';
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      code: errorCode,
+      message: 'Failed to process reaction'
+    }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

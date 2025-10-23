@@ -93,6 +93,84 @@ export const useProfile = (userId?: string) => {
     }
   };
 
+  const uploadCover = async (file: File) => {
+    if (!user) {
+      toast({
+        title: 'AUTH_001',
+        description: 'You must be logged in to upload a cover image',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('UPLOAD_004: File size must be less than 5MB');
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('UPLOAD_005: File must be an image');
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+      
+      console.log('[COVER] Uploading to path:', filePath);
+      
+      // Delete old cover if exists
+      if (profile?.cover_url) {
+        const oldPath = profile.cover_url.split('/covers/').pop();
+        if (oldPath) {
+          console.log('[COVER] Removing old cover:', oldPath);
+          await supabase.storage.from('covers').remove([oldPath]);
+        }
+      }
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('covers')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('[COVER] Upload error:', uploadError);
+        throw new Error(`UPLOAD_006: ${uploadError.message}`);
+      }
+
+      console.log('[COVER] Upload successful:', uploadData);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('covers')
+        .getPublicUrl(filePath);
+
+      console.log('[COVER] Public URL:', publicUrl);
+
+      await updateProfile({ cover_url: publicUrl });
+      
+      toast({
+        title: 'Success',
+        description: 'Cover image updated successfully!'
+      });
+      
+      return publicUrl;
+    } catch (err: any) {
+      console.error('[COVER] Error:', err);
+      const errorCode = err.message?.split(':')[0] || 'UPLOAD_ERROR';
+      const errorMsg = err.message?.split(':')[1]?.trim() || err.message || 'Failed to upload cover image';
+      
+      toast({
+        title: errorCode,
+        description: errorMsg,
+        variant: 'destructive'
+      });
+      throw err;
+    }
+  };
+
   const uploadAvatar = async (file: File) => {
     if (!user) {
       toast({
@@ -177,6 +255,7 @@ export const useProfile = (userId?: string) => {
     error,
     updateProfile,
     uploadAvatar,
+    uploadCover,
     refetch: fetchProfile
   };
 };

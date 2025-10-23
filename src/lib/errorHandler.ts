@@ -100,10 +100,23 @@ export const getCleanError = (error: any): { message: string; code: string } => 
 export const showCleanError = (error: any, toast: any, customTitle?: string) => {
   const { message, code } = getCleanError(error);
   
+  // Extract code from error if it contains one
+  const errorCode = error?.message?.includes('[') ? 
+    error.message.split('[')[1]?.split(']')[0] : code;
+  
+  let description = `${message} [${errorCode}]`;
+  
+  // Add technical details in development
+  if (process.env.NODE_ENV === 'development' && error?.message) {
+    const details = typeof error === 'object' ? JSON.stringify(error, null, 2) : String(error);
+    description += `\n\n📋 Technical Details:\n${details.slice(0, 200)}...`;
+  }
+  
   toast({
-    title: customTitle || 'Something went wrong',
-    description: `${message} • ${code}`,
+    title: `⚠️ ${customTitle || 'Error'}`,
+    description: description,
     variant: 'destructive',
-    duration: 5000
+    duration: 8000,
+    className: 'border-2 border-destructive shadow-lg max-w-md',
   });
 };

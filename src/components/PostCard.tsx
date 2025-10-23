@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import PollCard from "./PollCard";
+import { PollCard } from "./PollCard";
 import { PostContent } from "./PostContent";
 import { CommentsSection } from "./CommentsSection";
 import { SharePostDialog } from "./SharePostDialog";

@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.create-official-account]
 verify_jwt = true
+
+[functions.process-tip]
+verify_jwt = true
+
+[functions.publish-scheduled-posts]
+verify_jwt = false
