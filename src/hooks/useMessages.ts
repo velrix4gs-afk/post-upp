@@ -107,8 +107,69 @@ export const useMessages = (chatId?: string) => {
           schema: 'public',
           table: 'messages',
           filter: `chat_id=eq.${chatId}`
+        }, async (payload) => {
+          const newMessage = payload.new as any;
+          
+          // Fetch sender profile for the new message
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, display_name, avatar_url')
+            .eq('id', newMessage.sender_id)
+            .single();
+          
+          const messageWithProfile: Message = {
+            ...newMessage,
+            sender: {
+              username: profile?.username || 'user',
+              display_name: profile?.display_name || 'User',
+              avatar_url: profile?.avatar_url
+            }
+          };
+          
+          setMessages(prev => {
+            // Avoid duplicates (optimistic updates)
+            const exists = prev.find(m => m.id === messageWithProfile.id);
+            if (exists) {
+              return prev.map(m => m.id === messageWithProfile.id ? messageWithProfile : m);
+            }
+            return [...prev, messageWithProfile];
+          });
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `chat_id=eq.${chatId}`
+        }, async (payload) => {
+          const updatedMessage = payload.new as any;
+          
+          // Fetch sender profile for updated message
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, display_name, avatar_url')
+            .eq('id', updatedMessage.sender_id)
+            .single();
+          
+          const messageWithProfile: Message = {
+            ...updatedMessage,
+            sender: {
+              username: profile?.username || 'user',
+              display_name: profile?.display_name || 'User',
+              avatar_url: profile?.avatar_url
+            }
+          };
+          
+          setMessages(prev => prev.map(msg => 
+            msg.id === messageWithProfile.id ? messageWithProfile : msg
+          ));
+        })
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+          filter: `chat_id=eq.${chatId}`
         }, (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
+          setMessages(prev => prev.filter(msg => msg.id !== payload.old.id));
         })
         .subscribe();
 
@@ -128,11 +189,7 @@ export const useMessages = (chatId?: string) => {
       
       setChats(data || []);
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load chats',
-        variant: 'destructive'
-      });
+      console.error('[CHAT_001] Failed to load chats:', err);
     }
   };
 
@@ -149,11 +206,7 @@ export const useMessages = (chatId?: string) => {
       if (error) throw error;
       setMessages(data || []);
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load messages',
-        variant: 'destructive'
-      });
+      console.error('[MSG_001] Failed to load messages:', err);
     } finally {
       setLoading(false);
     }

@@ -437,14 +437,24 @@ const MessagesPage = () => {
                     >
                       ←
                     </Button>
-                    <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/30">
-                      <AvatarImage src={selectedChat.avatar_url} />
-                      <AvatarFallback className="bg-gradient-primary text-white">{selectedChat.name?.[0] || 'C'}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{selectedChat.name || 'Chat'}</p>
-                      <p className="text-xs md:text-sm text-success">Online</p>
-                    </div>
+                    {(() => {
+                      const otherParticipant = selectedChat.participants.find(p => p.user_id !== user?.id);
+                      const chatName = selectedChat.name || otherParticipant?.profiles.display_name || 'User';
+                      const chatAvatar = selectedChat.avatar_url || otherParticipant?.profiles.avatar_url;
+                      
+                      return (
+                        <>
+                          <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/30">
+                            <AvatarImage src={chatAvatar} />
+                            <AvatarFallback className="bg-gradient-primary text-white">{chatName[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{chatName}</p>
+                            <p className="text-xs md:text-sm text-success">Online</p>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className="flex gap-1 md:gap-2 flex-shrink-0">
                     <Button size="icon" variant="ghost" className="h-10 w-10 hover:bg-primary/10 hover:text-primary" disabled>
