@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Image, Video, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { showCleanError } from '@/lib/errorHandler';
 
 interface CreateStoryProps {
   onStoryCreated?: () => void;
@@ -23,23 +23,31 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showCleanError({ code: 'STORY_001', message: 'File size must be less than 10MB' }, toast);
+      return;
     }
+
+    // Validate file type
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      showCleanError({ code: 'STORY_002', message: 'Only images and videos are allowed' }, toast);
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPreviewUrl(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCreateStory = async () => {
     if (!selectedFile || !user) {
-      toast({
-        title: 'Error',
-        description: 'Please select a file',
-        variant: 'destructive'
-      });
+      showCleanError({ code: 'STORY_003', message: 'Please select a file' }, toast);
       return;
     }
 
@@ -48,11 +56,6 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       // Upload media
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      // Validate file size (max 10MB)
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        throw new Error('[STORY_001] File size must be less than 10MB');
-      }
 
       const { error: uploadError } = await supabase.storage
         .from('stories')
@@ -62,8 +65,7 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
         });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error('Upload failed - ' + uploadError.message);
+        throw new Error(`STORY_004: ${uploadError.message}`);
       }
 
       const { data: { publicUrl } } = supabase.storage
@@ -81,12 +83,11 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
         });
 
       if (storyError) {
-        console.error('Story creation error:', storyError);
-        throw new Error('Story creation failed');
+        throw new Error(`STORY_005: ${storyError.message}`);
       }
 
       toast({
-        title: 'Success',
+        title: '✅ Success',
         description: 'Story created!'
       });
 
@@ -97,12 +98,7 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       setIsOpen(false);
       onStoryCreated?.();
     } catch (error: any) {
-      console.error('Story error:', error);
-      toast({
-        title: 'Story Error',
-        description: error.message || 'Failed to create story',
-        variant: 'destructive'
-      });
+      showCleanError(error, toast, 'Story Creation Failed');
     } finally {
       setIsUploading(false);
     }
@@ -112,7 +108,7 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
     <>
       <Button
         size="sm"
-        className="gap-2"
+        className="gap-2 bg-gradient-primary hover:shadow-glow"
         onClick={() => setIsOpen(true)}
       >
         <Plus className="h-4 w-4" />
@@ -120,7 +116,7 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Story</DialogTitle>
           </DialogHeader>
@@ -169,8 +165,9 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
                         <Image className="h-8 w-8 text-success" />
                         <Video className="h-8 w-8 text-destructive" />
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Click to upload photo or video
+                      <p className="text-sm text-muted-foreground text-center">
+                        Click to upload photo or video<br />
+                        <span className="text-xs">Max 10MB</span>
                       </p>
                     </div>
                   </Card>
@@ -183,6 +180,7 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={3}
+              maxLength={200}
             />
 
             <div className="flex gap-2">
@@ -190,11 +188,12 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
                 variant="outline"
                 className="flex-1"
                 onClick={() => setIsOpen(false)}
+                disabled={isUploading}
               >
                 Cancel
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 bg-gradient-primary"
                 onClick={handleCreateStory}
                 disabled={!selectedFile || isUploading}
               >

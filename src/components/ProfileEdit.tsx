@@ -13,6 +13,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { showCleanError } from '@/lib/errorHandler';
 
 interface ProfileEditProps {
   onClose: () => void;
@@ -43,14 +44,10 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: 'Error',
-        description: 'Image must be less than 5MB',
-        variant: 'destructive',
-      });
-      return;
-    }
+      if (file.size > 5 * 1024 * 1024) {
+        showCleanError({ code: 'UPLOAD_001', message: 'Image must be less than 5MB' }, toast);
+        return;
+      }
 
     setIsUploading(true);
     try {
@@ -74,12 +71,8 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: 'Error',
-        description: 'Cover image must be less than 10MB',
-        variant: 'destructive',
-      });
+    if (file.size > 5 * 1024 * 1024) {
+      showCleanError({ code: 'UPLOAD_001', message: 'Cover image must be less than 5MB' }, toast);
       return;
     }
 

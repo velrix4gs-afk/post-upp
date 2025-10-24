@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import CreatePost from "@/components/CreatePost";
 import { PostCard } from "@/components/PostCard";
-import MessagesList from "@/components/MessagesList";
+
 import Stories from "@/components/Stories";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -140,11 +140,6 @@ const Dashboard = () => {
 
           {/* Right Sidebar */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Messages */}
-            <div className="h-[600px]">
-              <MessagesList />
-            </div>
-
             {/* Trending Topics */}
             <Card className="bg-gradient-card border-0 p-4">
               <h3 className="font-semibold mb-3">Trending Topics</h3>

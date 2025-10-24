@@ -14,7 +14,8 @@ import {
   X,
   BarChart3,
   Save,
-  Clock
+  Clock,
+  Heart
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,8 +25,23 @@ import { useDrafts } from "@/hooks/useDrafts";
 import { useHashtags } from "@/hooks/useHashtags";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { showCleanError } from "@/lib/errorHandler";
 import CreatePollDialog from "./CreatePollDialog";
 import DraftsDialog from "./DraftsDialog";
+import { UserTagSelector } from "./UserTagSelector";
+
+const FEELINGS = [
+  { emoji: '😊', label: 'happy' },
+  { emoji: '😍', label: 'loved' },
+  { emoji: '😎', label: 'cool' },
+  { emoji: '😢', label: 'sad' },
+  { emoji: '😤', label: 'frustrated' },
+  { emoji: '🤔', label: 'thoughtful' },
+  { emoji: '🎉', label: 'excited' },
+  { emoji: '😴', label: 'tired' },
+  { emoji: '🤗', label: 'grateful' },
+  { emoji: '💪', label: 'motivated' },
+];
 
 const CreatePost = () => {
   const { user } = useAuth();
@@ -43,6 +59,9 @@ const CreatePost = () => {
   const [scheduledDate, setScheduledDate] = useState<Date>();
   const [location, setLocation] = useState('');
   const [taggedUsers, setTaggedUsers] = useState<string[]>([]);
+  const [feeling, setFeeling] = useState<string>('');
+  const [showFeelings, setShowFeelings] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -50,30 +69,18 @@ const CreatePost = () => {
 
     // Validate max 10 images
     if (selectedImages.length + files.length > 10) {
-      toast({
-        title: '[POST_001] Too many images',
-        description: 'You can upload maximum 10 images per post',
-        variant: 'destructive'
-      });
+      showCleanError({ code: 'POST_001', message: 'Maximum 10 images per post' }, toast);
       return;
     }
 
     // Validate file types and sizes
     const validFiles = files.filter(file => {
       if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        toast({
-          title: '[POST_002] Invalid file type',
-          description: `${file.name} is not an image or video`,
-          variant: 'destructive'
-        });
+        showCleanError({ code: 'POST_002', message: `${file.name} is not an image or video` }, toast);
         return false;
       }
       if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: '[POST_003] File too large',
-          description: `${file.name} exceeds 10MB limit`,
-          variant: 'destructive'
-        });
+        showCleanError({ code: 'POST_003', message: `${file.name} exceeds 10MB limit` }, toast);
         return false;
       }
       return true;
@@ -100,9 +107,11 @@ const CreatePost = () => {
 
   const uploadPostMedia = async (files: File[]): Promise<string[]> => {
     const uploadedUrls: string[] = [];
+    setUploadProgress(0);
     
     try {
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const fileExt = file.name.split('.').pop();
         const fileName = `${user?.id}/${Date.now()}-${Math.random()}.${fileExt}`;
         
@@ -112,7 +121,8 @@ const CreatePost = () => {
 
         if (uploadError) {
           console.error('[POST_004] Upload error:', uploadError);
-          throw new Error(`[POST_004] Failed to upload ${file.name}`);
+          showCleanError({ code: 'POST_004', message: `Failed to upload ${file.name}` }, toast);
+          throw uploadError;
         }
 
         const { data: { publicUrl } } = supabase.storage
@@ -120,26 +130,19 @@ const CreatePost = () => {
           .getPublicUrl(fileName);
 
         uploadedUrls.push(publicUrl);
+        setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
       
       return uploadedUrls;
     } catch (error: any) {
-      toast({
-        title: 'Upload Error',
-        description: error.message || 'Failed to upload images',
-        variant: 'destructive'
-      });
+      showCleanError(error, toast, 'Upload Failed');
       return [];
     }
   };
 
   const handlePost = async () => {
     if (!postContent.trim() && selectedImages.length === 0) {
-      toast({
-        title: '[POST_005] Missing content',
-        description: 'Please add some content or media to your post',
-        variant: 'destructive'
-      });
+      showCleanError({ code: 'POST_005', message: 'Add content or media to post' }, toast);
       return;
     }
 
@@ -154,12 +157,18 @@ const CreatePost = () => {
         }
       }
 
+      let contentWithFeeling = postContent.trim();
+      if (feeling) {
+        const feelingData = FEELINGS.find(f => f.label === feeling);
+        contentWithFeeling = `${feelingData?.emoji} feeling ${feeling}\n\n${contentWithFeeling}`;
+      }
+
       const postData: any = {
         privacy: 'public'
       };
       
-      if (postContent.trim()) {
-        postData.content = postContent.trim();
+      if (contentWithFeeling) {
+        postData.content = contentWithFeeling;
       }
       
       if (mediaUrls.length > 0) {
@@ -188,35 +197,30 @@ const CreatePost = () => {
       setCreatedPostId(newPostId);
 
       // Process hashtags
-      if (postContent.trim()) {
-        await processHashtags(newPostId, postContent);
+      if (contentWithFeeling) {
+        await processHashtags(newPostId, contentWithFeeling);
       }
 
       toast({
-        title: 'Success!',
+        title: '✅ Success!',
         description: scheduledDate ? 'Post scheduled successfully' : 'Post created successfully'
       });
 
-      // If poll dialog should be shown, keep expanded
-      if (!showPollDialog) {
-        // Reset form
-        setPostContent("");
-        setSelectedImages([]);
-        setPreviewImages([]);
-        setLocation('');
-        setTaggedUsers([]);
-        setIsExpanded(false);
-        setScheduledDate(undefined);
-      }
+      // Reset form
+      setPostContent('');
+      setSelectedImages([]);
+      setPreviewImages([]);
+      setLocation('');
+      setTaggedUsers([]);
+      setFeeling('');
+      setScheduledDate(undefined);
+      setUploadProgress(0);
+      setIsExpanded(false);
     } catch (error: any) {
-      console.error('[POST_006] Post creation error:', error);
-      toast({
-        title: '[POST_006] Error creating post',
-        description: error.message || 'Something went wrong',
-        variant: 'destructive'
-      });
+      showCleanError(error, toast, 'Failed to Create Post');
     } finally {
       setIsPosting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -234,6 +238,27 @@ const CreatePost = () => {
       media_type: selectedImages[0]?.type.startsWith('image/') ? 'image' : 'video',
       scheduled_for: scheduledDate?.toISOString()
     });
+
+    // Reset form
+    setPostContent("");
+    setSelectedImages([]);
+    setPreviewImages([]);
+    setLocation('');
+    setTaggedUsers([]);
+    setIsExpanded(false);
+    setScheduledDate(undefined);
+  };
+
+  const handleLoadDraft = (draft: any) => {
+    setPostContent(draft.content || '');
+    if (draft.media_url) {
+      setPreviewImages([draft.media_url]);
+    }
+    if (draft.scheduled_for) {
+      setScheduledDate(new Date(draft.scheduled_for));
+    }
+    setIsExpanded(true);
+  };
 
     // Reset form
     setPostContent("");
@@ -329,10 +354,32 @@ const CreatePost = () => {
               </label>
             </div>
 
-            <Button variant="ghost" size="sm" className="h-9 px-3">
-              <Smile className="h-4 w-4 mr-2 text-warning" />
-              <span className="text-xs">Feeling</span>
-            </Button>
+            <Popover open={showFeelings} onOpenChange={setShowFeelings}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-9 px-3">
+                  <Smile className="h-4 w-4 mr-2 text-warning" />
+                  <span className="text-xs">{feeling ? `feeling ${feeling}` : 'Feeling'}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="grid grid-cols-5 gap-2">
+                  {FEELINGS.map((f) => (
+                    <Button
+                      key={f.label}
+                      variant={feeling === f.label ? "secondary" : "ghost"}
+                      className="h-12 flex flex-col items-center justify-center"
+                      onClick={() => {
+                        setFeeling(feeling === f.label ? '' : f.label);
+                        setShowFeelings(false);
+                      }}
+                    >
+                      <span className="text-2xl">{f.emoji}</span>
+                      <span className="text-[10px] mt-1">{f.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {isExpanded && (
               <>
@@ -352,10 +399,20 @@ const CreatePost = () => {
                   </PopoverContent>
                 </Popover>
 
-                <Button variant="ghost" size="sm" className="h-9 px-3">
-                  <Users className="h-4 w-4 mr-2 text-accent" />
-                  <span className="text-xs">Tag {taggedUsers.length > 0 && `(${taggedUsers.length})`}</span>
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-9 px-3">
+                      <Users className="h-4 w-4 mr-2 text-accent" />
+                      <span className="text-xs">Tag {taggedUsers.length > 0 && `(${taggedUsers.length})`}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <UserTagSelector
+                      selectedUsers={taggedUsers}
+                      onUsersChange={setTaggedUsers}
+                    />
+                  </PopoverContent>
+                </Popover>
 
                 <Button 
                   variant="ghost" 
@@ -390,6 +447,14 @@ const CreatePost = () => {
           <div className="flex gap-2">
             {isExpanded && (
               <>
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-gradient-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
                 <DraftsDialog onSelectDraft={handleLoadDraft} />
                 <Button 
                   variant="outline" 
