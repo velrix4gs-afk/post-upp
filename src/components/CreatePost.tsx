@@ -260,27 +260,6 @@ const CreatePost = () => {
     setIsExpanded(true);
   };
 
-    // Reset form
-    setPostContent("");
-    setSelectedImages([]);
-    setPreviewImages([]);
-    setLocation('');
-    setTaggedUsers([]);
-    setIsExpanded(false);
-    setScheduledDate(undefined);
-  };
-
-  const handleLoadDraft = (draft: any) => {
-    setPostContent(draft.content || '');
-    if (draft.media_url) {
-      setPreviewImages([draft.media_url]);
-    }
-    if (draft.scheduled_for) {
-      setScheduledDate(new Date(draft.scheduled_for));
-    }
-    setIsExpanded(true);
-  };
-
   return (
     <Card className="bg-gradient-card border-0 shadow-sm">
       <div className="p-4">
