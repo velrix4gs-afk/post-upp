@@ -108,6 +108,7 @@ serve(async (req) => {
       // Check if this is a delete action
       if (body.action === 'delete') {
         const { postId } = body;
+        if (!user) throw new Error('User not authenticated');
         console.log('Deleting post:', postId, 'for user:', user.id);
 
         if (!postId) {
@@ -147,6 +148,7 @@ serve(async (req) => {
       }
 
       // Regular post creation
+      if (!user) throw new Error('User not authenticated');
       const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
 
       console.log('Post data received:', { content, media_url, media_type });
@@ -197,6 +199,7 @@ serve(async (req) => {
     }
 
     if (method === 'PUT') {
+      if (!user) throw new Error('User not authenticated');
       const { postId, content, media_url, media_type, privacy } = body;
 
       const { data: post, error } = await supabaseClient
@@ -228,6 +231,7 @@ serve(async (req) => {
     }
 
     if (method === 'DELETE') {
+      if (!user) throw new Error('User not authenticated');
       const { postId } = body;
       console.log('Deleting post:', postId, 'for user:', user.id);
 

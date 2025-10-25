@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -471,9 +472,34 @@ const MessagesPage = () => {
                     >
                       <Star className="h-5 w-5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-10 w-10 hover:bg-primary/10 hover:text-primary">
-                      <MoreVertical className="h-5 w-5" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-10 w-10 hover:bg-primary/10 hover:text-primary">
+                          <MoreVertical className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={() => {
+                          const otherParticipant = selectedChat.participants.find(p => p.user_id !== user?.id);
+                          if (otherParticipant) {
+                            window.location.href = `/profile/${otherParticipant.user_id}`;
+                          }
+                        }}>
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          const otherParticipant = selectedChat.participants.find(p => p.user_id !== user?.id);
+                          if (otherParticipant) {
+                            toast({
+                              title: 'User Blocked',
+                              description: 'You have blocked this user',
+                            });
+                          }
+                        }}>
+                          Block User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 

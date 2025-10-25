@@ -2,12 +2,13 @@ import Navigation from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Crown, Star, Zap, TrendingUp } from 'lucide-react';
+import { Check, Crown, Star, Zap, TrendingUp, Coins } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { showCleanError } from '@/lib/errorHandler';
+import { CoinsDialog } from '@/components/premium/CoinsDialog';
 
 const PremiumPage = () => {
   const { user } = useAuth();
@@ -110,6 +111,9 @@ const PremiumPage = () => {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Unlock exclusive features, remove ads, and get priority support. Choose the plan that's right for you.
           </p>
+          <div className="mt-6">
+            <CoinsDialog />
+          </div>
         </div>
 
         {/* Pricing Cards */}

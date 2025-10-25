@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.publish-scheduled-posts]
 verify_jwt = false
+
+[functions.create-coins-checkout]
+verify_jwt = true

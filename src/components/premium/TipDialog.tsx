@@ -17,11 +17,11 @@ interface TipDialogProps {
 export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState('5');
+  const [amount, setAmount] = useState('1');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const predefinedAmounts = ['5', '10', '20', '50'];
+  const predefinedAmounts = ['1', '5', '10', '25', '50'];
 
   const handleSendTip = async () => {
     if (!user) {
@@ -54,11 +54,11 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
       return;
     }
 
-    const tipAmount = parseFloat(amount);
-    if (isNaN(tipAmount) || tipAmount <= 0) {
+    const tipAmount = parseInt(amount);
+    if (isNaN(tipAmount) || tipAmount < 1) {
       toast({
         title: '⚠️ TIP_001',
-        description: 'Please enter a valid amount (minimum $1)',
+        description: 'Please enter a valid amount (minimum 1 coin)',
         variant: 'destructive'
       });
       return;
@@ -79,12 +79,12 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
 
       toast({
         title: '✅ Success',
-        description: `You sent $${tipAmount} to ${recipientName}`,
+        description: `You sent ${tipAmount} coins to ${recipientName}`,
         duration: 5000
       });
 
       setOpen(false);
-      setAmount('5');
+      setAmount('1');
       setMessage('');
     } catch (err: any) {
       console.error('[TIP_002] Error sending tip:', err);
@@ -112,8 +112,8 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Amount ($)</Label>
-            <div className="grid grid-cols-4 gap-2 mb-2">
+            <Label>Amount (Coins)</Label>
+            <div className="grid grid-cols-5 gap-2 mb-2">
               {predefinedAmounts.map((amt) => (
                 <Button
                   key={amt}
@@ -121,7 +121,7 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
                   onClick={() => setAmount(amt)}
                   type="button"
                 >
-                  ${amt}
+                  {amt}
                 </Button>
               ))}
             </div>
@@ -131,8 +131,9 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               min="1"
-              step="0.01"
+              step="1"
             />
+            <p className="text-xs text-muted-foreground">1 coin = $0.01</p>
           </div>
 
           <div className="space-y-2">
@@ -147,7 +148,7 @@ export const TipDialog = ({ recipientId, recipientName }: TipDialogProps) => {
 
           <div className="flex gap-2">
             <Button onClick={handleSendTip} disabled={loading} className="flex-1">
-              {loading ? 'Processing...' : `Send $${amount || '0'}`}
+              {loading ? 'Processing...' : `Send ${amount || '0'} coins`}
             </Button>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
