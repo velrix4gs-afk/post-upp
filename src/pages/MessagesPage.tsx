@@ -268,7 +268,7 @@ const MessagesPage = () => {
           <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
             <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">Messages</h2>
+                <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
                 <Button 
                   size="icon"
                   variant="ghost"
@@ -659,7 +659,7 @@ const MessagesPage = () => {
                     <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl rounded-full"></div>
                     <MessageCircle className="h-20 w-20 mx-auto text-primary relative z-10" />
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground bg-gradient-primary bg-clip-text text-transparent">Your Messages</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Your Messages</h3>
                   <p className="text-sm text-muted-foreground">
                     Send private messages to friends and connect with others in your network
                   </p>

@@ -74,11 +74,7 @@ export const useEvents = () => {
 
       setEvents(eventsWithInfo);
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load events',
-        variant: 'destructive'
-      });
+      console.error('[EVENT_001] Failed to load events:', err);
     } finally {
       setLoading(false);
     }
@@ -135,9 +131,10 @@ export const useEvents = () => {
       
       await fetchEvents();
     } catch (err: any) {
+      console.error('[EVENT_002] Failed to create event:', err);
       toast({
         title: 'Error',
-        description: 'Failed to create event',
+        description: '[EVENT_002] Failed to create event',
         variant: 'destructive'
       });
     }
@@ -171,9 +168,10 @@ export const useEvents = () => {
 
       await fetchEvents();
     } catch (err: any) {
+      console.error('[EVENT_003] Failed to update attendance:', err);
       toast({
         title: 'Error',
-        description: 'Failed to update attendance',
+        description: '[EVENT_003] Failed to update attendance',
         variant: 'destructive'
       });
     }

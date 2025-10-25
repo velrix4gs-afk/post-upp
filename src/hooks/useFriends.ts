@@ -67,11 +67,7 @@ export const useFriends = () => {
       if (error) throw error;
       setFriendships(data || []);
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load friendships',
-        variant: 'destructive'
-      });
+      console.error('[FRIEND_001] Failed to load friendships:', err);
     } finally {
       setLoading(false);
     }
