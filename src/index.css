@@ -6,6 +6,11 @@
 All colors MUST be HSL.
 */
 
+/* Performance optimization: Force font-display swap for faster FCP */
+@font-face {
+  font-display: swap;
+}
+
 @layer base {
   :root {
     /* Modern social media color palette */
