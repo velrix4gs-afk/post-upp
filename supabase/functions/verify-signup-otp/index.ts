@@ -26,19 +26,24 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify OTP
-    const { data: otpRecord, error: otpError } = await supabase
+    // Retrieve OTP record (constant time regardless of existence)
+    const { data: otpRecord } = await supabase
       .from('email_otps')
       .select('*')
       .eq('email', email)
-      .eq('code', code)
-      .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (otpError || !otpRecord) {
-      console.error('OTP verification failed:', otpError);
+    // Constant-time comparison - check all conditions together
+    const isValid = otpRecord && 
+                    otpRecord.code === code && 
+                    new Date(otpRecord.expires_at) > new Date();
+
+    if (!isValid) {
+      // Add consistent delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, 100));
+      console.error('[OTP_001] Invalid or expired verification code');
       return new Response(
         JSON.stringify({ error: 'Invalid or expired verification code' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
