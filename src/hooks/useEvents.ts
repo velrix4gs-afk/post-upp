@@ -30,6 +30,25 @@ export const useEvents = () => {
   useEffect(() => {
     if (user) {
       fetchEvents();
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('events-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'events'
+          },
+          () => {
+            fetchEvents();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 

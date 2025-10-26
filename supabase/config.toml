@@ -9,6 +9,9 @@ verify_jwt = true
 [functions.messages]
 verify_jwt = true
 
+[functions.messages-v2]
+verify_jwt = true
+
 [functions.friendships]
 verify_jwt = true
 

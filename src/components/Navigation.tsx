@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
-import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck } from 'lucide-react';
+import { CoinsDisplay } from './CoinsDisplay';
+import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText } from 'lucide-react';
 import { useState } from 'react';
 import {
   DropdownMenu,
@@ -116,6 +117,16 @@ const Navigation = () => {
                     Saved
                   </Button>
                 </Link>
+                <Link to="/pages">
+                  <Button 
+                    variant={isActive('/pages') ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Pages
+                  </Button>
+                </Link>
                 <Link to="/verification">
                   <Button 
                     variant={isActive('/verification') ? 'default' : 'ghost'} 
@@ -163,6 +174,7 @@ const Navigation = () => {
           )}
 
           <div className="flex items-center gap-3">
+            <CoinsDisplay />
             <ThemeToggle />
             
             {user ? (

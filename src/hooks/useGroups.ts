@@ -28,6 +28,27 @@ export const useGroups = () => {
     if (user) {
       fetchGroups();
       fetchMyGroups();
+      
+      // Set up real-time subscription for groups
+      const channel = supabase
+        .channel('groups-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'groups'
+          },
+          () => {
+            fetchGroups();
+            fetchMyGroups();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
