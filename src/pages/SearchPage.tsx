@@ -47,7 +47,7 @@ const SearchPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto p-4 max-w-4xl">
+      <main className="container mx-auto p-4 max-w-4xl">
         <div className="mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
@@ -259,7 +259,7 @@ const SearchPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

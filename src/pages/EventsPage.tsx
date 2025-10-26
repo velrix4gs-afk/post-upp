@@ -6,9 +6,9 @@ const EventsPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6">
         <Events />
-      </div>
+      </main>
     </div>
   );
 };

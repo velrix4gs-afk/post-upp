@@ -95,7 +95,7 @@ const ExplorePage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto p-4 max-w-7xl">
+      <main className="container mx-auto p-4 max-w-7xl">
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-8 w-8 text-primary" />
@@ -289,7 +289,7 @@ const ExplorePage = () => {
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

@@ -36,7 +36,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Left Sidebar */}
           <div className="lg:col-span-3 space-y-6">
@@ -202,7 +202,7 @@ const Dashboard = () => {
             </Card>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

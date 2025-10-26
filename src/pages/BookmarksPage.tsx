@@ -59,7 +59,7 @@ const BookmarksPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto p-4 max-w-2xl">
+      <main className="container mx-auto p-4 max-w-2xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Bookmark className="h-6 w-6" />
@@ -99,7 +99,7 @@ const BookmarksPage = () => {
             ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };

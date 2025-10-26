@@ -178,7 +178,7 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <main className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Cover Photo */}
         <div className="relative h-48 md:h-64 bg-gradient-to-r from-primary to-primary-foreground rounded-lg overflow-hidden mb-6">
           {profile?.cover_url ? (
@@ -355,7 +355,7 @@ const ProfilePage = () => {
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       {/* Profile Edit Modal */}
       {showProfileEdit && (

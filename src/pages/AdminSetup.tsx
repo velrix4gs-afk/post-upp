@@ -74,6 +74,7 @@ export default function AdminSetup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-subtle">
+      <main>
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -119,6 +120,7 @@ export default function AdminSetup() {
           </form>
         </CardContent>
       </Card>
+      </main>
     </div>
   );
 }

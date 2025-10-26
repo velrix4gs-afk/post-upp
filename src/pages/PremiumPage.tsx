@@ -99,7 +99,7 @@ const PremiumPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <div className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -192,7 +192,7 @@ const PremiumPage = () => {
             </Card>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

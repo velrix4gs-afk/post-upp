@@ -263,7 +263,7 @@ const MessagesPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-0 md:px-4 h-[calc(100dvh-80px)]">
+      <main className="container mx-auto px-0 md:px-4 h-[calc(100dvh-80px)]">
         <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}
           <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
@@ -701,7 +701,7 @@ const MessagesPage = () => {
             )}
           </div>
         </Card>
-      </div>
+      </main>
 
       {/* Dialogs */}
       <NewChatDialog

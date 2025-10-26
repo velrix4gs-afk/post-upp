@@ -64,7 +64,7 @@ const FriendsPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto p-4 max-w-6xl">
+      <main className="container mx-auto p-4 max-w-6xl">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-4">Friends</h1>
           <div className="relative">
@@ -508,7 +508,7 @@ const FriendsPage = () => {
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

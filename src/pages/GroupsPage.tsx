@@ -66,7 +66,7 @@ const GroupsPage = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto p-4 max-w-6xl">
+      <main className="container mx-auto p-4 max-w-6xl">
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-2xl md:text-3xl font-bold">Groups</h1>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -297,7 +297,7 @@ const GroupsPage = () => {
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

@@ -115,6 +115,7 @@ const Feed = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <main>
       
       {/* Mobile/Tablet Quick Actions - Fixed Top Left */}
       {isMobile && (
@@ -249,6 +250,7 @@ const Feed = () => {
           </div>
         </div>
       </div>
+      </main>
     </div>
   );
 };

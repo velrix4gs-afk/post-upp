@@ -36,7 +36,7 @@ const HashtagPage = () => {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-6">
+    <main className="container max-w-2xl mx-auto px-4 py-6">
       <div className="mb-6">
         <Button
           variant="ghost"
@@ -74,7 +74,7 @@ const HashtagPage = () => {
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

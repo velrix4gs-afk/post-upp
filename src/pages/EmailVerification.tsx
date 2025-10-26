@@ -131,6 +131,7 @@ const EmailVerification = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background flex items-center justify-center p-4">
+      <main>
       <Card className="w-full max-w-md bg-gradient-card border-0 shadow-xl">
         <div className="p-8">
           <Button
@@ -196,6 +197,7 @@ const EmailVerification = () => {
           </div>
         </div>
       </Card>
+      </main>
     </div>
   );
 };
