@@ -2,12 +2,20 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Stripe from 'https://esm.sh/stripe@14.21.0'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const ALLOWED_ORIGINS = [
+  'https://post-upp.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin || '') ? origin! : ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+});
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -34,6 +42,20 @@ serve(async (req) => {
 
     if (!user) {
       throw new Error('Not authenticated')
+    }
+
+    // Server-side verification check to prevent bypassing payment
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('is_verified')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.is_verified) {
+      return new Response(
+        JSON.stringify({ error: 'Account already verified' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const { userId } = await req.json()
@@ -97,7 +119,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error creating checkout session:', error)
     return new Response(
-      JSON.stringify({ error: (error as Error).message }),
+      JSON.stringify({ error: 'Failed to create checkout session' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
