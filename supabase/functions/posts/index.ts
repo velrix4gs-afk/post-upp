@@ -1,12 +1,42 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const ALLOWED_ORIGINS = [
+  'https://post-upp.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+];
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Credentials': 'true',
+});
+
+// Validation schemas
+const createPostSchema = z.object({
+  content: z.string().max(5000, 'Content must be less than 5000 characters').optional(),
+  media_url: z.string().url('Invalid media URL').max(500).optional(),
+  media_type: z.enum(['image', 'video']).optional(),
+  location: z.string().max(200).optional(),
+  tagged_users: z.array(z.string().uuid()).max(50, 'Maximum 50 users can be tagged').optional(),
+  hashtags: z.array(z.string().max(50)).max(30, 'Maximum 30 hashtags').optional(),
+  privacy: z.enum(['public', 'friends', 'private']).default('public'),
+}).refine(
+  (data) => data.content || data.media_url,
+  'Post must have either content or media'
+);
+
+const deletePostSchema = z.object({
+  action: z.literal('delete'),
+  postId: z.string().uuid('Invalid post ID'),
+});
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -105,97 +135,110 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
+      if (!user) throw new Error('User not authenticated');
+
       // Check if this is a delete action
       if (body.action === 'delete') {
-        const { postId } = body;
-        if (!user) throw new Error('User not authenticated');
-        console.log('Deleting post:', postId, 'for user:', user.id);
+        try {
+          const validated = deletePostSchema.parse(body);
+          console.log('Deleting post:', validated.postId, 'for user:', user.id);
 
-        if (!postId) {
-          throw new Error('Post ID is required');
+          // First check if post exists and belongs to user
+          const { data: existingPost, error: checkError } = await supabaseClient
+            .from('posts')
+            .select('id, user_id')
+            .eq('id', validated.postId)
+            .eq('user_id', user.id)
+            .single();
+
+          if (checkError || !existingPost) {
+            return new Response(
+              JSON.stringify({ error: 'Post not found or unauthorized' }),
+              { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          // Delete the post
+          const { error } = await supabaseClient
+            .from('posts')
+            .delete()
+            .eq('id', validated.postId)
+            .eq('user_id', user.id);
+
+          if (error) {
+            console.error('Error deleting post:', error);
+            throw error;
+          }
+
+          console.log('Post deleted successfully:', validated.postId);
+
+          return new Response(JSON.stringify({ success: true, message: 'Post deleted successfully' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        } catch (e) {
+          if (e instanceof z.ZodError) {
+            return new Response(
+              JSON.stringify({ error: 'Invalid input', details: e.issues }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          throw e;
         }
+      }
 
-        // First check if post exists and belongs to user
-        const { data: existingPost, error: checkError } = await supabaseClient
+      // Regular post creation - validate input
+      try {
+        const validated = createPostSchema.parse(body);
+        console.log('Creating post with validated data:', validated);
+
+        const { data: post, error } = await supabaseClient
           .from('posts')
-          .select('id, user_id')
-          .eq('id', postId)
-          .eq('user_id', user.id)
+          .insert({
+            user_id: user.id,
+            content: validated.content,
+            media_url: validated.media_url,
+            media_type: validated.media_type,
+            privacy: validated.privacy
+          })
+          .select(`
+            *,
+            profiles:user_id (
+              username,
+              display_name,
+              avatar_url,
+              is_verified
+            )
+          `)
           .single();
 
-        if (checkError || !existingPost) {
-          throw new Error('Post not found or you do not have permission to delete it');
+        if (error) throw error;
+
+        // Create notification for tagged users
+        if (validated.tagged_users && validated.tagged_users.length > 0) {
+          const notifications = validated.tagged_users.map((taggedUserId: string) => ({
+            user_id: taggedUserId,
+            type: 'mention',
+            title: 'You were tagged in a post',
+            content: `${post.profiles.display_name} tagged you in a post`,
+            data: { post_id: post.id, user_id: user.id }
+          }));
+
+          await supabaseClient.from('notifications').insert(notifications);
         }
 
-        // Delete the post
-        const { error } = await supabaseClient
-          .from('posts')
-          .delete()
-          .eq('id', postId)
-          .eq('user_id', user.id);
-
-        if (error) {
-          console.error('Error deleting post:', error);
-          throw error;
-        }
-
-        console.log('Post deleted successfully:', postId);
-
-        return new Response(JSON.stringify({ success: true, message: 'Post deleted successfully' }), {
+        return new Response(JSON.stringify(post), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
         });
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid input', details: e.issues }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        throw e;
       }
-
-      // Regular post creation
-      if (!user) throw new Error('User not authenticated');
-      const { content, media_url, media_type, location, tagged_users, hashtags, privacy } = body;
-
-      console.log('Post data received:', { content, media_url, media_type });
-
-      // Validate required fields - check for truthy values
-      if ((!content || content.trim() === '') && (!media_url || media_url.trim() === '')) {
-        throw new Error('Post must have content or media');
-      }
-
-      const { data: post, error } = await supabaseClient
-        .from('posts')
-        .insert({
-          user_id: user.id,
-          content,
-          media_url,
-          media_type,
-          privacy: privacy || 'public'
-        })
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            display_name,
-            avatar_url,
-            is_verified
-          )
-        `)
-        .single();
-
-      if (error) throw error;
-
-      // Create notification for tagged users
-      if (tagged_users?.length > 0) {
-        const notifications = tagged_users.map((taggedUserId: string) => ({
-          user_id: taggedUserId,
-          type: 'mention',
-          title: 'You were tagged in a post',
-          content: `${post.profiles.display_name} tagged you in a post`,
-          data: { post_id: post.id, user_id: user.id }
-        }));
-
-        await supabaseClient.from('notifications').insert(notifications);
-      }
-
-      return new Response(JSON.stringify(post), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
     if (method === 'PUT') {

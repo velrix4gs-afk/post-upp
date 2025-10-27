@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_user_id: string
+          created_at: string | null
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          blocked_user_id: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          blocked_user_id?: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_blocked_user_id_fkey"
+            columns: ["blocked_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "blocked_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       bookmarks: {
         Row: {
           created_at: string | null
@@ -282,6 +321,91 @@ export type Database = {
           },
           {
             foreignKeyName: "chat_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      chat_settings: {
+        Row: {
+          auto_delete_duration: number | null
+          chat_id: string
+          created_at: string | null
+          id: string
+          is_muted: boolean | null
+          is_pinned: boolean | null
+          notifications_enabled: boolean | null
+          theme_color: string | null
+          updated_at: string | null
+          user_id: string
+          wallpaper_url: string | null
+        }
+        Insert: {
+          auto_delete_duration?: number | null
+          chat_id: string
+          created_at?: string | null
+          id?: string
+          is_muted?: boolean | null
+          is_pinned?: boolean | null
+          notifications_enabled?: boolean | null
+          theme_color?: string | null
+          updated_at?: string | null
+          user_id: string
+          wallpaper_url?: string | null
+        }
+        Update: {
+          auto_delete_duration?: number | null
+          chat_id?: string
+          created_at?: string | null
+          id?: string
+          is_muted?: boolean | null
+          is_pinned?: boolean | null
+          notifications_enabled?: boolean | null
+          theme_color?: string | null
+          updated_at?: string | null
+          user_id?: string
+          wallpaper_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_settings_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_settings_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_overview"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_settings_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_settings_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_settings_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_settings_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_settings_view"
@@ -1074,12 +1198,87 @@ export type Database = {
           },
         ]
       }
+      message_translations: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          original_language: string | null
+          target_language: string
+          translated_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          original_language?: string | null
+          target_language: string
+          translated_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          original_language?: string | null
+          target_language?: string
+          translated_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_translations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "message_translations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_translations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_translations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_translations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_translations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           chat_id: string | null
           content: string
           created_at: string | null
+          deleted_at: string | null
           deleted_for: string[] | null
+          edit_deadline: string | null
           edited_at: string | null
           forwarded_from_message_id: string | null
           id: string
@@ -1096,7 +1295,9 @@ export type Database = {
           chat_id?: string | null
           content: string
           created_at?: string | null
+          deleted_at?: string | null
           deleted_for?: string[] | null
+          edit_deadline?: string | null
           edited_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
@@ -1113,7 +1314,9 @@ export type Database = {
           chat_id?: string | null
           content?: string
           created_at?: string | null
+          deleted_at?: string | null
           deleted_for?: string[] | null
+          edit_deadline?: string | null
           edited_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
@@ -1931,6 +2134,219 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_view"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      reported_users: {
+        Row: {
+          chat_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          message_id: string | null
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          message_id?: string | null
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          message_id?: string | null
+          reason?: string
+          reported_user_id?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reported_users_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "reported_users_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_overview"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "reported_users_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reported_users_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "reported_users_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "reported_users_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "reported_users_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "reported_users_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reported_users_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "reported_users_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reported_users_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reported_users_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reported_users_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      scheduled_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          scheduled_for: string
+          sender_id: string
+          sent: boolean | null
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          scheduled_for: string
+          sender_id: string
+          sent?: boolean | null
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          scheduled_for?: string
+          sender_id?: string
+          sent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_overview"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "scheduled_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -3284,6 +3700,10 @@ export type Database = {
       }
       is_chat_participant: {
         Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_user_blocked: {
+        Args: { by_user_id: string; check_user_id: string }
         Returns: boolean
       }
       safe_error_message: { Args: { error_text: string }; Returns: string }
