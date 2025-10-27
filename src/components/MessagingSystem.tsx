@@ -21,7 +21,8 @@ import { useChats } from '@/hooks/useChats';
 import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/hooks/useAuth';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
-import { usePresence } from '@/hooks/usePresence';
+import { usePresenceSystem } from '@/hooks/usePresenceSystem';
+import { ChatMenu } from './ChatMenu';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
 import TypingIndicator from './TypingIndicator';
 import VoiceRecorder from './VoiceRecorder';
@@ -48,11 +49,11 @@ const MessagingSystem = () => {
   const { createChat: createChatByUuid } = useChats();
 
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
-  const { onlineUsers, isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
+  const { isUserOnline, updateCurrentChat } = usePresenceSystem(selectedChatId || undefined);
 
   // Update viewing chat when selected chat changes
   useEffect(() => {
-    updateViewingChat(selectedChatId || undefined);
+    updateCurrentChat(selectedChatId || undefined);
   }, [selectedChatId]);
 
   // Mark messages as read when chat is selected
@@ -311,9 +312,7 @@ const MessagingSystem = () => {
               <Button variant="ghost" size="sm">
                 <Video className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              {selectedChat && <ChatMenu chatId={selectedChat.id} />}
             </div>
           </div>
 

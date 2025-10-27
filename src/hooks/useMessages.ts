@@ -241,6 +241,10 @@ export const useMessages = (chatId?: string) => {
 
     // Add optimistic message immediately
     setMessages(prev => [...prev, optimisticMessage]);
+    
+    // Persist status in localStorage
+    const messageStatusKey = `msg_status_${tempId}`;
+    localStorage.setItem(messageStatusKey, 'sending');
 
     try {
       const { data, error } = await supabase.functions.invoke('messages', {
@@ -256,14 +260,25 @@ export const useMessages = (chatId?: string) => {
 
       if (error) throw error;
       
+      // Update status to sent
+      localStorage.setItem(messageStatusKey, 'sent');
+      
       // Replace optimistic message with real message
       setMessages(prev => prev.map(msg => 
         msg.id === tempId 
           ? { ...data, status: 'sent' as const }
           : msg
       ));
+      
+      // Clean up status after 3 seconds
+      setTimeout(() => {
+        localStorage.removeItem(messageStatusKey);
+      }, 3000);
     } catch (err: any) {
       console.error('Send message error:', err);
+      
+      // Update status to failed
+      localStorage.setItem(messageStatusKey, 'failed');
       
       // Mark message as failed
       setMessages(prev => prev.map(msg => 
@@ -277,6 +292,11 @@ export const useMessages = (chatId?: string) => {
         description: err.message || 'Failed to send message',
         variant: 'destructive'
       });
+      
+      // Keep failed status for 30 seconds
+      setTimeout(() => {
+        localStorage.removeItem(messageStatusKey);
+      }, 30000);
     }
   };
 

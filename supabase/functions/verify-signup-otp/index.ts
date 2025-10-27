@@ -6,6 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple rate limiting using in-memory cache
+const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
+
+const checkRateLimit = (identifier: string, maxRequests = 5, windowMs = 60000): boolean => {
+  const now = Date.now();
+  const userLimit = rateLimitCache.get(identifier);
+
+  if (!userLimit || now > userLimit.resetAt) {
+    rateLimitCache.set(identifier, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+
+  if (userLimit.count >= maxRequests) {
+    return false;
+  }
+
+  userLimit.count++;
+  return true;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,6 +38,14 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limiting: 5 verification attempts per minute per email
+    if (!checkRateLimit(email, 5, 60000)) {
+      return new Response(
+        JSON.stringify({ error: 'Too many verification attempts. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

@@ -230,13 +230,32 @@ export const PostCard = ({ post }: PostCardProps) => {
 
           <div className="mb-4">
             <PostContent content={post.content} />
-            {post.media_url && (
-              <div className="rounded-lg overflow-hidden">
+            {post.media_url && !Array.isArray((post as any).media_urls) && (
+              <div className="rounded-lg overflow-hidden mt-3">
                 <img 
                   src={post.media_url} 
                   alt="Post media"
                   className="w-full h-auto object-cover"
                 />
+              </div>
+            )}
+            {(post as any).media_urls && Array.isArray((post as any).media_urls) && (
+              <div className={`grid gap-2 mt-3 ${
+                (post as any).media_urls.length === 1 ? 'grid-cols-1' :
+                (post as any).media_urls.length === 2 ? 'grid-cols-2' :
+                (post as any).media_urls.length === 3 ? 'grid-cols-3' :
+                'grid-cols-2'
+              }`}>
+                {(post as any).media_urls.map((url: string, index: number) => (
+                  <div key={index} className="rounded-lg overflow-hidden">
+                    <img 
+                      src={url} 
+                      alt={`Media ${index + 1}`}
+                      className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(url, '_blank')}
+                    />
+                  </div>
+                ))}
               </div>
             )}
             

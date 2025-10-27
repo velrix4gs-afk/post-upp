@@ -71,6 +71,76 @@ export type Database = {
           },
         ]
       }
+      chat_exports: {
+        Row: {
+          chat_id: string
+          created_at: string | null
+          export_type: string
+          file_url: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string | null
+          export_type: string
+          file_url?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string | null
+          export_type?: string
+          file_url?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_exports_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_exports_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_overview"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_exports_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_exports_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_exports_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_exports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           chat_id: string | null
@@ -226,7 +296,10 @@ export type Database = {
           created_by: string | null
           creator_id: string | null
           id: string
+          is_pinned: boolean | null
+          muted_until: string | null
           name: string | null
+          theme_color: string | null
           type: string
           updated_at: string | null
         }
@@ -236,7 +309,10 @@ export type Database = {
           created_by?: string | null
           creator_id?: string | null
           id?: string
+          is_pinned?: boolean | null
+          muted_until?: string | null
           name?: string | null
+          theme_color?: string | null
           type?: string
           updated_at?: string | null
         }
@@ -246,7 +322,10 @@ export type Database = {
           created_by?: string | null
           creator_id?: string | null
           id?: string
+          is_pinned?: boolean | null
+          muted_until?: string | null
           name?: string | null
+          theme_color?: string | null
           type?: string
           updated_at?: string | null
         }
@@ -2088,6 +2167,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_presence: {
+        Row: {
+          current_chat_id: string | null
+          last_seen: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_chat_id?: string | null
+          last_seen?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_chat_id?: string | null
+          last_seen?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
           },
         ]
       }
