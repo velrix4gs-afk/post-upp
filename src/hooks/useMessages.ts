@@ -181,7 +181,7 @@ export const useMessages = (chatId?: string) => {
 
   const fetchChats = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('messages', {
+      const { data, error } = await supabase.functions.invoke('messages-v2', {
         body: { action: 'list_chats' },
       });
 
@@ -199,7 +199,7 @@ export const useMessages = (chatId?: string) => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.functions.invoke('messages', {
+      const { data, error } = await supabase.functions.invoke('messages-v2', {
         body: { chat_id: chatId },
       });
 
@@ -247,7 +247,7 @@ export const useMessages = (chatId?: string) => {
     localStorage.setItem(messageStatusKey, 'sending');
 
     try {
-      const { data, error } = await supabase.functions.invoke('messages', {
+      const { data, error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'send',
           chat_id: chatId,
@@ -304,7 +304,7 @@ export const useMessages = (chatId?: string) => {
     if (!content.trim()) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('messages', {
+      const { data, error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'edit',
           messageId,
@@ -317,14 +317,9 @@ export const useMessages = (chatId?: string) => {
       setMessages(prev => prev.map(msg => 
         msg.id === messageId ? data : msg
       ));
-
-      toast({
-        title: 'Success',
-        description: 'Message edited'
-      });
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: 'MSG_002',
         description: 'Failed to edit message',
         variant: 'destructive'
       });
@@ -333,7 +328,7 @@ export const useMessages = (chatId?: string) => {
 
   const deleteMessage = async (messageId: string, deleteFor: 'me' | 'everyone' = 'me') => {
     try {
-      const { data, error } = await supabase.functions.invoke('messages', {
+      const { data, error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'delete',
           messageId,
@@ -346,17 +341,11 @@ export const useMessages = (chatId?: string) => {
       if (deleteFor === 'everyone') {
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
       } else {
-        // For "delete for me", just remove from local state
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
       }
-
-      toast({
-        title: 'Success',
-        description: 'Message deleted'
-      });
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: 'MSG_003',
         description: 'Failed to delete message',
         variant: 'destructive'
       });
@@ -365,7 +354,7 @@ export const useMessages = (chatId?: string) => {
 
   const reactToMessage = async (messageId: string, reactionType: string) => {
     try {
-      const { error } = await supabase.functions.invoke('messages', {
+      const { error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'react',
           messageId,
@@ -374,14 +363,9 @@ export const useMessages = (chatId?: string) => {
       });
 
       if (error) throw error;
-      
-      toast({
-        title: 'Success',
-        description: 'Reaction added'
-      });
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: 'MSG_004',
         description: 'Failed to add reaction',
         variant: 'destructive'
       });
@@ -390,7 +374,7 @@ export const useMessages = (chatId?: string) => {
 
   const unreactToMessage = async (messageId: string) => {
     try {
-      const { error } = await supabase.functions.invoke('messages', {
+      const { error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'unreact',
           messageId
@@ -400,7 +384,7 @@ export const useMessages = (chatId?: string) => {
       if (error) throw error;
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: 'MSG_005',
         description: 'Failed to remove reaction',
         variant: 'destructive'
       });
@@ -409,7 +393,7 @@ export const useMessages = (chatId?: string) => {
 
   const starMessage = async (messageId: string) => {
     try {
-      const { error } = await supabase.functions.invoke('messages', {
+      const { error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'star',
           messageId
@@ -417,14 +401,9 @@ export const useMessages = (chatId?: string) => {
       });
 
       if (error) throw error;
-      
-      toast({
-        title: 'Success',
-        description: 'Message starred'
-      });
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: 'MSG_006',
         description: 'Failed to star message',
         variant: 'destructive'
       });
@@ -433,7 +412,7 @@ export const useMessages = (chatId?: string) => {
 
   const unstarMessage = async (messageId: string) => {
     try {
-      const { error } = await supabase.functions.invoke('messages', {
+      const { error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'unstar',
           messageId
@@ -441,14 +420,9 @@ export const useMessages = (chatId?: string) => {
       });
 
       if (error) throw error;
-      
-      toast({
-        title: 'Success',
-        description: 'Message unstarred'
-      });
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: 'MSG_007',
         description: 'Failed to unstar message',
         variant: 'destructive'
       });
@@ -457,7 +431,7 @@ export const useMessages = (chatId?: string) => {
 
   const forwardMessage = async (messageId: string, toChatIds: string[]) => {
     try {
-      const { error } = await supabase.functions.invoke('messages', {
+      const { error } = await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'forward',
           messageId,
@@ -466,14 +440,9 @@ export const useMessages = (chatId?: string) => {
       });
 
       if (error) throw error;
-      
-      toast({
-        title: 'Success',
-        description: `Message forwarded to ${toChatIds.length} chat(s)`
-      });
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: 'MSG_008',
         description: 'Failed to forward message',
         variant: 'destructive'
       });
@@ -482,7 +451,7 @@ export const useMessages = (chatId?: string) => {
 
   const markMessageRead = async (messageId: string) => {
     try {
-      await supabase.functions.invoke('messages', {
+      await supabase.functions.invoke('messages-v2', {
         body: {
           action: 'mark_read',
           messageId

@@ -119,10 +119,6 @@ const MessagingSystem = () => {
 
       await sendMessage('', undefined, publicUrl, 'audio');
       setShowVoiceRecorder(false);
-      
-      toast({
-        title: 'Voice note sent',
-      });
     } catch (error) {
       console.error('Error sending voice note:', error);
       toast({

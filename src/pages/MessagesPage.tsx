@@ -194,10 +194,6 @@ const MessagesPage = () => {
       await sendMessage('🎤 Voice message', undefined, publicUrl, 'audio/webm');
 
       setIsRecordingVoice(false);
-      toast({
-        title: 'Success',
-        description: 'Voice message sent'
-      });
     } catch (error) {
       toast({
         title: 'Error',

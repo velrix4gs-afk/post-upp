@@ -207,10 +207,6 @@ export const useChats = () => {
 
       console.log('[CHAT] Created successfully:', chatData.chat_id);
       await fetchChats();
-      toast({
-        title: 'Success',
-        description: 'Chat created successfully!',
-      });
       return chatData.chat_id;
     } catch (err: any) {
       console.error('[CHAT] Error:', err);
