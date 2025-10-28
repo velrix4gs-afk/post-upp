@@ -191,6 +191,7 @@ const Auth = () => {
         email: magicLinkEmail,
         options: {
           emailRedirectTo: `${window.location.origin}/feed`,
+          shouldCreateUser: true,
         }
       });
 
@@ -198,7 +199,7 @@ const Auth = () => {
 
       toast({
         title: 'Magic link sent!',
-        description: 'Check your email for the login link.',
+        description: 'Check your email and click the link to sign in.',
       });
       
     } catch (error: any) {

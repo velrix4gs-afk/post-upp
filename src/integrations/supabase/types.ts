@@ -264,6 +264,72 @@ export type Database = {
           },
         ]
       }
+      chat_nicknames: {
+        Row: {
+          chat_id: string
+          created_at: string | null
+          id: string
+          nickname: string
+          target_user_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string | null
+          id?: string
+          nickname: string
+          target_user_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string | null
+          id?: string
+          nickname?: string
+          target_user_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_nicknames_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_nicknames_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chat_overview"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_nicknames_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_nicknames_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_view"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "chat_nicknames_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "conversations_view"
+            referencedColumns: ["chat_id"]
+          },
+        ]
+      }
       chat_participants: {
         Row: {
           chat_id: string
@@ -2094,6 +2160,39 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          action: string
+          attempt_count: number | null
+          blocked_until: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          last_attempt: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          last_attempt?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          last_attempt?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       reactions: {
         Row: {

@@ -5,11 +5,12 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { Reply, Forward, Copy, Star, Edit, Trash2, Languages } from 'lucide-react';
+import { Reply, Forward, Copy, Star, Edit, Trash2, Languages, Clock } from 'lucide-react';
 
 interface MessageActionsMenuProps {
   children: React.ReactNode;
   isOwn: boolean;
+  isStarred?: boolean;
   onReply: () => void;
   onForward: () => void;
   onCopy: () => void;
@@ -17,11 +18,13 @@ interface MessageActionsMenuProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onTranslate?: () => void;
+  onSchedule?: () => void;
 }
 
 export const MessageActionsMenu = ({
   children,
   isOwn,
+  isStarred,
   onReply,
   onForward,
   onCopy,
@@ -29,6 +32,7 @@ export const MessageActionsMenu = ({
   onEdit,
   onDelete,
   onTranslate,
+  onSchedule,
 }: MessageActionsMenuProps) => {
   return (
     <ContextMenu>
@@ -52,9 +56,19 @@ export const MessageActionsMenu = ({
         </ContextMenuItem>
         
         <ContextMenuItem onClick={onStar}>
-          <Star className="mr-2 h-4 w-4" />
-          Star Message
+          <Star className={`mr-2 h-4 w-4 ${isStarred ? 'fill-primary text-primary' : ''}`} />
+          {isStarred ? 'Unstar Message' : 'Star Message'}
         </ContextMenuItem>
+
+        {onSchedule && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={onSchedule}>
+              <Clock className="mr-2 h-4 w-4" />
+              Schedule Message
+            </ContextMenuItem>
+          </>
+        )}
 
         {onTranslate && (
           <>
