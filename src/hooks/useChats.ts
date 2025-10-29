@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { toast } from './use-toast';
-import { showCleanError } from '@/lib/errorHandler';
 
 export interface Chat {
   id: string;
@@ -90,11 +88,8 @@ export const useChats = () => {
 
       setChats(processedChats.filter(Boolean) as Chat[]);
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load chats',
-        variant: 'destructive'
-      });
+      console.error('[CHAT] Failed to load chats:', err);
+      // Silently fail - user doesn't need to see this error
     } finally {
       setLoading(false);
     }
@@ -102,22 +97,14 @@ export const useChats = () => {
 
   const createChat = async (participantUuid: string) => {
     if (!user) {
-      toast({
-        title: 'AUTH_001',
-        description: 'Please log in to start a chat',
-        variant: 'destructive'
-      });
+      console.error('[CHAT] User not authenticated');
       return null;
     }
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(participantUuid)) {
-      toast({
-        title: 'CHAT_002',
-        description: 'Invalid user ID format',
-        variant: 'destructive'
-      });
+      console.error('[CHAT] Invalid UUID format:', participantUuid);
       return null;
     }
 
@@ -158,50 +145,15 @@ export const useChats = () => {
       console.log('[CHAT] Edge function response:', response);
 
       if (response.error) {
-        const errorData = response.error as any;
-        const errorCode = errorData.code || 'CHAT_ERROR';
-        const errorMsg = errorData.message || errorData.toString();
-        
-        console.error('[CHAT] Edge function error:', errorData);
-        
-        toast({
-          title: errorCode,
-          description: errorMsg,
-          variant: 'destructive'
-        });
+        console.error('[CHAT] Edge function error:', response.error);
         return null;
       }
 
       const chatData = response.data;
       console.log('[CHAT] Chat data received:', chatData);
       
-      if (!chatData) {
-        console.error('[CHAT] No data returned from edge function');
-        toast({
-          title: 'CHAT_006',
-          description: 'No response from server',
-          variant: 'destructive'
-        });
-        return null;
-      }
-      
-      if (chatData.error) {
-        console.error('[CHAT] Server returned error:', chatData);
-        toast({
-          title: chatData.code || 'CHAT_ERROR',
-          description: chatData.message || chatData.error,
-          variant: 'destructive'
-        });
-        return null;
-      }
-
-      if (!chatData.chat_id) {
-        console.error('[CHAT] No chat_id in response:', chatData);
-        toast({
-          title: 'CHAT_005',
-          description: 'Chat creation failed - no ID returned. Please try again.',
-          variant: 'destructive'
-        });
+      if (!chatData || chatData.error || !chatData.chat_id) {
+        console.error('[CHAT] Invalid response:', chatData);
         return null;
       }
 
@@ -210,11 +162,6 @@ export const useChats = () => {
       return chatData.chat_id;
     } catch (err: any) {
       console.error('[CHAT] Error:', err);
-      toast({
-        title: 'CHAT_ERROR',
-        description: err.message || 'Failed to create chat',
-        variant: 'destructive'
-      });
       return null;
     }
   };
