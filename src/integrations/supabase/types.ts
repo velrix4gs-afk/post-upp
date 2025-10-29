@@ -1340,7 +1340,7 @@ export type Database = {
       messages: {
         Row: {
           chat_id: string | null
-          content: string
+          content: string | null
           created_at: string | null
           deleted_at: string | null
           deleted_for: string[] | null
@@ -1359,7 +1359,7 @@ export type Database = {
         }
         Insert: {
           chat_id?: string | null
-          content: string
+          content?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_for?: string[] | null
@@ -1378,7 +1378,7 @@ export type Database = {
         }
         Update: {
           chat_id?: string | null
-          content?: string
+          content?: string | null
           created_at?: string | null
           deleted_at?: string | null
           deleted_for?: string[] | null
