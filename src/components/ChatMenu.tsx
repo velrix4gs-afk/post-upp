@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2 } from 'lucide-react';
+import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,13 +17,17 @@ import { toast } from '@/hooks/use-toast';
 
 interface ChatMenuProps {
   chatId: string;
+  otherUserId?: string;
   onExportChat?: () => void;
   onViewMedia?: () => void;
   onReport?: () => void;
   onClearChat?: () => void;
+  onBlock?: () => void;
+  onSearchInChat?: () => void;
+  onViewStarred?: () => void;
 }
 
-export const ChatMenu = ({ chatId, onExportChat, onViewMedia, onReport, onClearChat }: ChatMenuProps) => {
+export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred }: ChatMenuProps) => {
   const { settings, setNickname, muteChat, unmuteChat, togglePin, setTheme } = useChatSettings(chatId);
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
@@ -86,6 +90,14 @@ export const ChatMenu = ({ chatId, onExportChat, onViewMedia, onReport, onClearC
             <Image className="mr-2 h-4 w-4" />
             View Shared Media
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={onSearchInChat}>
+            <Search className="mr-2 h-4 w-4" />
+            Search in Chat
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onViewStarred}>
+            <Star className="mr-2 h-4 w-4" />
+            Starred Messages
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setShowThemeDialog(true)}>
             <Palette className="mr-2 h-4 w-4" />
             Change Theme
@@ -113,10 +125,18 @@ export const ChatMenu = ({ chatId, onExportChat, onViewMedia, onReport, onClearC
             <Trash2 className="mr-2 h-4 w-4" />
             Clear Chat
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onReport} className="text-destructive">
-            <AlertCircle className="mr-2 h-4 w-4" />
-            Report User
-          </DropdownMenuItem>
+          {otherUserId && (
+            <>
+              <DropdownMenuItem onClick={onBlock} className="text-destructive">
+                <Ban className="mr-2 h-4 w-4" />
+                Block User
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onReport} className="text-destructive">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Report User
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

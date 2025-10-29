@@ -446,7 +446,17 @@ const MessagesPage = () => {
                             <AvatarFallback className="bg-gradient-primary text-white">{chatName[0]}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate">{chatName}</p>
+                            <Button
+                              variant="ghost"
+                              className="p-0 h-auto hover:bg-transparent"
+                              onClick={() => {
+                                if (otherParticipant?.profiles.username) {
+                                  window.location.href = `/profile/${otherParticipant.profiles.username}`;
+                                }
+                              }}
+                            >
+                              <p className="font-medium truncate hover:text-primary transition-colors">{chatName}</p>
+                            </Button>
                             <p className="text-xs md:text-sm text-success">Online</p>
                           </div>
                         </>

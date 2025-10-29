@@ -23,6 +23,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePresenceSystem } from '@/hooks/usePresenceSystem';
 import { ChatMenu } from './ChatMenu';
+import { BlockUserDialog } from './messaging/BlockUserDialog';
+import { SearchInChatDialog } from './messaging/SearchInChatDialog';
+import { ClearChatDialog } from './messaging/ClearChatDialog';
+import { ReportUserDialog } from './messaging/ReportUserDialog';
+import { SharedMediaGallery } from './messaging/SharedMediaGallery';
+import { StarredMessagesDialog } from './messaging/StarredMessagesDialog';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
 import TypingIndicator from './TypingIndicator';
 import VoiceRecorder from './VoiceRecorder';
@@ -36,6 +42,12 @@ const MessagingSystem = () => {
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showMediaGallery, setShowMediaGallery] = useState(false);
+  const [showStarredDialog, setShowStarredDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { 
@@ -285,10 +297,21 @@ const MessagingSystem = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold">
-                      {selectedChat.name || 
-                       getOtherParticipants(selectedChat).map(p => p.profiles.display_name).join(', ')}
-                    </h3>
+                    <Button
+                      variant="ghost"
+                      className="p-0 h-auto hover:bg-transparent"
+                      onClick={() => {
+                        const otherUser = getOtherParticipants(selectedChat)[0];
+                        if (otherUser) {
+                          window.location.href = `/profile/${otherUser.profiles.username}`;
+                        }
+                      }}
+                    >
+                      <h3 className="font-semibold hover:text-primary transition-colors">
+                        {selectedChat.name || 
+                         getOtherParticipants(selectedChat).map(p => p.profiles.display_name).join(', ')}
+                      </h3>
+                    </Button>
                     <p className="text-sm text-muted-foreground">
                       {getOtherParticipants(selectedChat).length === 1 ? (
                         isUserOnline(getOtherParticipants(selectedChat)[0].user_id) 
@@ -308,7 +331,18 @@ const MessagingSystem = () => {
               <Button variant="ghost" size="sm">
                 <Video className="h-4 w-4" />
               </Button>
-              {selectedChat && <ChatMenu chatId={selectedChat.id} />}
+              {selectedChat && (
+                <ChatMenu 
+                  chatId={selectedChat.id}
+                  otherUserId={getOtherParticipants(selectedChat)[0]?.user_id}
+                  onBlock={() => setShowBlockDialog(true)}
+                  onReport={() => setShowReportDialog(true)}
+                  onClearChat={() => setShowClearDialog(true)}
+                  onViewMedia={() => setShowMediaGallery(true)}
+                  onSearchInChat={() => setShowSearchDialog(true)}
+                  onViewStarred={() => setShowStarredDialog(true)}
+                />
+              )}
             </div>
           </div>
 
@@ -442,6 +476,46 @@ const MessagingSystem = () => {
             </p>
           </div>
         </div>
+      )}
+      
+      {/* Dialogs */}
+      {selectedChat && (
+        <>
+          <BlockUserDialog
+            userId={getOtherParticipants(selectedChat)[0]?.user_id || ''}
+            userName={getOtherParticipants(selectedChat)[0]?.profiles.display_name || 'User'}
+            open={showBlockDialog}
+            onOpenChange={setShowBlockDialog}
+          />
+          <SearchInChatDialog
+            chatId={selectedChat.id}
+            open={showSearchDialog}
+            onOpenChange={setShowSearchDialog}
+            onMessageSelect={(id) => console.log('Jump to message:', id)}
+          />
+          <ClearChatDialog
+            chatId={selectedChat.id}
+            open={showClearDialog}
+            onOpenChange={setShowClearDialog}
+            onCleared={() => window.location.reload()}
+          />
+          <ReportUserDialog
+            userId={getOtherParticipants(selectedChat)[0]?.user_id || ''}
+            userName={getOtherParticipants(selectedChat)[0]?.profiles.display_name || 'User'}
+            open={showReportDialog}
+            onOpenChange={setShowReportDialog}
+          />
+          <SharedMediaGallery
+            chatId={selectedChat.id}
+            open={showMediaGallery}
+            onOpenChange={setShowMediaGallery}
+          />
+          <StarredMessagesDialog
+            open={showStarredDialog}
+            onClose={() => setShowStarredDialog(false)}
+            chatId={selectedChat.id}
+          />
+        </>
       )}
     </div>
   );
