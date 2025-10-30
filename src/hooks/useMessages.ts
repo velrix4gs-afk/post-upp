@@ -110,6 +110,20 @@ export const useMessages = (chatId?: string) => {
         }, async (payload) => {
           const newMessage = payload.new as any;
           
+          // Skip if this is an optimistic message we already have
+          if (newMessage.sender_id === user?.id) {
+            const exists = messages.find(m => m.content === newMessage.content && m.sender_id === user.id);
+            if (exists && exists.is_optimistic) {
+              // Replace optimistic with real
+              setMessages(prev => prev.map(m => 
+                m.is_optimistic && m.content === newMessage.content && m.sender_id === user.id
+                  ? { ...newMessage, sender: m.sender, status: 'sent' as const, updated_at: newMessage.created_at }
+                  : m
+              ));
+              return;
+            }
+          }
+          
           // Fetch sender profile for the new message
           const { data: profile } = await supabase
             .from('profiles')
@@ -119,6 +133,8 @@ export const useMessages = (chatId?: string) => {
           
           const messageWithProfile: Message = {
             ...newMessage,
+            status: 'sent' as const,
+            updated_at: newMessage.created_at,
             sender: {
               username: profile?.username || 'user',
               display_name: profile?.display_name || 'User',
@@ -127,11 +143,9 @@ export const useMessages = (chatId?: string) => {
           };
           
           setMessages(prev => {
-            // Avoid duplicates (optimistic updates)
+            // Avoid duplicates
             const exists = prev.find(m => m.id === messageWithProfile.id);
-            if (exists) {
-              return prev.map(m => m.id === messageWithProfile.id ? messageWithProfile : m);
-            }
+            if (exists) return prev;
             return [...prev, messageWithProfile];
           });
         })
@@ -152,6 +166,8 @@ export const useMessages = (chatId?: string) => {
           
           const messageWithProfile: Message = {
             ...updatedMessage,
+            status: (updatedMessage.status || 'sent') as 'sending' | 'sent' | 'delivered' | 'read' | 'failed',
+            updated_at: updatedMessage.edited_at || updatedMessage.created_at,
             sender: {
               username: profile?.username || 'user',
               display_name: profile?.display_name || 'User',
@@ -177,7 +193,7 @@ export const useMessages = (chatId?: string) => {
         supabase.removeChannel(channel);
       };
     }
-  }, [chatId]);
+  }, [chatId, user]);
 
   const fetchChats = async () => {
     try {

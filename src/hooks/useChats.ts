@@ -109,23 +109,31 @@ export const useChats = () => {
     }
 
     try {
-      // Check if chat already exists
+      // Check if chat already exists between these two users
       const { data: existingChats } = await supabase
         .from('chat_participants')
-        .select('chat_id, chats:chat_id(type)')
+        .select('chat_id')
         .eq('user_id', user.id);
 
       if (existingChats) {
         for (const ec of existingChats) {
-          if (ec.chats?.type === 'private') {
-            const { data: otherParticipant } = await supabase
-              .from('chat_participants')
-              .select('user_id')
-              .eq('chat_id', ec.chat_id)
-              .neq('user_id', user.id)
-              .maybeSingle();
+          // Check if this chat has the other user as participant
+          const { data: otherParticipant } = await supabase
+            .from('chat_participants')
+            .select('user_id, chats:chat_id(type)')
+            .eq('chat_id', ec.chat_id)
+            .eq('user_id', participantUuid)
+            .maybeSingle();
 
-            if (otherParticipant?.user_id === participantUuid) {
+          if (otherParticipant) {
+            // Get the chat type
+            const { data: chatData } = await supabase
+              .from('chats')
+              .select('type')
+              .eq('id', ec.chat_id)
+              .single();
+
+            if (chatData?.type === 'private') {
               console.log('[CHAT] Existing chat found:', ec.chat_id);
               return ec.chat_id;
             }
@@ -135,31 +143,32 @@ export const useChats = () => {
 
       console.log('[CHAT] Creating new chat with UUID:', participantUuid);
       
-      const response = await supabase.functions.invoke('friendships', {
-        body: {
-          action: 'create_chat',
-          participant_uuid: participantUuid
-        }
-      });
+      // Create new chat directly
+      const { data: newChat, error: chatError } = await supabase
+        .from('chats')
+        .insert({
+          type: 'private',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-      console.log('[CHAT] Edge function response:', response);
+      if (chatError) throw chatError;
 
-      if (response.error) {
-        console.error('[CHAT] Edge function error:', response.error);
-        return null;
-      }
+      // Add both participants
+      const { error: participantsError } = await supabase
+        .from('chat_participants')
+        .insert([
+          { chat_id: newChat.id, user_id: user.id, role: 'member' },
+          { chat_id: newChat.id, user_id: participantUuid, role: 'member' }
+        ]);
 
-      const chatData = response.data;
-      console.log('[CHAT] Chat data received:', chatData);
-      
-      if (!chatData || chatData.error || !chatData.chat_id) {
-        console.error('[CHAT] Invalid response:', chatData);
-        return null;
-      }
+      if (participantsError) throw participantsError;
 
-      console.log('[CHAT] Created successfully:', chatData.chat_id);
+      console.log('[CHAT] Created successfully:', newChat.id);
       await fetchChats();
-      return chatData.chat_id;
+      return newChat.id;
     } catch (err: any) {
       console.error('[CHAT] Error:', err);
       return null;
