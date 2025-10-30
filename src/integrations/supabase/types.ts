@@ -772,6 +772,42 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string | null
+          following_id: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id?: string | null
+          following_id?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string | null
+          following_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       friends: {
         Row: {
           created_at: string | null
@@ -1080,6 +1116,58 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_attachments: {
+        Row: {
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          message_id: string | null
+          storage_path: string | null
+          uploaded_at: string | null
+        }
+        Insert: {
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          message_id?: string | null
+          storage_path?: string | null
+          uploaded_at?: string | null
+        }
+        Update: {
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          message_id?: string | null
+          storage_path?: string | null
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_with_users"
+            referencedColumns: ["message_id"]
           },
         ]
       }
@@ -2016,6 +2104,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_deleted: boolean
+          is_public: boolean | null
           is_published: boolean | null
           location: string | null
           media_type: string | null
@@ -2035,6 +2124,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_deleted?: boolean
+          is_public?: boolean | null
           is_published?: boolean | null
           location?: string | null
           media_type?: string | null
@@ -2054,6 +2144,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_deleted?: boolean
+          is_public?: boolean | null
           is_published?: boolean | null
           location?: string | null
           media_type?: string | null
@@ -3789,6 +3880,35 @@ export type Database = {
         }[]
       }
       extract_hashtags: { Args: { post_content: string }; Returns: string[] }
+      get_random_feed: {
+        Args: { user_uuid: string }
+        Returns: {
+          comments_count: number | null
+          content: string | null
+          created_at: string | null
+          id: string
+          is_deleted: boolean
+          is_public: boolean | null
+          is_published: boolean | null
+          location: string | null
+          media_type: string | null
+          media_url: string | null
+          media_urls: string[] | null
+          privacy: string | null
+          reactions_count: number | null
+          scheduled_for: string | null
+          shares_count: number | null
+          tagged_users: string[] | null
+          updated_at: string | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "posts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       handle_post_visibility: { Args: never; Returns: undefined }
       has_role: {
         Args: {
