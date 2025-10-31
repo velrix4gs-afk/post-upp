@@ -42,15 +42,56 @@ serve(async (req) => {
   try {
     const { email, code, password, username, displayName } = await req.json();
 
-    if (!email || !code || !password || !username || !displayName) {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Valid email is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Validate OTP format (6 digits)
+    const otpRegex = /^\d{6}$/;
+    if (!code || typeof code !== 'string' || !otpRegex.test(code)) {
+      return new Response(
+        JSON.stringify({ error: 'Valid 6-digit code is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate password strength (minimum 8 characters)
+    if (!password || typeof password !== 'string' || password.length < 8) {
+      return new Response(
+        JSON.stringify({ error: 'Password must be at least 8 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate username (3-30 alphanumeric characters, underscores, hyphens)
+    const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
+    if (!username || typeof username !== 'string' || !usernameRegex.test(username)) {
+      return new Response(
+        JSON.stringify({ error: 'Username must be 3-30 characters (letters, numbers, _, -)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate display name (1-100 characters)
+    if (!displayName || typeof displayName !== 'string' || displayName.trim().length === 0 || displayName.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Display name must be 1-100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = email.toLowerCase().trim();
+    const sanitizedUsername = username.trim();
+    const sanitizedDisplayName = displayName.trim();
+
     // Rate limiting: 5 verification attempts per minute per email
-    if (!checkRateLimit(email, 5, 60000)) {
+    if (!checkRateLimit(sanitizedEmail, 5, 60000)) {
       return new Response(
         JSON.stringify({ error: 'Too many verification attempts. Please try again later.' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -66,7 +107,7 @@ serve(async (req) => {
     const { data: otpRecord } = await supabase
       .from('email_otps')
       .select('*')
-      .eq('email', email)
+      .eq('email', sanitizedEmail)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -88,12 +129,12 @@ serve(async (req) => {
 
     // Create user account
     const { data: authData, error: signUpError } = await supabase.auth.admin.createUser({
-      email,
+      email: sanitizedEmail,
       password,
       email_confirm: true, // Auto-confirm since they verified via OTP
       user_metadata: {
-        username,
-        display_name: displayName
+        username: sanitizedUsername,
+        display_name: sanitizedDisplayName
       }
     });
 
@@ -120,7 +161,7 @@ serve(async (req) => {
     // Generate session for the new user
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email,
+      email: sanitizedEmail,
     });
 
     if (sessionError) {

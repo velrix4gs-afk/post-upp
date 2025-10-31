@@ -42,23 +42,31 @@ serve(async (req) => {
   try {
     const { email } = await req.json();
 
-    if (!email) {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || typeof email !== 'string' || !emailRegex.test(email)) {
       return new Response(
-        JSON.stringify({ error: 'Email is required' }),
+        JSON.stringify({ error: 'Valid email is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Sanitize email
+    const sanitizedEmail = email.toLowerCase().trim();
+
     // Rate limiting: 5 requests per minute per email
-    if (!checkRateLimit(email, 5, 60000)) {
+    if (!checkRateLimit(sanitizedEmail, 5, 60000)) {
       return new Response(
         JSON.stringify({ error: 'Too many requests. Please try again later.' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Generate 6-digit OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate cryptographically secure 6-digit OTP
+    const randomBytes = new Uint8Array(4);
+    crypto.getRandomValues(randomBytes);
+    const randomNumber = new DataView(randomBytes.buffer).getUint32(0, false);
+    const code = (100000 + (randomNumber % 900000)).toString();
     
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -71,7 +79,7 @@ serve(async (req) => {
     const { error: insertError } = await supabase
       .from('email_otps')
       .insert({
-        email,
+        email: sanitizedEmail,
         code,
         expires_at: expiresAt
       });
@@ -87,7 +95,7 @@ serve(async (req) => {
     // Send email with OTP
     // Note: In production, integrate with your email service (Resend, SendGrid, etc.)
     // For now, we'll log it and return success
-    console.log(`OTP for ${email}: ${code}`);
+    console.log(`OTP for ${sanitizedEmail}: ${code}`);
     
     // If you have RESEND_API_KEY configured, you can send the email:
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
@@ -101,7 +109,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             from: 'POST UP <onboarding@resend.dev>',
-            to: [email],
+            to: [sanitizedEmail],
             subject: 'Your POST UP Verification Code',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
