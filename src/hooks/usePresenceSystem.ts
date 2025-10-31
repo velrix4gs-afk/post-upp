@@ -2,135 +2,125 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-interface UserPresenceData {
-  user_id: string;
-  status: 'online' | 'offline' | 'away';
-  last_seen: string;
-  current_chat_id?: string;
-  updated_at: string;
-}
-
 export const usePresenceSystem = (chatId?: string) => {
   const { user } = useAuth();
-  const [onlineUsers, setOnlineUsers] = useState<Record<string, UserPresenceData>>({});
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
 
   useEffect(() => {
     if (!user) return;
 
-    // Set user as online when component mounts
-    const setOnline = async () => {
-      await supabase
-        .from('user_presence' as any)
-        .upsert({
-          user_id: user.id,
-          status: 'online',
-          current_chat_id: chatId,
-          last_seen: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-    };
-
-    setOnline();
-
-    // Subscribe to presence changes
-    const presenceChannel = supabase
-      .channel('user-presence-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_presence'
+    // Create presence channel using Supabase Realtime
+    const channel = supabase.channel('online-users', {
+      config: {
+        presence: {
+          key: user.id,
         },
-        (payload) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const presence = payload.new as UserPresenceData;
-            setOnlineUsers(prev => ({
-              ...prev,
-              [presence.user_id]: presence
-            }));
-          } else if (payload.eventType === 'DELETE') {
-            const presence = payload.old as UserPresenceData;
-            setOnlineUsers(prev => {
-              const newState = { ...prev };
-              delete newState[presence.user_id];
-              return newState;
+      },
+    });
+
+    // Track presence state changes
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const online = new Set<string>();
+        
+        Object.keys(state).forEach((key) => {
+          const presences = state[key];
+          if (presences && presences.length > 0) {
+            presences.forEach((presence: any) => {
+              if (presence.user_id && presence.status === 'online') {
+                online.add(presence.user_id);
+              }
             });
           }
+        });
+        
+        setOnlineUsers(online);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        setOnlineUsers((prev) => {
+          const updated = new Set(prev);
+          if (newPresences && Array.isArray(newPresences)) {
+            newPresences.forEach((presence: any) => {
+              if (presence.user_id && presence.status === 'online') {
+                updated.add(presence.user_id);
+              }
+            });
+          }
+          return updated;
+        });
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        setOnlineUsers((prev) => {
+          const updated = new Set(prev);
+          if (leftPresences && Array.isArray(leftPresences)) {
+            leftPresences.forEach((presence: any) => {
+              if (presence.user_id) {
+                updated.delete(presence.user_id);
+              }
+            });
+          }
+          return updated;
+        });
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Track current user's presence
+          await channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+            status: 'online',
+          });
         }
-      )
-      .subscribe();
+      });
 
-    // Fetch initial presence data
-    const fetchPresence = async () => {
-      const { data } = await supabase
-        .from('user_presence' as any)
-        .select('*')
-        .eq('status', 'online');
+    setPresenceChannel(channel);
 
-      if (data) {
-        const presenceMap: Record<string, UserPresenceData> = {};
-        data.forEach((p: any) => {
-          presenceMap[p.user_id] = p;
-        });
-        setOnlineUsers(presenceMap);
-      }
-    };
-
-    fetchPresence();
-
-    // Update presence every 30 seconds
-    const intervalId = setInterval(async () => {
-      await supabase
-        .from('user_presence' as any)
-        .upsert({
+    // Heartbeat to keep presence alive
+    const heartbeatInterval = setInterval(async () => {
+      if (channel) {
+        await channel.track({
           user_id: user.id,
+          online_at: new Date().toISOString(),
           status: 'online',
-          current_chat_id: chatId,
-          last_seen: new Date().toISOString(),
-          updated_at: new Date().toISOString()
         });
+      }
     }, 30000);
 
-    // Set user as offline when component unmounts
+    // Cleanup on unmount
     return () => {
-      clearInterval(intervalId);
-      supabase
-        .from('user_presence' as any)
-        .upsert({
-          user_id: user.id,
-          status: 'offline',
-          last_seen: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-      supabase.removeChannel(presenceChannel);
+      clearInterval(heartbeatInterval);
+      if (channel) {
+        channel.untrack();
+        supabase.removeChannel(channel);
+      }
     };
-  }, [user, chatId]);
+  }, [user]);
 
   const updateCurrentChat = async (newChatId?: string) => {
-    if (!user) return;
+    if (!user || !presenceChannel) return;
     
-    await supabase
-      .from('user_presence' as any)
-      .upsert({
-        user_id: user.id,
-        status: 'online',
-        current_chat_id: newChatId,
-        last_seen: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+    // Update presence with current chat info
+    await presenceChannel.track({
+      user_id: user.id,
+      online_at: new Date().toISOString(),
+      status: 'online',
+      current_chat_id: newChatId,
+    });
   };
 
   const isUserOnline = (userId: string) => {
-    return onlineUsers[userId]?.status === 'online';
+    return onlineUsers.has(userId);
   };
 
   const isUserInChat = (userId: string, checkChatId: string) => {
-    return onlineUsers[userId]?.current_chat_id === checkChatId;
+    // This would require tracking chat info in presence state
+    return false;
   };
 
   return {
-    onlineUsers,
+    onlineUsers: Array.from(onlineUsers),
     isUserOnline,
     isUserInChat,
     updateCurrentChat

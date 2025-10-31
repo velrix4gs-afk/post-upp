@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,19 +59,89 @@ export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onRep
     setShowThemeDialog(false);
   };
 
-  const handleExportChat = () => {
-    toast({
-      title: 'Export Chat',
-      description: 'This feature is coming soon!',
-    });
+  const handleExportChat = async () => {
+    try {
+      // Fetch all messages for export
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('*, sender:profiles!messages_sender_id_fkey(display_name)')
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: true });
+
+      if (!messages || messages.length === 0) {
+        toast({
+          title: 'No messages to export',
+          description: 'This chat is empty',
+        });
+        return;
+      }
+
+      // Create text export
+      const exportText = messages
+        .map(msg => {
+          const timestamp = new Date(msg.created_at).toLocaleString();
+          const sender = msg.sender?.display_name || 'Unknown';
+          return `[${timestamp}] ${sender}: ${msg.content || '[Media]'}`;
+        })
+        .join('\n');
+
+      // Download as text file
+      const blob = new Blob([exportText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `chat-export-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Chat exported',
+        description: 'Chat history downloaded successfully',
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Export failed',
+        description: 'Could not export chat',
+        variant: 'destructive',
+      });
+    }
     onExportChat?.();
   };
 
-  const handleAISummary = () => {
-    toast({
-      title: 'AI Summary',
-      description: 'Premium feature - coming soon!',
-    });
+  const handleAISummary = async () => {
+    try {
+      // Fetch recent messages
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('content')
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (!messages || messages.length === 0) {
+        toast({
+          title: 'No messages',
+          description: 'This chat has no messages to summarize',
+        });
+        return;
+      }
+
+      const messageCount = messages.length;
+      const hasMedia = messages.some(m => !m.content);
+      
+      toast({
+        title: 'Chat Summary',
+        description: `This chat has ${messageCount} recent messages${hasMedia ? ', including media files' : ''}. Full AI summary is a premium feature.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Summary failed',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
