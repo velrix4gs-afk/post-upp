@@ -29,6 +29,8 @@ import { ClearChatDialog } from './messaging/ClearChatDialog';
 import { ReportUserDialog } from './messaging/ReportUserDialog';
 import { SharedMediaGallery } from './messaging/SharedMediaGallery';
 import { StarredMessagesDialog } from './messaging/StarredMessagesDialog';
+import { EnhancedMessageBubble } from './EnhancedMessageBubble';
+import { ForwardMessageDialog } from './messaging/ForwardMessageDialog';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
 import TypingIndicator from './TypingIndicator';
 import VoiceRecorder from './VoiceRecorder';
@@ -48,13 +50,24 @@ const MessagingSystem = () => {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showMediaGallery, setShowMediaGallery] = useState(false);
   const [showStarredDialog, setShowStarredDialog] = useState(false);
+  const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
+  const [replyToMessage, setReplyToMessage] = useState<any>(null);
+  const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { 
     messages, 
     chats, 
     loading, 
-    sendMessage, 
+    sendMessage,
+    editMessage,
+    deleteMessage,
+    reactToMessage,
+    unreactToMessage,
+    starMessage,
+    unstarMessage,
+    forwardMessage,
     markMessageRead
   } = useMessages(selectedChatId || undefined);
   
@@ -109,8 +122,40 @@ const MessagingSystem = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedChatId) return;
     
-    await sendMessage(newMessage);
+    if (editingMessage) {
+      await editMessage(editingMessage.id, newMessage);
+      setEditingMessage(null);
+    } else {
+      await sendMessage(newMessage, replyToMessage?.id);
+      setReplyToMessage(null);
+    }
     setNewMessage('');
+  };
+
+  const handleEditMessage = (id: string, content: string) => {
+    setEditingMessage({ id, content });
+    setNewMessage(content);
+  };
+
+  const handleReply = (message: any) => {
+    setReplyToMessage(message);
+  };
+
+  const handleForward = (messageId: string) => {
+    setForwardingMessageId(messageId);
+    setShowForwardDialog(true);
+  };
+
+  const handleForwardSubmit = async (chatIds: string[]) => {
+    if (forwardingMessageId) {
+      await forwardMessage(forwardingMessageId, chatIds);
+      setShowForwardDialog(false);
+      setForwardingMessageId(null);
+      toast({
+        title: 'Success',
+        description: 'Message forwarded successfully',
+      });
+    }
   };
 
   const handleVoiceNote = async (audioBlob: Blob, duration: number) => {
@@ -348,68 +393,32 @@ const MessagingSystem = () => {
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+            <div className="space-y-1">
               {messages.map((message) => {
                 const isOwn = message.sender_id === user?.id;
-                const showTime = true; // You can add logic to group messages by time
                 
                 return (
-                  <div
+                  <EnhancedMessageBubble
                     key={message.id}
-                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'} space-x-2`}
-                  >
-                    {!isOwn && (
-                      <Avatar className="h-8 w-8 mt-1">
-                        <AvatarImage src={message.sender.avatar_url} />
-                        <AvatarFallback className="text-xs">
-                          {message.sender.display_name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    
-                    <div className={`max-w-[70%] ${isOwn ? 'text-right' : 'text-left'}`}>
-                      {!isOwn && (
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {message.sender.display_name}
-                        </p>
-                      )}
-                      
-                       <div
-                        className={`rounded-lg px-3 py-2 ${
-                          isOwn
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
-                      >
-                        {message.media_type === 'audio' && message.media_url ? (
-                          <audio controls className="max-w-full">
-                            <source src={message.media_url} type="audio/webm" />
-                          </audio>
-                        ) : (
-                          <p className="text-sm">{message.content}</p>
-                        )}
-                        {message.is_edited && (
-                          <p className="text-xs opacity-70 mt-1">edited</p>
-                        )}
-                        {isOwn && message.status && (
-                          <div className="flex justify-end mt-1">
-                            {message.status === 'sending' && (
-                              <span className="text-xs opacity-70">Sending...</span>
-                            )}
-                            {message.status === 'failed' && (
-                              <span className="text-xs text-red-500">Failed to send</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {showTime && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {formatMessageTime(message.created_at)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                    id={message.id}
+                    content={message.content || ''}
+                    sender={message.sender}
+                    timestamp={message.created_at}
+                    isOwn={isOwn}
+                    mediaUrl={message.media_url}
+                    mediaType={message.media_type}
+                    isEdited={message.is_edited}
+                    isForwarded={message.is_forwarded}
+                    status={message.status}
+                    onEdit={handleEditMessage}
+                    onDelete={(id, deleteFor) => deleteMessage(id, deleteFor)}
+                    onReply={() => handleReply(message)}
+                    onReact={reactToMessage}
+                    onUnreact={unreactToMessage}
+                    onStar={starMessage}
+                    onUnstar={unstarMessage}
+                    onForward={handleForward}
+                  />
                 );
               })}
               <div ref={messagesEndRef} />
@@ -421,6 +430,31 @@ const MessagingSystem = () => {
 
           {/* Message Input */}
           <div className="p-4 border-t">
+            {/* Reply/Edit indicator */}
+            {(replyToMessage || editingMessage) && (
+              <div className="mb-2 p-2 bg-muted rounded-lg flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground">
+                    {editingMessage ? 'Editing message' : `Replying to ${replyToMessage?.sender.display_name}`}
+                  </p>
+                  <p className="text-sm truncate">
+                    {editingMessage ? editingMessage.content : replyToMessage?.content}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setReplyToMessage(null);
+                    setEditingMessage(null);
+                    setNewMessage('');
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+            )}
+            
             {showVoiceRecorder ? (
               <div className="flex items-center justify-center py-4">
                 <VoiceRecorder
@@ -437,7 +471,7 @@ const MessagingSystem = () => {
                   <Smile className="h-4 w-4" />
                 </Button>
                 <Input
-                  placeholder="Type a message..."
+                  placeholder={editingMessage ? "Edit message..." : "Type a message..."}
                   value={newMessage}
                   onChange={(e) => {
                     setNewMessage(e.target.value);
@@ -515,6 +549,15 @@ const MessagingSystem = () => {
             onClose={() => setShowStarredDialog(false)}
             chatId={selectedChat.id}
           />
+          {showForwardDialog && (
+            <ForwardMessageDialog
+              open={showForwardDialog}
+              onClose={() => setShowForwardDialog(false)}
+              chats={chats}
+              currentChatId={selectedChat.id}
+              onForward={handleForwardSubmit}
+            />
+          )}
         </>
       )}
     </div>
