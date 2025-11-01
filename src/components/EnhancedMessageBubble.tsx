@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Edit2, Trash2, Reply, Copy, Star, Forward, CheckCheck } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, Reply, Copy, Star, Forward, CheckCheck, FileIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,8 @@ import {
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
+import { useMessageReactions } from "@/hooks/useMessageReactions";
+import { MessageReactions } from "./messaging/MessageReactions";
 import { ReactionPicker } from "./ReactionPicker";
 
 interface MessageReaction {
@@ -68,7 +70,7 @@ export const EnhancedMessageBubble = ({
   isForwarded = false,
   isStarred = false,
   status = 'sent',
-  reactions = [],
+  reactions: _reactions = [],
   onEdit,
   onDelete,
   onReply,
@@ -80,19 +82,12 @@ export const EnhancedMessageBubble = ({
 }: EnhancedMessageBubbleProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteFor, setDeleteFor] = useState<'me' | 'everyone'>('me');
+  const { reactions, loading: reactionsLoading } = useMessageReactions(id);
 
   const handleDelete = () => {
     onDelete?.(id, deleteFor);
     setShowDeleteDialog(false);
   };
-
-  // Group reactions by type and count
-  const reactionGroups = reactions.reduce((acc, r) => {
-    acc[r.reaction_type] = (acc[r.reaction_type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const hasUserReacted = reactions.some(r => r.user_id === 'current-user'); // Replace with actual user check
 
   return (
     <>
@@ -140,16 +135,32 @@ export const EnhancedMessageBubble = ({
                 
                 {mediaUrl && (
                   <div className="mb-2">
-                    {mediaType?.startsWith('image/') ? (
+                    {mediaType?.startsWith('image') || mediaType === 'image' ? (
                       <img 
                         src={mediaUrl} 
                         alt="Message attachment" 
-                        className="rounded-lg max-w-full max-h-64 cursor-pointer hover:opacity-90"
+                        className="rounded-lg max-w-full max-h-64 cursor-pointer hover:opacity-90 transition"
                         onClick={() => window.open(mediaUrl, '_blank')}
                       />
-                    ) : mediaType?.startsWith('audio/') ? (
+                    ) : mediaType?.startsWith('video') || mediaType === 'video' ? (
+                      <video 
+                        controls 
+                        src={mediaUrl} 
+                        className="rounded-lg max-w-full max-h-64"
+                      />
+                    ) : mediaType?.startsWith('audio') || mediaType === 'audio' ? (
                       <audio controls src={mediaUrl} className="max-w-full" />
-                    ) : null}
+                    ) : (
+                      <a 
+                        href={mediaUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 p-2 rounded bg-muted/50 hover:bg-muted transition"
+                      >
+                        <FileIcon className="h-5 w-5" />
+                        <span className="text-sm truncate">{content || 'Document'}</span>
+                      </a>
+                    )}
                   </div>
                 )}
                 
@@ -183,20 +194,13 @@ export const EnhancedMessageBubble = ({
                 )}
               </div>
 
-              {/* Reactions display */}
-              {Object.keys(reactionGroups).length > 0 && (
-                <div className="absolute -bottom-2 left-2 flex gap-1">
-                  {Object.entries(reactionGroups).map(([reaction, count]) => (
-                    <Badge
-                      key={reaction}
-                      variant="secondary"
-                      className="h-5 px-1.5 text-xs cursor-pointer hover:scale-110 transition-transform"
-                      onClick={() => hasUserReacted ? onUnreact?.(id) : onReact?.(id, reaction)}
-                    >
-                      {reaction} {count > 1 && count}
-                    </Badge>
-                  ))}
-                </div>
+              {/* Reactions display using MessageReactions component */}
+              {!reactionsLoading && reactions.length > 0 && (
+                <MessageReactions
+                  reactions={reactions}
+                  onReact={(type) => onReact?.(id, type)}
+                  onUnreact={(type) => onUnreact?.(id)}
+                />
               )}
             </div>
             

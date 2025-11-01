@@ -504,13 +504,22 @@ export const useMessages = (chatId?: string) => {
   const deleteMessage = async (messageId: string, deleteFor: 'me' | 'everyone' = 'me') => {
     try {
       if (deleteFor === 'everyone') {
+        // Completely delete the message from database
         const { error } = await supabase
           .from('messages')
           .delete()
-          .eq('id', messageId);
+          .eq('id', messageId)
+          .eq('sender_id', user!.id); // Only allow sender to delete for everyone
 
         if (error) throw error;
+        
+        // Remove from local state immediately
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
+        
+        toast({
+          title: 'Success',
+          description: 'Message deleted for everyone',
+        });
       } else {
         // Delete for me - add user ID to deleted_for array
         const { data: message } = await supabase
@@ -530,7 +539,14 @@ export const useMessages = (chatId?: string) => {
           .eq('id', messageId);
 
         if (error) throw error;
+        
+        // Remove from local state
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
+        
+        toast({
+          title: 'Success',
+          description: 'Message deleted for you',
+        });
       }
     } catch (err: any) {
       toast({

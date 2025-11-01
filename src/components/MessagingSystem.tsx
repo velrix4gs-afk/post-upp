@@ -22,6 +22,7 @@ import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/hooks/useAuth';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePresenceSystem } from '@/hooks/usePresenceSystem';
+import { useChatSettings } from '@/hooks/useChatSettings';
 import { ChatMenu } from './ChatMenu';
 import { BlockUserDialog } from './messaging/BlockUserDialog';
 import { SearchInChatDialog } from './messaging/SearchInChatDialog';
@@ -29,6 +30,8 @@ import { ClearChatDialog } from './messaging/ClearChatDialog';
 import { ReportUserDialog } from './messaging/ReportUserDialog';
 import { SharedMediaGallery } from './messaging/SharedMediaGallery';
 import { StarredMessagesDialog } from './messaging/StarredMessagesDialog';
+import { WallpaperDialog } from './messaging/WallpaperDialog';
+import { FileUploadDialog } from './messaging/FileUploadDialog';
 import { EnhancedMessageBubble } from './EnhancedMessageBubble';
 import { ForwardMessageDialog } from './messaging/ForwardMessageDialog';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
@@ -51,10 +54,14 @@ const MessagingSystem = () => {
   const [showMediaGallery, setShowMediaGallery] = useState(false);
   const [showStarredDialog, setShowStarredDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [showWallpaperDialog, setShowWallpaperDialog] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
   const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<any>(null);
   const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
   
   const { 
     messages, 
@@ -72,6 +79,7 @@ const MessagingSystem = () => {
   } = useMessages(selectedChatId || undefined);
   
   const { createChat: createChatByUuid } = useChats();
+  const { settings } = useChatSettings(selectedChatId || undefined);
 
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
   const { isUserOnline, updateCurrentChat } = usePresenceSystem(selectedChatId || undefined);
@@ -79,25 +87,69 @@ const MessagingSystem = () => {
   // Update viewing chat when selected chat changes
   useEffect(() => {
     updateCurrentChat(selectedChatId || undefined);
+    setHasScrolledToUnread(false);
   }, [selectedChatId]);
 
-  // Mark messages as read when chat is selected
+  // Mark messages as read and show notification for new messages
   useEffect(() => {
     if (selectedChatId && messages.length > 0) {
-      const unreadMessages = messages.filter(m => m.sender_id !== user?.id);
+      const unreadMessages = messages.filter(m => m.sender_id !== user?.id && m.status !== 'read');
+      
+      // Mark as read
       unreadMessages.forEach(msg => {
         markMessageRead(msg.id);
       });
+      
+      // Show notification for new messages when chat is not selected
+      if (!document.hasFocus()) {
+        const latestMessage = messages[messages.length - 1];
+        if (latestMessage && latestMessage.sender_id !== user?.id) {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(latestMessage.sender.display_name, {
+              body: latestMessage.content || 'Sent a media file',
+              icon: latestMessage.sender.avatar_url
+            });
+          }
+        }
+      }
     }
   }, [selectedChatId, messages]);
+
+  // Request notification permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Auto-scroll to first unread message or bottom
+  useEffect(() => {
+    if (messages.length > 0 && !hasScrolledToUnread) {
+      const firstUnread = messages.find(m => m.sender_id !== user?.id && m.status !== 'read');
+      
+      if (firstUnread) {
+        const element = document.getElementById(`message-${firstUnread.id}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setHasScrolledToUnread(true);
+          return;
+        }
+      }
+      
+      scrollToBottom();
+      setHasScrolledToUnread(true);
+    }
+  }, [messages, hasScrolledToUnread]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length > 0 && hasScrolledToUnread) {
+      scrollToBottom();
+    }
+  }, [messages.length]);
 
   const selectedChat = chats.find(chat => chat.id === selectedChatId);
   
@@ -156,6 +208,19 @@ const MessagingSystem = () => {
         description: 'Message forwarded successfully',
       });
     }
+  };
+
+  const handleFileUploadComplete = async (url: string, type: string, fileName: string) => {
+    if (!selectedChatId) return;
+    
+    // Determine media type category
+    let mediaType = type;
+    if (type.startsWith('image/')) mediaType = 'image';
+    else if (type.startsWith('video/')) mediaType = 'video';
+    else if (type.startsWith('audio/')) mediaType = 'audio';
+    else mediaType = 'document';
+    
+    await sendMessage(fileName, undefined, url, mediaType);
   };
 
   const handleVoiceNote = async (audioBlob: Blob, duration: number) => {
@@ -386,39 +451,54 @@ const MessagingSystem = () => {
                   onViewMedia={() => setShowMediaGallery(true)}
                   onSearchInChat={() => setShowSearchDialog(true)}
                   onViewStarred={() => setShowStarredDialog(true)}
+                  onWallpaperChange={() => setShowWallpaperDialog(true)}
                 />
               )}
             </div>
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-1">
+          <ScrollArea 
+            className="flex-1 p-4"
+            style={{
+              backgroundImage: settings?.wallpaper_url && settings.wallpaper_url.startsWith('http') 
+                ? `url(${settings.wallpaper_url})` 
+                : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div 
+              className={`space-y-1 ${settings?.wallpaper_url && !settings.wallpaper_url.startsWith('http') 
+                ? getWallpaperClass(settings.wallpaper_url) 
+                : ''}`}
+            >
               {messages.map((message) => {
                 const isOwn = message.sender_id === user?.id;
                 
                 return (
-                  <EnhancedMessageBubble
-                    key={message.id}
-                    id={message.id}
-                    content={message.content || ''}
-                    sender={message.sender}
-                    timestamp={message.created_at}
-                    isOwn={isOwn}
-                    mediaUrl={message.media_url}
-                    mediaType={message.media_type}
-                    isEdited={message.is_edited}
-                    isForwarded={message.is_forwarded}
-                    status={message.status}
-                    onEdit={handleEditMessage}
-                    onDelete={(id, deleteFor) => deleteMessage(id, deleteFor)}
-                    onReply={() => handleReply(message)}
-                    onReact={reactToMessage}
-                    onUnreact={unreactToMessage}
-                    onStar={starMessage}
-                    onUnstar={unstarMessage}
-                    onForward={handleForward}
-                  />
+                  <div key={message.id} id={`message-${message.id}`}>
+                    <EnhancedMessageBubble
+                      id={message.id}
+                      content={message.content || ''}
+                      sender={message.sender}
+                      timestamp={message.created_at}
+                      isOwn={isOwn}
+                      mediaUrl={message.media_url}
+                      mediaType={message.media_type}
+                      isEdited={message.is_edited}
+                      isForwarded={message.is_forwarded}
+                      status={message.status}
+                      onEdit={handleEditMessage}
+                      onDelete={(id, deleteFor) => deleteMessage(id, deleteFor)}
+                      onReply={() => handleReply(message)}
+                      onReact={reactToMessage}
+                      onUnreact={unreactToMessage}
+                      onStar={starMessage}
+                      onUnstar={unstarMessage}
+                      onForward={handleForward}
+                    />
+                  </div>
                 );
               })}
               <div ref={messagesEndRef} />
@@ -464,7 +544,11 @@ const MessagingSystem = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowFileUpload(true)}
+                >
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="sm">
@@ -558,10 +642,36 @@ const MessagingSystem = () => {
               onForward={handleForwardSubmit}
             />
           )}
+          {showWallpaperDialog && (
+            <WallpaperDialog
+              chatId={selectedChat.id}
+              open={showWallpaperDialog}
+              onOpenChange={setShowWallpaperDialog}
+            />
+          )}
+          {showFileUpload && (
+            <FileUploadDialog
+              chatId={selectedChat.id}
+              open={showFileUpload}
+              onOpenChange={setShowFileUpload}
+              onUploadComplete={handleFileUploadComplete}
+            />
+          )}
         </>
       )}
     </div>
   );
+};
+
+const getWallpaperClass = (wallpaperId: string) => {
+  const wallpapers: Record<string, string> = {
+    'blue': 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-950 dark:to-blue-900',
+    'green': 'bg-gradient-to-br from-green-100 to-green-200 dark:from-green-950 dark:to-green-900',
+    'purple': 'bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-950 dark:to-purple-900',
+    'pink': 'bg-gradient-to-br from-pink-100 to-pink-200 dark:from-pink-950 dark:to-pink-900',
+    'orange': 'bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-950 dark:to-orange-900',
+  };
+  return wallpapers[wallpaperId] || '';
 };
 
 export default MessagingSystem;

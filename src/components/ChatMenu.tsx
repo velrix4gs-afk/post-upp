@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX } from 'lucide-react';
+import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX, Unlock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useChatSettings } from '@/hooks/useChatSettings';
+import { useBlockedUsers } from '@/hooks/useBlockedUsers';
 import { toast } from '@/hooks/use-toast';
 
 interface ChatMenuProps {
@@ -26,10 +27,12 @@ interface ChatMenuProps {
   onBlock?: () => void;
   onSearchInChat?: () => void;
   onViewStarred?: () => void;
+  onWallpaperChange?: () => void;
 }
 
-export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred }: ChatMenuProps) => {
+export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred, onWallpaperChange }: ChatMenuProps) => {
   const { settings, setNickname, muteChat, unmuteChat, togglePin, setTheme } = useChatSettings(chatId);
+  const { isBlocked, unblockUser } = useBlockedUsers();
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [showThemeDialog, setShowThemeDialog] = useState(false);
@@ -173,6 +176,10 @@ export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onRep
             <Palette className="mr-2 h-4 w-4" />
             Change Theme
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={onWallpaperChange}>
+            <Image className="mr-2 h-4 w-4" />
+            Change Wallpaper
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={togglePin}>
             <Star className={`mr-2 h-4 w-4 ${settings?.is_pinned ? 'fill-current' : ''}`} />
@@ -198,10 +205,20 @@ export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onRep
           </DropdownMenuItem>
           {otherUserId && (
             <>
-              <DropdownMenuItem onClick={onBlock} className="text-destructive">
-                <Ban className="mr-2 h-4 w-4" />
-                Block User
-              </DropdownMenuItem>
+              {isBlocked(otherUserId) ? (
+                <DropdownMenuItem 
+                  onClick={() => unblockUser(otherUserId)}
+                  className="text-green-600"
+                >
+                  <Unlock className="mr-2 h-4 w-4" />
+                  Unblock User
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={onBlock} className="text-destructive">
+                  <Ban className="mr-2 h-4 w-4" />
+                  Block User
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={onReport} className="text-destructive">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Report User
