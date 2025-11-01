@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX, Unlock } from 'lucide-react';
+import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX, Unlock, UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import { toast } from '@/hooks/use-toast';
 interface ChatMenuProps {
   chatId: string;
   otherUserId?: string;
+  otherUsername?: string;
   onExportChat?: () => void;
   onViewMedia?: () => void;
   onReport?: () => void;
@@ -30,7 +32,8 @@ interface ChatMenuProps {
   onWallpaperChange?: () => void;
 }
 
-export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred, onWallpaperChange }: ChatMenuProps) => {
+export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred, onWallpaperChange }: ChatMenuProps) => {
+  const navigate = useNavigate();
   const { settings, setNickname, muteChat, unmuteChat, togglePin, setTheme } = useChatSettings(chatId);
   const { isBlocked, unblockUser } = useBlockedUsers();
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
@@ -156,6 +159,15 @@ export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onRep
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
+          {otherUsername && (
+            <>
+              <DropdownMenuItem onClick={() => navigate(`/profile/${otherUsername}`)}>
+                <UserCircle className="mr-2 h-4 w-4" />
+                View Profile
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuItem onClick={() => setShowNicknameDialog(true)}>
             <User className="mr-2 h-4 w-4" />
             Add Nickname

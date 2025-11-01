@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Edit2, Trash2, Reply, Copy, Star, Forward, CheckCheck, FileIcon } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, Reply, Copy, Star, Forward, CheckCheck, FileIcon, ZoomIn } from "lucide-react";
+import { ImageViewer } from "./messaging/ImageViewer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +83,7 @@ export const EnhancedMessageBubble = ({
 }: EnhancedMessageBubbleProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteFor, setDeleteFor] = useState<'me' | 'everyone'>('me');
+  const [showImageViewer, setShowImageViewer] = useState(false);
   const { reactions, loading: reactionsLoading } = useMessageReactions(id);
 
   const handleDelete = () => {
@@ -92,20 +94,20 @@ export const EnhancedMessageBubble = ({
   return (
     <>
       <div className={cn(
-        "flex gap-3 group mb-4 relative",
+        "flex gap-2 md:gap-3 group mb-2 md:mb-4 relative",
         isOwn ? "flex-row-reverse" : "flex-row"
       )}>
-        <Avatar className="h-8 w-8 flex-shrink-0">
+        <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
           <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
-          <AvatarFallback>{sender.display_name[0]}</AvatarFallback>
+          <AvatarFallback className="text-xs">{sender.display_name[0]}</AvatarFallback>
         </Avatar>
         
         <div className={cn(
-          "flex flex-col max-w-[70%]",
+          "flex flex-col max-w-[85%] md:max-w-[70%]",
           isOwn ? "items-end" : "items-start"
         )}>
           {!isOwn && (
-            <span className="text-xs text-muted-foreground mb-1 px-3">
+            <span className="text-xs text-muted-foreground mb-1 px-2 md:px-3">
               {sender.display_name}
             </span>
           )}
@@ -120,7 +122,7 @@ export const EnhancedMessageBubble = ({
               
               <div
                 className={cn(
-                  "rounded-2xl px-4 py-2 shadow-sm",
+                  "rounded-2xl px-3 py-2 md:px-4 md:py-2 shadow-sm",
                   isOwn
                     ? "bg-primary text-primary-foreground rounded-tr-sm"
                     : "bg-muted rounded-tl-sm"
@@ -134,14 +136,19 @@ export const EnhancedMessageBubble = ({
                 )}
                 
                 {mediaUrl && (
-                  <div className="mb-2">
+                  <div className="mb-2 relative group">
                     {mediaType?.startsWith('image') || mediaType === 'image' ? (
-                      <img 
-                        src={mediaUrl} 
-                        alt="Message attachment" 
-                        className="rounded-lg max-w-full max-h-64 cursor-pointer hover:opacity-90 transition"
-                        onClick={() => window.open(mediaUrl, '_blank')}
-                      />
+                      <div className="relative">
+                        <img 
+                          src={mediaUrl} 
+                          alt="Message attachment" 
+                          className="rounded-lg max-w-full w-full max-h-64 object-cover cursor-pointer hover:opacity-90 transition"
+                          onClick={() => setShowImageViewer(true)}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
+                          <ZoomIn className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
                     ) : mediaType?.startsWith('video') || mediaType === 'video' ? (
                       <video 
                         controls 
@@ -165,7 +172,7 @@ export const EnhancedMessageBubble = ({
                 )}
                 
                 {content && (
-                  <p className="text-sm break-words whitespace-pre-wrap">
+                  <p className="text-xs md:text-sm break-words whitespace-pre-wrap">
                     {content}
                     {isEdited && (
                       <span className="text-xs opacity-70 ml-2">(edited)</span>
@@ -214,9 +221,9 @@ export const EnhancedMessageBubble = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-6 w-6 md:h-7 md:w-7"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={isOwn ? "end" : "start"}>
@@ -289,7 +296,7 @@ export const EnhancedMessageBubble = ({
             </div>
           </div>
 
-          <span className="text-xs text-muted-foreground mt-1 px-3">
+          <span className="text-xs text-muted-foreground mt-1 px-2 md:px-3">
             {formatDistanceToNow(new Date(timestamp), { addSuffix: true })}
           </span>
         </div>
@@ -312,6 +319,19 @@ export const EnhancedMessageBubble = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Viewer */}
+      {mediaUrl && (mediaType?.startsWith('image') || mediaType === 'image') && (
+        <ImageViewer
+          open={showImageViewer}
+          onOpenChange={setShowImageViewer}
+          imageUrl={mediaUrl}
+          onReply={onReply}
+          onForward={() => onForward?.(id)}
+          onStar={() => isStarred ? onUnstar?.(id) : onStar?.(id)}
+          isStarred={isStarred}
+        />
+      )}
     </>
   );
 };

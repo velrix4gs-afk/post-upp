@@ -110,20 +110,6 @@ export const useMessages = (chatId?: string) => {
         }, async (payload) => {
           const newMessage = payload.new as any;
           
-          // Skip if this is an optimistic message we already have
-          if (newMessage.sender_id === user?.id) {
-            const exists = messages.find(m => m.content === newMessage.content && m.sender_id === user.id);
-            if (exists && exists.is_optimistic) {
-              // Replace optimistic with real
-              setMessages(prev => prev.map(m => 
-                m.is_optimistic && m.content === newMessage.content && m.sender_id === user.id
-                  ? { ...newMessage, sender: m.sender, status: 'sent' as const, updated_at: newMessage.created_at }
-                  : m
-              ));
-              return;
-            }
-          }
-          
           // Fetch sender profile for the new message
           const { data: profile } = await supabase
             .from('profiles')
@@ -143,10 +129,16 @@ export const useMessages = (chatId?: string) => {
           };
           
           setMessages(prev => {
-            // Avoid duplicates
-            const exists = prev.find(m => m.id === messageWithProfile.id);
-            if (exists) return prev;
-            return [...prev, messageWithProfile];
+            // Remove any existing message with same ID (avoid true duplicates)
+            const withoutDuplicate = prev.filter(m => m.id !== messageWithProfile.id);
+            // Remove optimistic messages with same content from same sender
+            const withoutOptimistic = withoutDuplicate.filter(m => 
+              !(m.is_optimistic && 
+                m.content === messageWithProfile.content && 
+                m.sender_id === messageWithProfile.sender_id &&
+                Math.abs(new Date(m.created_at).getTime() - new Date(messageWithProfile.created_at).getTime()) < 5000)
+            );
+            return [...withoutOptimistic, messageWithProfile];
           });
         })
         .on('postgres_changes', {

@@ -445,6 +445,7 @@ const MessagingSystem = () => {
                 <ChatMenu 
                   chatId={selectedChat.id}
                   otherUserId={getOtherParticipants(selectedChat)[0]?.user_id}
+                  otherUsername={getOtherParticipants(selectedChat)[0]?.profiles.username}
                   onBlock={() => setShowBlockDialog(true)}
                   onReport={() => setShowReportDialog(true)}
                   onClearChat={() => setShowClearDialog(true)}
@@ -473,7 +474,12 @@ const MessagingSystem = () => {
                 ? getWallpaperClass(settings.wallpaper_url) 
                 : ''}`}
             >
-              {messages.map((message) => {
+              {messages
+                .filter((message, index, self) => 
+                  // Remove duplicates by ID
+                  index === self.findIndex(m => m.id === message.id)
+                )
+                .map((message) => {
                 const isOwn = message.sender_id === user?.id;
                 
                 return (
