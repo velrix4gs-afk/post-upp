@@ -34,6 +34,8 @@ import { WallpaperDialog } from './messaging/WallpaperDialog';
 import { FileUploadDialog } from './messaging/FileUploadDialog';
 import { EnhancedMessageBubble } from './EnhancedMessageBubble';
 import { ForwardMessageDialog } from './messaging/ForwardMessageDialog';
+import { TranslateMessageDialog } from './messaging/TranslateMessageDialog';
+import { ScheduleMessageDialog } from './messaging/ScheduleMessageDialog';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
 import TypingIndicator from './TypingIndicator';
 import VoiceRecorder from './VoiceRecorder';
@@ -59,6 +61,8 @@ const MessagingSystem = () => {
   const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<any>(null);
   const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(null);
+  const [translatingMessage, setTranslatingMessage] = useState<{ id: string; content: string } | null>(null);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
@@ -503,6 +507,8 @@ const MessagingSystem = () => {
                       onStar={starMessage}
                       onUnstar={unstarMessage}
                       onForward={handleForward}
+                      onTranslate={() => setTranslatingMessage({ id: message.id, content: message.content || '' })}
+                      onSchedule={() => setShowScheduleDialog(true)}
                     />
                   </div>
                 );
@@ -661,6 +667,26 @@ const MessagingSystem = () => {
               open={showFileUpload}
               onOpenChange={setShowFileUpload}
               onUploadComplete={handleFileUploadComplete}
+            />
+          )}
+          {translatingMessage && (
+            <TranslateMessageDialog
+              messageId={translatingMessage.id}
+              originalText={translatingMessage.content}
+              open={!!translatingMessage}
+              onOpenChange={(open) => !open && setTranslatingMessage(null)}
+            />
+          )}
+          {showScheduleDialog && (
+            <ScheduleMessageDialog
+              chatId={selectedChat.id}
+              content=""
+              open={showScheduleDialog}
+              onOpenChange={setShowScheduleDialog}
+              onScheduled={() => {
+                setShowScheduleDialog(false);
+                toast({ title: 'Message scheduled successfully' });
+              }}
             />
           )}
         </>
