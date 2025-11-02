@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePages } from '@/hooks/usePages';
 import { Button } from '@/components/ui/button';
+import Navigation from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -52,20 +53,23 @@ const PagesDirectory = () => {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Pages</h1>
-          <p className="text-muted-foreground">Discover and create pages for businesses, brands, and communities</p>
-        </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Page
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Pages</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Discover and create pages for businesses, brands, and communities</p>
+          </div>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Page
+              </Button>
+            </DialogTrigger>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create a Page</DialogTitle>
               <DialogDescription>
@@ -260,7 +264,8 @@ const PagesDirectory = () => {
           )}
         </TabsContent>
       </Tabs>
-    </main>
+      </main>
+    </div>
   );
 };
 

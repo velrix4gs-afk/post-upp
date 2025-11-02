@@ -47,17 +47,17 @@ const Events = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Events</h2>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h2 className="text-xl md:text-2xl font-bold">Events</h2>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Create Event
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Event</DialogTitle>
             </DialogHeader>
@@ -146,10 +146,10 @@ const Events = () => {
 
       <div className="grid gap-4">
         {events.length === 0 ? (
-          <Card className="bg-gradient-card border-0 p-8 text-center">
-            <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Events Yet</h3>
-            <p className="text-muted-foreground mb-4">
+          <Card className="bg-gradient-card border-0 p-6 md:p-8 text-center">
+            <Calendar className="h-10 md:h-12 w-10 md:w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-base md:text-lg font-medium mb-2">No Events Yet</h3>
+            <p className="text-sm md:text-base text-muted-foreground mb-4">
               Be the first to create an event in your community!
             </p>
           </Card>
@@ -157,27 +157,27 @@ const Events = () => {
           events.map((event) => (
             <Card key={event.id} className="bg-gradient-card border-0">
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center space-x-2 md:space-x-3 min-w-0">
+                    <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
                       <AvatarImage src={event.creator.avatar_url} />
-                      <AvatarFallback className="bg-gradient-primary text-white text-sm">
+                      <AvatarFallback className="bg-gradient-primary text-white text-xs md:text-sm">
                         {event.creator.display_name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium text-sm">{event.creator.display_name}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0">
+                      <p className="font-medium text-xs md:text-sm truncate">{event.creator.display_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
                         @{event.creator.username}
                       </p>
                     </div>
                   </div>
-                  <Badge variant={event.is_attending ? "default" : "outline"}>
+                  <Badge variant={event.is_attending ? "default" : "outline"} className="text-xs flex-shrink-0">
                     {event.is_attending ? "Attending" : "Not Attending"}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 md:space-y-4">
                 {event.image_url && (
                   <div className="rounded-lg overflow-hidden">
                     <img 
@@ -189,18 +189,18 @@ const Events = () => {
                 )}
                 
                 <div>
-                  <CardTitle className="text-lg mb-2">{event.title}</CardTitle>
+                  <CardTitle className="text-base md:text-lg mb-2">{event.title}</CardTitle>
                   {event.description && (
-                    <p className="text-sm text-muted-foreground mb-3">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-3">
                       {event.description}
                     </p>
                   )}
                 </div>
                 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-xs md:text-sm">
                   <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span>
+                    <Calendar className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
+                    <span className="truncate">
                       {format(new Date(event.start_date), 'PPP p')}
                       {event.end_date && (
                         <> - {format(new Date(event.end_date), 'PPP p')}</>
@@ -210,13 +210,13 @@ const Events = () => {
                   
                   {event.location && (
                     <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <span>{event.location}</span>
+                      <MapPin className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
+                      <span className="truncate">{event.location}</span>
                     </div>
                   )}
                   
                   <div className="flex items-center space-x-2">
-                    <Users className="h-4 w-4 text-primary" />
+                    <Users className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
                     <span>{event.attendees_count} attendees</span>
                   </div>
                 </div>
@@ -224,7 +224,7 @@ const Events = () => {
                 <Button 
                   onClick={() => toggleAttendance(event.id)}
                   variant={event.is_attending ? "outline" : "default"}
-                  className="w-full"
+                  className="w-full text-sm"
                 >
                   {event.is_attending ? "Leave Event" : "Join Event"}
                 </Button>
