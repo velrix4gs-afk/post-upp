@@ -555,15 +555,16 @@ const MessagingSystem = () => {
                 />
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 w-full">
                 <Button 
                   variant="ghost" 
                   size="sm"
+                  className="flex-shrink-0"
                   onClick={() => setShowFileUpload(true)}
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="hidden sm:flex flex-shrink-0">
                   <Smile className="h-4 w-4" />
                 </Button>
                 <Input
@@ -573,18 +574,20 @@ const MessagingSystem = () => {
                     setNewMessage(e.target.value);
                     handleTyping();
                   }}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="flex-1"
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                  className="flex-1 min-w-0"
                 />
                 <Button 
                   variant="ghost" 
                   size="sm"
+                  className="flex-shrink-0"
                   onClick={() => setShowVoiceRecorder(true)}
                 >
                   <Mic className="h-4 w-4" />
                 </Button>
                 <Button 
                   size="sm" 
+                  className="flex-shrink-0"
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim()}
                 >

@@ -672,6 +672,45 @@ export type Database = {
           },
         ]
       }
+      event_collaborators: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_collaborators_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_collaborators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -1670,6 +1709,104 @@ export type Database = {
           },
         ]
       }
+      page_followers: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_followers_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_followers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          avatar_url: string | null
+          category: string | null
+          contact_email: string | null
+          cover_url: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          followers_count: number | null
+          id: string
+          is_official: boolean | null
+          is_verified: boolean | null
+          name: string
+          updated_at: string | null
+          username: string
+          website_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          category?: string | null
+          contact_email?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          followers_count?: number | null
+          id?: string
+          is_official?: boolean | null
+          is_verified?: boolean | null
+          name: string
+          updated_at?: string | null
+          username: string
+          website_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          category?: string | null
+          contact_email?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          followers_count?: number | null
+          id?: string
+          is_official?: boolean | null
+          is_verified?: boolean | null
+          name?: string
+          updated_at?: string | null
+          username?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       poll_options: {
         Row: {
           created_at: string | null
@@ -2144,6 +2281,42 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_view"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_views: {
+        Row: {
+          id: string
+          profile_id: string
+          viewed_at: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          viewed_at?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          viewed_at?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_views_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "profile_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
           },
         ]
       }

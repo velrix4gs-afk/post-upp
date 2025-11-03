@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CoinsDisplay } from '@/components/CoinsDisplay';
 import { 
   Edit, 
   MapPin, 
@@ -275,6 +277,11 @@ const ProfilePage = () => {
 
               {/* Details */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
+                {isOwnProfile && (
+                  <div className="flex items-center">
+                    <CoinsDisplay />
+                  </div>
+                )}
                 {profile?.location && (
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-1" />
@@ -319,42 +326,64 @@ const ProfilePage = () => {
 
         <Separator className="my-6" />
 
-        {/* Posts Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Posts</h2>
-          </div>
+        {/* Tabs for Posts, Groups, Events */}
+        <Tabs defaultValue="posts" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="posts">Posts</TabsTrigger>
+            <TabsTrigger value="groups">Groups</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+          </TabsList>
 
-          {isOwnProfile && <CreatePost />}
-
-          {userPosts.length === 0 ? (
-            <Card className="p-8 text-center">
-              <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
-              <p className="text-muted-foreground">
-                {isOwnProfile ? 'Share your first post to get started!' : 'This user hasn\'t posted anything yet.'}
-              </p>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {userPosts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={{
-                    id: post.id,
-                    content: post.content || '',
-                    media_url: post.media_url,
-                    created_at: post.created_at,
-                    reactions_count: post.reactions_count,
-                    comments_count: post.comments_count,
-                    author_name: profile?.display_name || '',
-                    author_avatar: profile?.avatar_url,
-                    author_id: post.user_id
-                  }}
-                />
-              ))}
+          <TabsContent value="posts" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Posts</h2>
             </div>
-          )}
-        </div>
+
+            {isOwnProfile && <CreatePost />}
+
+            {userPosts.length === 0 ? (
+              <Card className="p-8 text-center">
+                <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
+                <p className="text-muted-foreground">
+                  {isOwnProfile ? 'Share your first post to get started!' : 'This user hasn\'t posted anything yet.'}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {userPosts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    post={{
+                      id: post.id,
+                      content: post.content || '',
+                      media_url: post.media_url,
+                      created_at: post.created_at,
+                      reactions_count: post.reactions_count,
+                      comments_count: post.comments_count,
+                      author_name: profile?.display_name || '',
+                      author_avatar: profile?.avatar_url,
+                      author_id: post.user_id
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Groups</h3>
+              <p className="text-muted-foreground text-center">Groups feature coming soon</p>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="events">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Events</h3>
+              <p className="text-muted-foreground text-center">Events feature coming soon</p>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Profile Edit Modal */}
