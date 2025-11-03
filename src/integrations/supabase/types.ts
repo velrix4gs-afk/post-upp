@@ -3944,6 +3944,16 @@ export type Database = {
       }
     }
     Functions: {
+      check_and_increment_rate_limit: {
+        Args: {
+          p_action: string
+          p_block_duration_seconds?: number
+          p_max_attempts?: number
+          p_user_id: string
+          p_window_seconds?: number
+        }
+        Returns: Json
+      }
       column_exists: {
         Args: { column_name: string; schema_name: string; table_name: string }
         Returns: boolean
