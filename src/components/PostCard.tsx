@@ -1,11 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2, DollarSign } from "lucide-react";
+import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2, DollarSign, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
 import { useBookmarks } from "@/hooks/useBookmarks";
+import { useFollowers } from "@/hooks/useFollowers";
+import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +20,8 @@ import { TipDialog } from "./premium/TipDialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
-  DropdownMenuItem, 
+  DropdownMenuItem,
+  DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import {
@@ -58,6 +61,8 @@ export const PostCard = ({ post }: PostCardProps) => {
   const { user } = useAuth();
   const { toggleReaction, updatePost, deletePost, posts } = usePosts();
   const { toggleBookmark, isBookmarked } = useBookmarks();
+  const { followUser, unfollowUser, following } = useFollowers();
+  const { blockUser } = useBlockedUsers();
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
@@ -67,6 +72,47 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [localReactionCount, setLocalReactionCount] = useState(post.reactions_count);
   const [showComments, setShowComments] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+
+  const isOwner = user?.id === post.author_id;
+  const isFollowingAuthor = following.some(f => f.following?.id === post.author_id);
+
+  const handleFollowToggle = async () => {
+    if (isFollowingAuthor) {
+      await unfollowUser(post.author_id);
+      toast({
+        title: 'Success',
+        description: 'Unfollowed user',
+      });
+    } else {
+      await followUser(post.author_id, false);
+      toast({
+        title: 'Success',
+        description: 'Following user',
+      });
+    }
+  };
+
+  const handleMuteUser = () => {
+    toast({
+      title: 'Mute User',
+      description: 'Mute feature coming soon',
+    });
+  };
+
+  const handleReportPost = () => {
+    toast({
+      title: 'Report Post',
+      description: 'Report feature coming soon',
+    });
+  };
+
+  const handleBlockUser = async () => {
+    await blockUser(post.author_id, 'Blocked from post');
+    toast({
+      title: 'User Blocked',
+      description: 'This user has been blocked',
+    });
+  };
 
   // Check if user has liked this post
   useEffect(() => {
@@ -145,8 +191,6 @@ export const PostCard = ({ post }: PostCardProps) => {
     setShowShareDialog(true);
   };
 
-  const isOwner = user?.id === post.author_id;
-
   return (
     <>
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -204,28 +248,64 @@ export const PostCard = ({ post }: PostCardProps) => {
                 </p>
               </div>
             </div>
-            {isOwner && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover">
+                {isOwner ? (
+                  <>
+                    <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit Post
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Post
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem onClick={() => navigate(`/profile/${post.author_id}`)}>
+                      <UserCircle className="h-4 w-4 mr-2" />
+                      View Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleFollowToggle}>
+                      {isFollowingAuthor ? (
+                        <>
+                          <UserMinus className="h-4 w-4 mr-2" />
+                          Unfollow @{post.author_name}
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Follow @{post.author_name}
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleMuteUser}>
+                      <BellOff className="h-4 w-4 mr-2" />
+                      Mute User
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleReportPost} className="text-destructive">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Report Post
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleBlockUser} className="text-destructive">
+                      <Ban className="h-4 w-4 mr-2" />
+                      Block User
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="mb-4">

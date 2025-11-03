@@ -1,7 +1,24 @@
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Edit2, Trash2, Reply, Copy, Star, Forward, CheckCheck, FileIcon, ZoomIn } from "lucide-react";
+import { 
+  MoreVertical, 
+  Edit2, 
+  Trash2, 
+  Reply, 
+  Copy, 
+  Star, 
+  Forward, 
+  CheckCheck, 
+  FileIcon, 
+  ZoomIn,
+  Pin,
+  Download,
+  Info,
+  Languages,
+  Clock,
+  AlertCircle
+} from "lucide-react";
 import { ImageViewer } from "./messaging/ImageViewer";
 import {
   DropdownMenu,
@@ -26,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { useMessageReactions } from "@/hooks/useMessageReactions";
 import { MessageReactions } from "./messaging/MessageReactions";
 import { ReactionPicker } from "./ReactionPicker";
+import { toast } from "@/hooks/use-toast";
 
 interface MessageReaction {
   user_id: string;
@@ -230,7 +248,7 @@ export const EnhancedMessageBubble = ({
                     <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align={isOwn ? "end" : "start"}>
+                <DropdownMenuContent align={isOwn ? "end" : "start"} className="w-56">
                   {onReply && (
                     <DropdownMenuItem onClick={onReply}>
                       <Reply className="h-4 w-4 mr-2" />
@@ -240,7 +258,7 @@ export const EnhancedMessageBubble = ({
                   
                   <DropdownMenuItem onClick={() => navigator.clipboard.writeText(content)}>
                     <Copy className="h-4 w-4 mr-2" />
-                    Copy
+                    Copy Text
                   </DropdownMenuItem>
 
                   {onForward && (
@@ -257,12 +275,84 @@ export const EnhancedMessageBubble = ({
                     </DropdownMenuItem>
                   )}
 
+                  <DropdownMenuItem onClick={() => {
+                    toast({
+                      title: 'Pin Message',
+                      description: 'This feature will be available soon',
+                    });
+                  }}>
+                    <Pin className="h-4 w-4 mr-2" />
+                    Pin Message
+                  </DropdownMenuItem>
+
+                  {(mediaUrl && mediaType === 'image') && (
+                    <DropdownMenuItem onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = mediaUrl;
+                      link.download = 'image.jpg';
+                      link.click();
+                    }}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={() => {
+                    toast({
+                      title: 'Translate Message',
+                      description: 'Translation feature coming soon',
+                    });
+                  }}>
+                    <Languages className="h-4 w-4 mr-2" />
+                    Translate
+                  </DropdownMenuItem>
+
+                  {isOwn && (
+                    <DropdownMenuItem onClick={() => {
+                      toast({
+                        title: 'Schedule Message',
+                        description: 'Schedule feature coming soon',
+                      });
+                    }}>
+                      <Clock className="h-4 w-4 mr-2" />
+                      Schedule Message
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem onClick={() => {
+                    const date = new Date(timestamp);
+                    toast({
+                      title: 'Message Info',
+                      description: `Sent: ${date.toLocaleString()}\nStatus: ${status || 'delivered'}`,
+                    });
+                  }}>
+                    <Info className="h-4 w-4 mr-2" />
+                    Message Info
+                  </DropdownMenuItem>
+
+                  {!isOwn && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => {
+                        toast({
+                          title: 'Report Message',
+                          description: 'Report feature coming soon',
+                        });
+                      }} className="text-destructive focus:text-destructive">
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        Report Message
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
                   {isOwn && onEdit && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => onEdit(id, content)}>
                         <Edit2 className="h-4 w-4 mr-2" />
-                        Edit
+                        Edit Message
                       </DropdownMenuItem>
                     </>
                   )}

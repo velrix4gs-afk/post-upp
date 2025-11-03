@@ -206,7 +206,7 @@ const Navigation = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-56 bg-popover">
                     <div className="flex items-center gap-2 p-2">
                       <Avatar>
                         <AvatarImage src={profile?.avatar_url} />
@@ -217,6 +217,7 @@ const Navigation = () => {
                         <p className="text-xs text-muted-foreground truncate">@{profile?.username || 'username'}</p>
                       </div>
                     </div>
+                    <CoinsDisplay />
                     <DropdownMenuItem onClick={() => navigate(`/profile/${user.id}`)}>
                       <User className="h-4 w-4 mr-2" />
                       Profile
@@ -268,6 +269,10 @@ const Navigation = () => {
                     <DropdownMenuItem onClick={() => navigate('/bookmarks')} className="lg:hidden">
                       <Bookmark className="h-4 w-4 mr-2" />
                       Saved
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/pages')} className="lg:hidden">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Pages
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="h-4 w-4 mr-2" />
