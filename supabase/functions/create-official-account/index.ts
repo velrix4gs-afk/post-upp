@@ -105,15 +105,8 @@ serve(async (req) => {
       throw roleError;
     }
 
-    // If this is the first admin being created, also grant admin to the requesting user
-    if (adminCount === 0) {
-      await supabaseAdmin
-        .from('user_roles')
-        .insert({
-          user_id: requestingUser.id,
-          role: 'admin'
-        });
-    }
+    // Note: First admin must be granted manually via SQL to prevent race conditions:
+    // INSERT INTO public.user_roles (user_id, role) VALUES ('your-user-id-here', 'admin');
 
     return new Response(
       JSON.stringify({

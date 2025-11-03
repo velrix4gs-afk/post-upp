@@ -61,25 +61,96 @@ serve(async (req) => {
 
     console.log(`[TIP_001] Processing tip: sender=${user.id}, recipient=${recipient_id}, amount=${amount}`);
 
-    // Validate inputs
-    if (!recipient_id || !amount) {
+    // Validate recipient
+    if (!recipient_id || typeof recipient_id !== 'string') {
       return new Response(JSON.stringify({ 
-        error: 'TIP_003: Missing required fields',
+        error: 'TIP_003: Invalid recipient',
         code: 'TIP_003',
-        message: 'Recipient ID and amount are required'
+        message: 'Valid recipient ID is required'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (amount < 1) {
+    // Prevent self-tipping
+    if (recipient_id === user.id) {
+      return new Response(JSON.stringify({ 
+        error: 'TIP_003: Self-tip not allowed',
+        code: 'TIP_003',
+        message: 'You cannot tip yourself'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate amount type and range
+    if (typeof amount !== 'number' || !Number.isFinite(amount)) {
+      return new Response(JSON.stringify({ 
+        error: 'TIP_004: Invalid amount type',
+        code: 'TIP_004',
+        message: 'Amount must be a valid number'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (amount < 1 || amount > 10000) {
       return new Response(JSON.stringify({ 
         error: 'TIP_004: Invalid amount',
         code: 'TIP_004',
-        message: 'Tip amount must be at least $1'
+        message: 'Tip amount must be between $1 and $10,000'
       }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate decimal precision (max 2 decimal places)
+    if (!Number.isInteger(amount * 100)) {
+      return new Response(JSON.stringify({ 
+        error: 'TIP_004: Invalid precision',
+        code: 'TIP_004',
+        message: 'Amount can have at most 2 decimal places'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate message length if provided
+    if (message && (typeof message !== 'string' || message.length > 500)) {
+      return new Response(JSON.stringify({ 
+        error: 'TIP_005: Invalid message',
+        code: 'TIP_005',
+        message: 'Message must be less than 500 characters'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check rate limit (10 tips per minute)
+    const { data: rateLimitResult, error: rateLimitError } = await supabaseClient
+      .rpc('check_and_increment_rate_limit', {
+        p_user_id: user.id,
+        p_action: 'send_tip',
+        p_max_attempts: 10,
+        p_window_seconds: 60,
+        p_block_duration_seconds: 300
+      });
+
+    if (rateLimitError) {
+      console.error('[TIP_ERROR] Rate limit check failed:', rateLimitError);
+    } else if (rateLimitResult && !rateLimitResult.allowed) {
+      return new Response(JSON.stringify({ 
+        error: 'TIP_006: Rate limit exceeded',
+        code: 'TIP_006',
+        message: 'Too many tips sent. Please wait before sending another tip.'
+      }), {
+        status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -93,8 +164,8 @@ serve(async (req) => {
 
     if (!senderProfile?.is_verified) {
       return new Response(JSON.stringify({ 
-        error: 'TIP_005: Verification required',
-        code: 'TIP_005',
+        error: 'TIP_007: Verification required',
+        code: 'TIP_007',
         message: 'You must be verified to send tips. Get verified to unlock this feature!'
       }), {
         status: 403,
