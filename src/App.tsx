@@ -31,7 +31,6 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 const PagesDirectory = lazy(() => import("./pages/PagesDirectory"));
-const PostDetailPage = lazy(() => import("./pages/PostDetailPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -249,14 +248,6 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <PagesDirectory />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/post/:postId" 
-                element={
-                  <ProtectedRoute>
-                    <PostDetailPage />
                   </ProtectedRoute>
                 } 
               />

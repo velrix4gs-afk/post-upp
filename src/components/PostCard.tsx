@@ -225,7 +225,8 @@ export const PostCard = ({ post }: PostCardProps) => {
         </DialogContent>
       </Dialog>
 
-      <div className="p-4">
+      <Card className="overflow-hidden">
+        <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Avatar 
@@ -307,13 +308,10 @@ export const PostCard = ({ post }: PostCardProps) => {
             </DropdownMenu>
           </div>
 
-          <div 
-            className="mb-4 cursor-pointer" 
-            onClick={() => navigate(`/post/${post.id}`)}
-          >
+          <div className="mb-4">
             <PostContent content={post.content} />
             {post.media_url && !Array.isArray((post as any).media_urls) && (
-              <div className="rounded-lg overflow-hidden mt-3">
+              <div className="rounded-lg overflow-hidden mt-3 cursor-pointer" onClick={() => window.open(post.media_url, '_blank')}>
                 <img 
                   src={post.media_url} 
                   alt="Post media"
@@ -394,6 +392,7 @@ export const PostCard = ({ post }: PostCardProps) => {
 
           {showComments && <CommentsSection postId={post.id} />}
         </div>
+      </Card>
 
       <SharePostDialog
         postId={post.id}
