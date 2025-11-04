@@ -308,10 +308,13 @@ export const PostCard = ({ post }: PostCardProps) => {
             </DropdownMenu>
           </div>
 
-          <div className="mb-4">
+          <div 
+            className="mb-4 cursor-pointer" 
+            onClick={() => navigate(`/post/${post.id}`)}
+          >
             <PostContent content={post.content} />
             {post.media_url && !Array.isArray((post as any).media_urls) && (
-              <div className="rounded-lg overflow-hidden mt-3 cursor-pointer" onClick={() => window.open(post.media_url, '_blank')}>
+              <div className="rounded-lg overflow-hidden mt-3">
                 <img 
                   src={post.media_url} 
                   alt="Post media"
