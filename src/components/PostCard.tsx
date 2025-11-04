@@ -225,8 +225,7 @@ export const PostCard = ({ post }: PostCardProps) => {
         </DialogContent>
       </Dialog>
 
-      <Card className="overflow-hidden">
-        <div className="p-4">
+      <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Avatar 
@@ -395,7 +394,6 @@ export const PostCard = ({ post }: PostCardProps) => {
 
           {showComments && <CommentsSection postId={post.id} />}
         </div>
-      </Card>
 
       <SharePostDialog
         postId={post.id}

@@ -99,7 +99,7 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
                       <img 
                         src={(comment as any).media_url} 
                         alt="Comment attachment"
-                        className="w-full max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        className="w-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => window.open((comment as any).media_url, '_blank')}
                       />
                     </div>

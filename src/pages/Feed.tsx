@@ -9,20 +9,16 @@ import Stories from '@/components/Stories';
 import TrendingFeed from '@/components/TrendingFeed';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Users, Hash, UserCheck, Compass, Menu, MessageSquare, Settings } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
-import FriendSuggestions from '@/components/FriendSuggestions';
 
 const Feed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { posts, loading, createPost, toggleReaction } = usePosts();
   const [activeTab, setActiveTab] = useState<'friends' | 'trending' | 'all'>('all');
-  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (user) {
@@ -51,181 +47,92 @@ const Feed = () => {
     }
   }, [user]);
 
-  // Quick Actions Component (reusable for both sidebar and sheet)
-  const QuickActionsContent = () => (
-    <div className="space-y-2 p-1">
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start" 
-        onClick={() => {
-          navigate('/messages');
-          setIsQuickActionsOpen(false);
-        }}
-      >
-        <MessageSquare className="h-4 w-4 mr-2" />
-        Messages
-      </Button>
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start" 
-        onClick={() => {
-          navigate('/settings');
-          setIsQuickActionsOpen(false);
-        }}
-      >
-        <Settings className="h-4 w-4 mr-2" />
-        Settings
-      </Button>
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start" 
-        onClick={() => {
-          navigate('/explore');
-          setIsQuickActionsOpen(false);
-        }}
-      >
-        <Compass className="h-4 w-4 mr-2" />
-        Explore
-      </Button>
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start"
-        onClick={() => {
-          navigate('/friends');
-          setIsQuickActionsOpen(false);
-        }}
-      >
-        <UserCheck className="h-4 w-4 mr-2" />
-        Find Friends
-      </Button>
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start"
-        onClick={() => {
-          navigate('/groups');
-          setIsQuickActionsOpen(false);
-        }}
-      >
-        <Users className="h-4 w-4 mr-2" />
-        Browse Groups
-      </Button>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <Navigation />
-      <main>
       
-      {/* Mobile/Tablet Quick Actions - Fixed Top Left */}
-      {isMobile && (
-        <div className="lg:hidden fixed top-16 left-4 z-40">
-          <Sheet open={isQuickActionsOpen} onOpenChange={setIsQuickActionsOpen}>
-            <SheetTrigger asChild>
-              <Button size="icon" className="rounded-full shadow-lg">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Compass className="h-5 w-5" />
-                  Quick Actions
-                </h3>
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  onClick={() => setIsQuickActionsOpen(false)}
-                >
-                  ✕
-                </Button>
-              </div>
-              <QuickActionsContent />
-            </SheetContent>
-          </Sheet>
-        </div>
-      )}
-      
-      <div className="container mx-auto p-4 max-w-7xl">
-        <div className="grid lg:grid-cols-12 gap-6">
-          {/* Desktop Left Sidebar - Quick Actions */}
-          <div className="hidden lg:block lg:col-span-3 space-y-4">
-            <Card className="p-4">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Compass className="h-5 w-5" />
-                Quick Actions
-              </h3>
-              <QuickActionsContent />
-            </Card>
+      {/* Twitter/X Style Layout */}
+      <div className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-30">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex border-b">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={cn(
+                "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
+                activeTab === 'all' && "font-bold"
+              )}
+            >
+              For You
+              {activeTab === 'all' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('friends')}
+              className={cn(
+                "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
+                activeTab === 'friends' && "font-bold"
+              )}
+            >
+              Following
+              {activeTab === 'friends' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('trending')}
+              className={cn(
+                "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
+                activeTab === 'trending' && "font-bold"
+              )}
+            >
+              Trending
+              {activeTab === 'trending' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
+              )}
+            </button>
           </div>
+        </div>
+      </div>
 
-          {/* Main Feed */}
-          <div className="lg:col-span-6 space-y-6">
-            {/* Stories */}
-            <Stories />
+      <main className="max-w-2xl mx-auto">
+        {/* Create Post */}
+        <div className="border-b">
+          <CreatePost />
+        </div>
 
-            <CreatePost />
-
-            <Card className="p-2">
-              <div className="flex gap-2">
-                <Button
-                  variant={activeTab === 'all' ? 'default' : 'ghost'}
-                  className="flex-1"
-                  onClick={() => setActiveTab('all')}
-                >
-                  All Posts
-                </Button>
-                <Button
-                  variant={activeTab === 'friends' ? 'default' : 'ghost'}
-                  className="flex-1"
-                  onClick={() => setActiveTab('friends')}
-                >
-                  Friends
-                </Button>
-                <Button
-                  variant={activeTab === 'trending' ? 'default' : 'ghost'}
-                  className="flex-1"
-                  onClick={() => setActiveTab('trending')}
-                >
-                  Trending
-                </Button>
-              </div>
-            </Card>
-
-            {activeTab === 'trending' ? (
-              <TrendingFeed />
-            ) : loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <Card key={i} className="p-4">
-                    <div className="flex gap-3">
-                      <Skeleton className="h-10 w-10 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-20 w-full" />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : posts.length === 0 ? (
-              <Card className="p-12 text-center">
-                <div className="max-w-md mx-auto">
-                  <UserCheck className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">No posts yet from real users</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Be the first to share something! Only authenticated real users can post here.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Start by creating a post, following friends, or joining groups.
-                  </p>
+        {/* Feed Posts */}
+        {activeTab === 'trending' ? (
+          <TrendingFeed />
+        ) : loading ? (
+          <div>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="border-b p-4">
+                <div className="flex gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-20 w-full" />
+                  </div>
                 </div>
-              </Card>
-            ) : (
-            <div className="space-y-4">
-              {posts.map(post => (
+              </div>
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="border-b p-12 text-center">
+            <div className="max-w-md mx-auto">
+              <UserCheck className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Be the first to share something!
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {posts.map(post => (
+              <div key={post.id} className="border-b hover:bg-muted/30 transition-colors">
                 <PostCard
-                  key={post.id}
                   post={{
                     id: post.id,
                     content: post.content || '',
@@ -239,17 +146,10 @@ const Feed = () => {
                     author_id: post.user_id
                   }}
                 />
-              ))}
-            </div>
-            )}
+              </div>
+            ))}
           </div>
-
-          {/* Desktop Right Sidebar - Friend Suggestions */}
-          <div className="hidden lg:block lg:col-span-3 space-y-4">
-            <FriendSuggestions />
-          </div>
-        </div>
-      </div>
+        )}
       </main>
     </div>
   );

@@ -164,7 +164,7 @@ export const EnhancedMessageBubble = ({
                         <img 
                           src={mediaUrl} 
                           alt="Message attachment" 
-                          className="rounded-lg max-w-full w-full max-h-64 object-cover cursor-pointer hover:opacity-90 transition"
+                          className="rounded-lg max-w-full w-full object-contain cursor-pointer hover:opacity-90 transition"
                           onClick={() => setShowImageViewer(true)}
                         />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
@@ -175,7 +175,7 @@ export const EnhancedMessageBubble = ({
                       <video 
                         controls 
                         src={mediaUrl} 
-                        className="rounded-lg max-w-full max-h-64"
+                        className="rounded-lg max-w-full w-full"
                       />
                     ) : mediaType?.startsWith('audio') || mediaType === 'audio' ? (
                       <audio controls src={mediaUrl} className="max-w-full" />
