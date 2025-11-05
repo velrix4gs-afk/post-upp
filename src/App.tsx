@@ -19,6 +19,7 @@ const MessagesPage = lazy(() => import("./pages/MessagesPage"));
 const FriendsPage = lazy(() => import("./pages/FriendsPage"));
 const GroupsPage = lazy(() => import("./pages/GroupsPage"));
 const EventsPage = lazy(() => import("./pages/EventsPage"));
+const ThreadView = lazy(() => import("./pages/ThreadView"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BookmarksPage = lazy(() => import("./pages/BookmarksPage"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
@@ -212,7 +213,15 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/admin-setup" 
+                path="/post/:postId" 
+                element={
+                  <ProtectedRoute>
+                    <ThreadView />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin-setup"
                 element={
                   <ProtectedRoute>
                     <AdminSetup />

@@ -1,13 +1,13 @@
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Pencil, Trash2, DollarSign, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Pencil, Trash2, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useFollowers } from "@/hooks/useFollowers";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
+import { useReposts } from "@/hooks/useReposts";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,7 @@ import { PostContent } from "./PostContent";
 import { CommentsSection } from "./CommentsSection";
 import { SharePostDialog } from "./SharePostDialog";
 import { TipDialog } from "./premium/TipDialog";
+import { PostCardActions } from "./PostCard/PostCardActions";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -59,18 +60,18 @@ export interface PostCardProps {
 
 export const PostCard = ({ post }: PostCardProps) => {
   const { user } = useAuth();
-  const { toggleReaction, updatePost, deletePost, posts } = usePosts();
+  const { toggleReaction, updatePost, deletePost } = usePosts();
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { followUser, unfollowUser, following } = useFollowers();
   const { blockUser } = useBlockedUsers();
+  const { toggleRepost, isReposted } = useReposts();
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
-  const [showReactions, setShowReactions] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editContent, setEditContent] = useState(post.content || "");
   const [localReactionCount, setLocalReactionCount] = useState(post.reactions_count);
-  const [showComments, setShowComments] = useState(false);
+  const [localRepostCount, setLocalRepostCount] = useState(post.shares_count || 0);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
   const isOwner = user?.id === post.author_id;
@@ -187,8 +188,43 @@ export const PostCard = ({ post }: PostCardProps) => {
     toast({ title: "Post deleted" });
   };
 
+  const handleRepost = async () => {
+    if (!user) return;
+    
+    const wasReposted = isReposted(post.id);
+    setLocalRepostCount(prev => wasReposted ? Math.max(0, prev - 1) : prev + 1);
+    
+    try {
+      await toggleRepost(post.id);
+      toast({
+        title: wasReposted ? 'Repost removed' : 'Reposted',
+        description: wasReposted ? 'Post unreposted' : 'Post reposted to your followers'
+      });
+    } catch (error) {
+      setLocalRepostCount(post.shares_count || 0);
+      toast({
+        title: 'Error',
+        description: 'Failed to update repost',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleShare = () => {
     setShowShareDialog(true);
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('[role="button"]')
+    ) {
+      return;
+    }
+    navigate(`/post/${post.id}`);
   };
 
   return (
@@ -225,174 +261,156 @@ export const PostCard = ({ post }: PostCardProps) => {
         </DialogContent>
       </Dialog>
 
-      <Card className="overflow-hidden">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Avatar 
-                className="cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => navigate(`/profile/${post.author_id}`)}
-              >
-                <AvatarImage src={post.author_avatar} />
-                <AvatarFallback>{post.author_name?.[0]}</AvatarFallback>
-              </Avatar>
-              <div>
+      <article 
+        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+        onClick={handleCardClick}
+      >
+        <div className="p-4 flex gap-3">
+          <Avatar 
+            className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile/${post.author_id}`);
+            }}
+          >
+            <AvatarImage src={post.author_avatar} />
+            <AvatarFallback>{post.author_name?.[0]}</AvatarFallback>
+          </Avatar>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-1">
+              <div className="flex items-center gap-1 flex-wrap min-w-0">
                 <button
-                  onClick={() => navigate(`/profile/${post.author_id}`)}
-                  className="font-semibold hover:underline text-left"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/profile/${post.author_id}`);
+                  }}
+                  className="font-semibold hover:underline text-sm truncate"
                 >
                   {post.author_name}
                 </button>
-                <p className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">·</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                </p>
+                </span>
               </div>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-popover">
-                {isOwner ? (
-                  <>
-                    <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit Post
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => setShowDeleteDialog(true)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Post
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate(`/profile/${post.author_id}`)}>
-                      <UserCircle className="h-4 w-4 mr-2" />
-                      View Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleFollowToggle}>
-                      {isFollowingAuthor ? (
-                        <>
-                          <UserMinus className="h-4 w-4 mr-2" />
-                          Unfollow @{post.author_name}
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Follow @{post.author_name}
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleMuteUser}>
-                      <BellOff className="h-4 w-4 mr-2" />
-                      Mute User
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleReportPost} className="text-destructive">
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Report Post
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleBlockUser} className="text-destructive">
-                      <Ban className="h-4 w-4 mr-2" />
-                      Block User
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="mb-4">
-            <PostContent content={post.content} />
-            {post.media_url && !Array.isArray((post as any).media_urls) && (
-              <div className="rounded-lg overflow-hidden mt-3 cursor-pointer" onClick={() => window.open(post.media_url, '_blank')}>
-                <img 
-                  src={post.media_url} 
-                  alt="Post media"
-                  className="w-full h-auto max-h-[600px] object-contain bg-muted hover:opacity-95 transition-opacity"
-                />
-              </div>
-            )}
-            {(post as any).media_urls && Array.isArray((post as any).media_urls) && (
-              <div className={`grid gap-2 mt-3 ${
-                (post as any).media_urls.length === 1 ? 'grid-cols-1' :
-                (post as any).media_urls.length === 2 ? 'grid-cols-2' :
-                (post as any).media_urls.length === 3 ? 'grid-cols-3' :
-                'grid-cols-2'
-              }`}>
-                {(post as any).media_urls.map((url: string, index: number) => (
-                  <div key={index} className="rounded-lg overflow-hidden cursor-pointer" onClick={() => window.open(url, '_blank')}>
-                    <img 
-                      src={url} 
-                      alt={`Media ${index + 1}`}
-                      className="w-full h-48 object-cover hover:opacity-90 transition-opacity"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Poll */}
-            <PollCard postId={post.id} />
-          </div>
-
-          <div className="flex items-center justify-between pt-3 border-t">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={`gap-2 ${isLiked ? 'text-red-500' : ''}`}
-                onClick={handleLike}
-                onMouseEnter={() => setShowReactions(true)}
-                onMouseLeave={() => setShowReactions(false)}
-              >
-                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                <span>{localReactionCount}</span>
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="gap-2"
-                onClick={() => setShowComments(!showComments)}
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>{post.comments_count}</span>
-              </Button>
-              
-              <Button variant="ghost" size="sm" className="gap-2" onClick={handleShare}>
-                <Share className="h-4 w-4" />
-                <span>{post.shares_count || 0}</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0 hover:bg-blue-500/10 hover:text-blue-500"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="h-[18px] w-[18px]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-popover">
+                  {isOwner ? (
+                    <>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit Post
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(true); }}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Post
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author_id}`); }}>
+                        <UserCircle className="h-4 w-4 mr-2" />
+                        View Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleFollowToggle(); }}>
+                        {isFollowingAuthor ? (
+                          <>
+                            <UserMinus className="h-4 w-4 mr-2" />
+                            Unfollow @{post.author_name}
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            Follow @{post.author_name}
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMuteUser(); }}>
+                        <BellOff className="h-4 w-4 mr-2" />
+                        Mute User
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleReportPost(); }} className="text-destructive">
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        Report Post
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleBlockUser(); }} className="text-destructive">
+                        <Ban className="h-4 w-4 mr-2" />
+                        Block User
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => toggleBookmark(post.id)}
-              >
-                <Bookmark className={`h-4 w-4 ${isBookmarked(post.id) ? 'fill-current text-primary' : ''}`} />
-              </Button>
-
-              {user?.id !== post.author_id && (
-                <TipDialog 
-                  recipientId={post.author_id}
-                  recipientName={post.author_name}
-                />
+            <div className="mb-2">
+              <PostContent content={post.content} />
+              {post.media_url && !Array.isArray((post as any).media_urls) && (
+                <div className="rounded-2xl overflow-hidden mt-3 border border-border">
+                  <img 
+                    src={post.media_url} 
+                    alt="Post media"
+                    className="w-full h-auto object-cover"
+                    onClick={(e) => { e.stopPropagation(); window.open(post.media_url, '_blank'); }}
+                  />
+                </div>
               )}
+              {(post as any).media_urls && Array.isArray((post as any).media_urls) && (
+                <div className={`grid gap-0.5 mt-3 rounded-2xl overflow-hidden border border-border ${
+                  (post as any).media_urls.length === 1 ? 'grid-cols-1' :
+                  (post as any).media_urls.length === 2 ? 'grid-cols-2' :
+                  (post as any).media_urls.length === 3 ? 'grid-cols-3' :
+                  'grid-cols-2'
+                }`}>
+                  {(post as any).media_urls.map((url: string, index: number) => (
+                    <div key={index} className="aspect-video relative">
+                      <img 
+                        src={url} 
+                        alt={`Media ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onClick={(e) => { e.stopPropagation(); window.open(url, '_blank'); }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <PollCard postId={post.id} />
+
+              <PostCardActions
+                isLiked={isLiked}
+                isReposted={isReposted(post.id)}
+                isBookmarked={isBookmarked(post.id)}
+                likesCount={localReactionCount}
+                commentsCount={post.comments_count}
+                repostsCount={localRepostCount}
+                sharesCount={post.shares_count || 0}
+                onLike={handleLike}
+                onRepost={handleRepost}
+                onComment={() => navigate(`/post/${post.id}`)}
+                onShare={handleShare}
+                onBookmark={() => toggleBookmark(post.id)}
+              />
             </div>
           </div>
-
-          {showComments && <CommentsSection postId={post.id} />}
         </div>
-      </Card>
+      </article>
 
       <SharePostDialog
         postId={post.id}

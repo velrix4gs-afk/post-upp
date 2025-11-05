@@ -2221,6 +2221,7 @@ export type Database = {
           media_urls: string[] | null
           privacy: string | null
           reactions_count: number | null
+          reposts_count: number | null
           scheduled_for: string | null
           shares_count: number | null
           tagged_users: string[] | null
@@ -2241,6 +2242,7 @@ export type Database = {
           media_urls?: string[] | null
           privacy?: string | null
           reactions_count?: number | null
+          reposts_count?: number | null
           scheduled_for?: string | null
           shares_count?: number | null
           tagged_users?: string[] | null
@@ -2261,6 +2263,7 @@ export type Database = {
           media_urls?: string[] | null
           privacy?: string | null
           reactions_count?: number | null
+          reposts_count?: number | null
           scheduled_for?: string | null
           shares_count?: number | null
           tagged_users?: string[] | null
@@ -2605,6 +2608,27 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      reposts: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       scheduled_messages: {
         Row: {
@@ -3995,6 +4019,7 @@ export type Database = {
           media_urls: string[] | null
           privacy: string | null
           reactions_count: number | null
+          reposts_count: number | null
           scheduled_for: string | null
           shares_count: number | null
           tagged_users: string[] | null
