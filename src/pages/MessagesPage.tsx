@@ -7,6 +7,7 @@ import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 import Navigation from '@/components/Navigation';
 import { MessageBubble } from '@/components/MessageBubble';
+import { MessagingMenu } from '@/components/MessagingMenu';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import { NewChatDialog } from '@/components/NewChatDialog';
 import TypingIndicator from '@/components/TypingIndicator';
@@ -258,7 +259,9 @@ const MessagesPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+      <div className="absolute top-20 right-4 z-10">
+        <MessagingMenu onNewChat={() => setShowNewChatDialog(true)} onSearch={() => {}} />
+      </div>
       <main className="container mx-auto px-0 md:px-4 h-[calc(100dvh-80px)]">
         <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}

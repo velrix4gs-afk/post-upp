@@ -18,7 +18,9 @@ import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { showCleanError } from '@/lib/errorHandler';
-import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark } from 'lucide-react';
+import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark, ShieldCheck, Sparkles } from 'lucide-react';
+import { VerificationSettings } from './settings/VerificationSettings';
+import { CreatorStudio } from './settings/CreatorStudio';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -321,13 +323,16 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-9 mb-6 overflow-x-auto">
             <TabsTrigger value="general"><User className="h-4 w-4 mr-2" /><span className="hidden sm:inline">General</span></TabsTrigger>
             <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Appearance</span></TabsTrigger>
             <TabsTrigger value="privacy"><Shield className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Privacy</span></TabsTrigger>
             <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Notifications</span></TabsTrigger>
             <TabsTrigger value="messaging"><MessageCircle className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Messages</span></TabsTrigger>
             <TabsTrigger value="content"><FileText className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Content</span></TabsTrigger>
+            <TabsTrigger value="verification"><ShieldCheck className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Verification</span></TabsTrigger>
+            <TabsTrigger value="creator"><Sparkles className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Creator</span></TabsTrigger>
+            <TabsTrigger value="chat-settings"><MessageCircle className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Chat</span></TabsTrigger>
           </TabsList>
 
           {/* General Settings */}
@@ -902,6 +907,12 @@ const SettingsPage = () => {
                 </div>
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="verification"><VerificationSettings /></TabsContent>
+          <TabsContent value="creator"><CreatorStudio /></TabsContent>
+          <TabsContent value="chat-settings">
+            <Card className="p-6"><h3 className="text-lg font-semibold">Messaging Settings</h3><p className="text-muted-foreground mt-2">Configure chat preferences</p></Card>
           </TabsContent>
         </Tabs>
       </main>

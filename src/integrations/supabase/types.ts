@@ -612,6 +612,82 @@ export type Database = {
           },
         ]
       }
+      creator_pages: {
+        Row: {
+          bio: string | null
+          cover_media_id: string | null
+          cover_url: string | null
+          created_at: string | null
+          custom_css: string | null
+          id: string
+          is_published: boolean | null
+          monetization_enabled: boolean | null
+          profile_media_id: string | null
+          profile_url: string | null
+          slug: string
+          social_links: Json | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          cover_media_id?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          id?: string
+          is_published?: boolean | null
+          monetization_enabled?: boolean | null
+          profile_media_id?: string | null
+          profile_url?: string | null
+          slug: string
+          social_links?: Json | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          cover_media_id?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          id?: string
+          is_published?: boolean | null
+          monetization_enabled?: boolean | null
+          profile_media_id?: string | null
+          profile_url?: string | null
+          slug?: string
+          social_links?: Json | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_pages_cover_media_id_fkey"
+            columns: ["cover_media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_pages_profile_media_id_fkey"
+            columns: ["profile_media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_pages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       email_otps: {
         Row: {
           code: string
@@ -1155,6 +1231,71 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      media: {
+        Row: {
+          created_at: string
+          height: number | null
+          id: string
+          mime: string
+          post_id: string | null
+          size: number | null
+          url: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          height?: number | null
+          id?: string
+          mime: string
+          post_id?: string | null
+          size?: number | null
+          url: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          height?: number | null
+          id?: string
+          mime?: string
+          post_id?: string | null
+          size?: number | null
+          url?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts_view"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -2216,6 +2357,7 @@ export type Database = {
           is_public: boolean | null
           is_published: boolean | null
           location: string | null
+          media_ids: string[] | null
           media_type: string | null
           media_url: string | null
           media_urls: string[] | null
@@ -2237,6 +2379,7 @@ export type Database = {
           is_public?: boolean | null
           is_published?: boolean | null
           location?: string | null
+          media_ids?: string[] | null
           media_type?: string | null
           media_url?: string | null
           media_urls?: string[] | null
@@ -2258,6 +2401,7 @@ export type Database = {
           is_public?: boolean | null
           is_published?: boolean | null
           location?: string | null
+          media_ids?: string[] | null
           media_type?: string | null
           media_url?: string | null
           media_urls?: string[] | null
@@ -3174,6 +3318,95 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_audit: {
+        Row: {
+          action: string
+          code_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          operator_id: string | null
+        }
+        Insert: {
+          action: string
+          code_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operator_id?: string | null
+        }
+        Update: {
+          action?: string
+          code_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operator_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_audit_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "verification_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verification_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          issued_at: string | null
+          op_notes: string | null
+          purchased_at: string | null
+          status: string
+          used_at: string | null
+          used_by: string | null
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          issued_at?: string | null
+          op_notes?: string | null
+          purchased_at?: string | null
+          status?: string
+          used_at?: string | null
+          used_by?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          issued_at?: string | null
+          op_notes?: string | null
+          purchased_at?: string | null
+          status?: string
+          used_at?: string | null
+          used_by?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_codes_used_by_fkey"
+            columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "verification_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       chat_list_view: {
@@ -4003,6 +4236,7 @@ export type Database = {
         }[]
       }
       extract_hashtags: { Args: { post_content: string }; Returns: string[] }
+      generate_verification_code: { Args: never; Returns: string }
       get_random_feed: {
         Args: { user_uuid: string }
         Returns: {
@@ -4014,6 +4248,7 @@ export type Database = {
           is_public: boolean | null
           is_published: boolean | null
           location: string | null
+          media_ids: string[] | null
           media_type: string | null
           media_url: string | null
           media_urls: string[] | null
