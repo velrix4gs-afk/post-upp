@@ -15,7 +15,7 @@ export interface CreatorPage {
   is_published: boolean;
   monetization_enabled: boolean;
   custom_css: string | null;
-  social_links: Record<string, string>;
+  social_links: any;
   created_at: string;
   updated_at: string;
 }
@@ -74,7 +74,7 @@ export const useCreatorPages = (userId?: string) => {
         .insert({
           ...pageData,
           user_id: user.id
-        })
+        } as any)
         .select()
         .single();
 

@@ -41,7 +41,7 @@ export const useVerification = () => {
         .or(`user_id.eq.${user.id},used_by.eq.${user.id}`)
         .single();
 
-      setVerificationCode(code);
+      setVerificationCode(code as VerificationCode | null);
     } catch (error) {
       console.error('Error fetching verification status:', error);
     } finally {
