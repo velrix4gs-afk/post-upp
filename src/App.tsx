@@ -22,6 +22,7 @@ const EventsPage = lazy(() => import("./pages/EventsPage"));
 const ThreadView = lazy(() => import("./pages/ThreadView"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CreatorPage = lazy(() => import("./pages/creator/CreatorPage").then(m => ({ default: m.CreatorPage })));
+const VerificationCodes = lazy(() => import("./pages/admin/VerificationCodes").then(m => ({ default: m.VerificationCodes })));
 const BookmarksPage = lazy(() => import("./pages/BookmarksPage"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const VerificationPage = lazy(() => import("./pages/VerificationPage"));
@@ -218,6 +219,22 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ThreadView />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/verification" 
+                element={
+                  <ProtectedRoute>
+                    <VerificationCodes />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/creator/:slug" 
+                element={
+                  <ProtectedRoute>
+                    <CreatorPage />
                   </ProtectedRoute>
                 } 
               />
