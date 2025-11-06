@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 const Index = lazy(() => import("./pages/Index"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Auth = lazy(() => import("./pages/Auth"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Feed = lazy(() => import("./pages/Feed"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const MessagesPage = lazy(() => import("./pages/MessagesPage"));
@@ -117,6 +120,9 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/verify" element={<EmailVerification />} />
               <Route 
                 path="/dashboard" 

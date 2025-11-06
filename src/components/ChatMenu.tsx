@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX, Unlock, UserCircle } from 'lucide-react';
+import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX, Unlock, UserCircle, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -196,6 +196,10 @@ export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onV
           <DropdownMenuItem onClick={togglePin}>
             <Star className={`mr-2 h-4 w-4 ${settings?.is_pinned ? 'fill-current' : ''}`} />
             {settings?.is_pinned ? 'Unpin Chat' : 'Pin Chat'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={togglePin}>
+            <Heart className={`mr-2 h-4 w-4 ${settings?.is_pinned ? 'fill-current text-red-500' : ''}`} />
+            Add to Favorites
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => settings?.is_muted ? handleUnmute() : setShowMuteDialog(true)}>
             <BellOff className="mr-2 h-4 w-4" />
