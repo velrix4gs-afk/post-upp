@@ -106,8 +106,9 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       if (error) {
+        console.error('Email update error:', error);
         return new Response(
-          JSON.stringify({ error: error.message }),
+          JSON.stringify({ error: 'Failed to update email. Please try again.' }),
           { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
@@ -144,8 +145,9 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       if (error) {
+        console.error('Password update error:', error);
         return new Response(
-          JSON.stringify({ error: error.message }),
+          JSON.stringify({ error: 'Failed to update password. Please try again.' }),
           { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
@@ -170,10 +172,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
       if (error) {
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        console.error('Password reset error:', error);
+        // Security: Always return success to prevent email enumeration
       }
 
       return new Response(JSON.stringify({ 
@@ -190,8 +190,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error('Error in auth-settings function:', error);
+    // Security: Don't expose internal error details
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }

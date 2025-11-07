@@ -140,15 +140,10 @@ serve(async (req) => {
 
     if (signUpError) {
       console.error('Signup error:', signUpError);
-      if (signUpError.message.includes('already registered') || signUpError.message.includes('already exists')) {
-        return new Response(
-          JSON.stringify({ error: 'Email already registered' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      // Security: Use generic error message to prevent user enumeration
       return new Response(
-        JSON.stringify({ error: 'Failed to create account' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unable to create account. Please try again or contact support.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

@@ -1,5 +1,8 @@
 project_id = "ccyyxkjpgebjnstevgkw"
 
+[functions.publish-scheduled-posts]
+verify_jwt = true
+
 [functions.posts]
 verify_jwt = true
 

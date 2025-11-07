@@ -94,8 +94,10 @@ serve(async (req) => {
 
     // Send email with OTP
     // Note: In production, integrate with your email service (Resend, SendGrid, etc.)
-    // For now, we'll log it and return success
-    console.log(`OTP for ${sanitizedEmail}: ${code}`);
+    // Security: Only log in development mode, never in production
+    if (Deno.env.get('ENVIRONMENT') === 'development') {
+      console.log(`[DEV ONLY] OTP generated for ${sanitizedEmail}`);
+    }
     
     // If you have RESEND_API_KEY configured, you can send the email:
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
