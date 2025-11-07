@@ -378,7 +378,7 @@ export const PostCard = ({ post }: PostCardProps) => {
                   <img 
                     src={post.media_url} 
                     alt="Post media"
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-cover max-h-96"
                   />
                 </div>
               )}
@@ -388,7 +388,7 @@ export const PostCard = ({ post }: PostCardProps) => {
                   (post as any).media_urls.length === 2 ? 'grid-cols-2' :
                   (post as any).media_urls.length === 3 ? 'grid-cols-3' :
                   'grid-cols-2'
-                }`}>
+                } max-h-96`}>
                   {(post as any).media_urls.map((url: string, index: number) => (
                     <div 
                       key={index} 

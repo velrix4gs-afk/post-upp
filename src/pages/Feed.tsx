@@ -54,7 +54,9 @@ const Feed = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="max-w-2xl mx-auto border-x min-h-screen pb-20">
+      <div className="container mx-auto flex gap-6 px-4 lg:px-8">
+        {/* Main Feed - Left/Center */}
+        <main className="flex-1 max-w-2xl mx-auto lg:mx-0 border-x min-h-screen pb-20">
         {/* Sticky Tab Navigation */}
         <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-30 border-b">
           <div className="flex">
@@ -146,9 +148,9 @@ const Feed = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="feed-container">
             {posts.map(post => (
-              <div key={post.id} className="border-b last:border-b-0">
+              <div key={post.id} className="feed-post-item border-b last:border-b-0">
                 <PostCard
                   post={{
                     id: post.id,
@@ -174,7 +176,13 @@ const Feed = () => {
             )}
           </div>
         )}
-      </main>
+        </main>
+
+        {/* Right Sidebar - Desktop Only */}
+        <aside className="hidden lg:block w-80 sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto">
+          <TrendingFeed />
+        </aside>
+      </div>
     </div>
   );
 };

@@ -5,14 +5,14 @@ import { toast } from './use-toast';
 
 export interface Page {
   id: string;
-  user_id: string;
+  created_by: string;
   name: string;
   username: string;
   description?: string;
   category?: string;
   avatar_url?: string;
   cover_url?: string;
-  follower_count: number;
+  followers_count: number;
   is_verified: boolean;
   created_at: string;
   updated_at: string;
@@ -70,7 +70,7 @@ export const usePages = () => {
       const { data, error } = await supabase
         .from('pages' as any)
         .select('*')
-        .eq('user_id', user?.id);
+        .eq('created_by', user?.id);
 
       if (error) throw error;
 
@@ -117,7 +117,7 @@ export const usePages = () => {
           description: pageData.description,
           category: pageData.category,
           avatar_url,
-          user_id: user.id
+          created_by: user.id
         } as any)
         .select()
         .single();

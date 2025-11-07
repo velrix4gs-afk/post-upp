@@ -323,6 +323,19 @@ All colors MUST be HSL.
   .bg-gradient-subtle {
     background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
   }
+
+  /* Feed post scroll snap behavior */
+  @media (max-width: 1024px) {
+    .feed-container {
+      scroll-snap-type: y proximity;
+      scroll-padding-top: 4rem;
+    }
+    
+    .feed-post-item {
+      scroll-snap-align: start;
+      scroll-margin-top: 4rem;
+    }
+  }
 }
 
 @keyframes bounce {

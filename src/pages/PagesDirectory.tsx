@@ -190,7 +190,7 @@ const PagesDirectory = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Users className="h-4 w-4" />
-                        <span>{page.follower_count} followers</span>
+                        <span>{page.followers_count} followers</span>
                       </div>
                       {page.is_following ? (
                         <Button variant="outline" size="sm" onClick={() => unfollowPage(page.id)}>
@@ -252,7 +252,7 @@ const PagesDirectory = () => {
                     )}
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Users className="h-4 w-4" />
-                      <span>{page.follower_count} followers</span>
+                      <span>{page.followers_count} followers</span>
                     </div>
                     <Button variant="outline" className="w-full">
                       Manage Page
