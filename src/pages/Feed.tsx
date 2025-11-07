@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { usePosts } from '@/hooks/usePosts';
+import { useFeed } from '@/hooks/useFeed';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import CreatePost from '@/components/CreatePost';
 import { PostCard } from '@/components/PostCard';
 import Stories from '@/components/Stories';
 import TrendingFeed from '@/components/TrendingFeed';
-import { Button } from '@/components/ui/button';
 import { Sparkles, Users, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -15,10 +14,9 @@ import { useInView } from 'react-intersection-observer';
 
 const Feed = () => {
   const { user } = useAuth();
-  const { posts, loading } = usePosts();
-  const [activeTab, setActiveTab] = useState<'all' | 'friends' | 'trending'>('all');
+  const [activeTab, setActiveTab] = useState<'for-you' | 'following' | 'trending'>('for-you');
+  const { posts, loading, hasMore, loadMore } = useFeed(activeTab === 'trending' ? 'for-you' : activeTab);
   const { ref: loadMoreRef, inView } = useInView();
-  const [page, setPage] = useState(1);
 
   // Real-time subscription for posts
   useEffect(() => {
@@ -47,47 +45,47 @@ const Feed = () => {
 
   // Infinite scroll
   useEffect(() => {
-    if (inView && !loading) {
-      setPage(prev => prev + 1);
+    if (inView && !loading && hasMore) {
+      loadMore();
     }
-  }, [inView, loading]);
+  }, [inView, loading, hasMore, loadMore]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="max-w-2xl mx-auto border-x min-h-screen">
+      <main className="max-w-2xl mx-auto border-x min-h-screen pb-20">
         {/* Sticky Tab Navigation */}
         <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-30 border-b">
           <div className="flex">
             <button
-              onClick={() => setActiveTab('all')}
+              onClick={() => setActiveTab('for-you')}
               className={cn(
                 "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
-                activeTab === 'all' && "font-bold"
+                activeTab === 'for-you' && "font-bold"
               )}
             >
               <div className="flex items-center justify-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 <span>For You</span>
               </div>
-              {activeTab === 'all' && (
+              {activeTab === 'for-you' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
               )}
             </button>
             
             <button
-              onClick={() => setActiveTab('friends')}
+              onClick={() => setActiveTab('following')}
               className={cn(
                 "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
-                activeTab === 'friends' && "font-bold"
+                activeTab === 'following' && "font-bold"
               )}
             >
               <div className="flex items-center justify-center gap-2">
                 <Users className="h-4 w-4" />
                 <span>Following</span>
               </div>
-              {activeTab === 'friends' && (
+              {activeTab === 'following' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
               )}
             </button>
@@ -148,29 +146,32 @@ const Feed = () => {
             </div>
           </div>
         ) : (
-          <div>
+          <div className="space-y-4">
             {posts.map(post => (
-              <PostCard
-                key={post.id}
-                post={{
-                  id: post.id,
-                  content: post.content || '',
-                  media_url: post.media_url,
-                  created_at: post.created_at,
-                  reactions_count: post.reactions_count,
-                  comments_count: post.comments_count,
-                  shares_count: post.shares_count || 0,
-                  author_name: post.profiles?.display_name || 'Unknown User',
-                  author_avatar: post.profiles?.avatar_url,
-                  author_id: post.user_id
-                }}
-              />
+              <div key={post.id} className="border-b last:border-b-0">
+                <PostCard
+                  post={{
+                    id: post.id,
+                    content: post.content || '',
+                    media_url: post.media_url,
+                    created_at: post.created_at,
+                    reactions_count: post.reactions_count,
+                    comments_count: post.comments_count,
+                    shares_count: post.shares_count || 0,
+                    author_name: post.profiles?.display_name || 'Unknown User',
+                    author_avatar: post.profiles?.avatar_url,
+                    author_id: post.user_id
+                  }}
+                />
+              </div>
             ))}
             
             {/* Infinite scroll trigger */}
-            <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
-              {loading && <Skeleton className="h-10 w-10 rounded-full" />}
-            </div>
+            {hasMore && (
+              <div ref={loadMoreRef} className="h-40 flex items-center justify-center">
+                {loading && <Skeleton className="h-10 w-10 rounded-full" />}
+              </div>
+            )}
           </div>
         )}
       </main>

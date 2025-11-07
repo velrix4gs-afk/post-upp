@@ -55,7 +55,7 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:relative md:inset-auto">
+    <div className="fixed inset-0 z-50 md:absolute md:inset-auto">
       {/* Mobile backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 md:hidden"

@@ -17,6 +17,7 @@ import { PostContent } from "./PostContent";
 import { CommentsSection } from "./CommentsSection";
 import { SharePostDialog } from "./SharePostDialog";
 import { TipDialog } from "./premium/TipDialog";
+import { ImageGalleryViewer } from "./ImageGalleryViewer";
 import { PostCardActions } from "./PostCard/PostCardActions";
 import { 
   DropdownMenu, 
@@ -73,6 +74,9 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [localReactionCount, setLocalReactionCount] = useState(post.reactions_count);
   const [localRepostCount, setLocalRepostCount] = useState(post.shares_count || 0);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryStartIndex, setGalleryStartIndex] = useState(0);
 
   const isOwner = user?.id === post.author_id;
   const isFollowingAuthor = following.some(f => f.following?.id === post.author_id);
@@ -362,12 +366,19 @@ export const PostCard = ({ post }: PostCardProps) => {
             <div className="mb-2">
               <PostContent content={post.content} />
               {post.media_url && !Array.isArray((post as any).media_urls) && (
-                <div className="rounded-2xl overflow-hidden mt-3 border border-border">
+                <div 
+                  className="rounded-2xl overflow-hidden mt-3 border border-border cursor-pointer hover:opacity-90 transition"
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setGalleryImages([post.media_url!]);
+                    setGalleryStartIndex(0);
+                    setShowImageGallery(true);
+                  }}
+                >
                   <img 
                     src={post.media_url} 
                     alt="Post media"
                     className="w-full h-auto object-cover"
-                    onClick={(e) => { e.stopPropagation(); window.open(post.media_url, '_blank'); }}
                   />
                 </div>
               )}
@@ -379,12 +390,20 @@ export const PostCard = ({ post }: PostCardProps) => {
                   'grid-cols-2'
                 }`}>
                   {(post as any).media_urls.map((url: string, index: number) => (
-                    <div key={index} className="aspect-video relative">
+                    <div 
+                      key={index} 
+                      className="aspect-video relative cursor-pointer hover:opacity-90 transition"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setGalleryImages((post as any).media_urls);
+                        setGalleryStartIndex(index);
+                        setShowImageGallery(true);
+                      }}
+                    >
                       <img 
                         src={url} 
                         alt={`Media ${index + 1}`}
                         className="w-full h-full object-cover"
-                        onClick={(e) => { e.stopPropagation(); window.open(url, '_blank'); }}
                       />
                     </div>
                   ))}
@@ -416,6 +435,13 @@ export const PostCard = ({ post }: PostCardProps) => {
         postId={post.id}
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
+      />
+
+      <ImageGalleryViewer 
+        images={galleryImages}
+        initialIndex={galleryStartIndex}
+        open={showImageGallery}
+        onOpenChange={setShowImageGallery}
       />
     </>
   );
