@@ -29,6 +29,7 @@ import { showCleanError } from "@/lib/errorHandler";
 import CreatePollDialog from "./CreatePollDialog";
 import DraftsDialog from "./DraftsDialog";
 import { UserTagSelector } from "./UserTagSelector";
+import { postContentSchema } from "@/lib/validationSchemas";
 
 const FEELINGS = [
   { emoji: '😊', label: 'happy' },
@@ -144,6 +145,15 @@ const CreatePost = () => {
     if (!postContent.trim() && selectedImages.length === 0) {
       showCleanError({ code: 'POST_005', message: 'Add content or media to post' }, toast);
       return;
+    }
+
+    // Validate content length
+    if (postContent.trim()) {
+      const validation = postContentSchema.safeParse(postContent);
+      if (!validation.success) {
+        showCleanError({ code: 'POST_006', message: validation.error.issues[0].message }, toast);
+        return;
+      }
     }
 
     setIsPosting(true);
