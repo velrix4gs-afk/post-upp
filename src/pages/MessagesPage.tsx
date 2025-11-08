@@ -7,7 +7,11 @@ import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePresence } from '@/hooks/usePresence';
 import { useLastSeen } from '@/hooks/useLastSeen';
 import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
+import { useChatSettings } from '@/hooks/useChatSettings';
 import Navigation from '@/components/Navigation';
+import { VideoCall } from '@/components/VideoCall';
+import { VoiceCall } from '@/components/VoiceCall';
+import { ChatSettingsDialog } from '@/components/messaging/ChatSettingsDialog';
 import { EnhancedMessageBubble } from '@/components/EnhancedMessageBubble';
 import { MessagingMenu } from '@/components/MessagingMenu';
 import VoiceRecorder from '@/components/VoiceRecorder';
@@ -101,6 +105,10 @@ const MessagesPage = () => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [encryptionEnabled, setEncryptionEnabled] = useState(true);
+  const [showChatSettings, setShowChatSettings] = useState(false);
+  const [activeCall, setActiveCall] = useState<'voice' | 'video' | null>(null);
+  const [isCallInitiator, setIsCallInitiator] = useState(false);
+  const { settings: chatSettings } = useChatSettings(selectedChatId || undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const unreadMessageRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -495,10 +503,26 @@ const MessagesPage = () => {
                     })()}
                   </div>
                   <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                    <Button size="icon" variant="ghost" className="h-10 w-10 hover:bg-primary/10 hover:text-primary" disabled>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
+                      onClick={() => {
+                        setActiveCall('voice');
+                        setIsCallInitiator(true);
+                      }}
+                    >
                       <Phone className="h-5 w-5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary" disabled>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary"
+                      onClick={() => {
+                        setActiveCall('video');
+                        setIsCallInitiator(true);
+                      }}
+                    >
                       <Video className="h-5 w-5" />
                     </Button>
                     <Button
@@ -524,13 +548,19 @@ const MessagesPage = () => {
                         }}>
                           View Profile
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setShowSearchDialog(true)}>
+                          Search Messages
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setShowChatSettings(true)}>
+                          Chat Settings
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setShowWallpaper(true)}>
+                          Change Wallpaper
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => {
                           const otherParticipant = selectedChat.participants.find(p => p.user_id !== user?.id);
                           if (otherParticipant) {
-                            toast({
-                              title: 'User Blocked',
-                              description: 'You have blocked this user',
-                            });
+                            setShowBlockDialog(true);
                           }
                         }}>
                           Block User
@@ -541,7 +571,18 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Messages */}
-                <ScrollArea className="flex-1 px-2 py-3 md:px-4 md:py-4 bg-muted/20">
+                <ScrollArea 
+                  className="flex-1 px-2 py-3 md:px-4 md:py-4"
+                  style={{
+                    backgroundImage: chatSettings?.wallpaper_url 
+                      ? `url(${chatSettings.wallpaper_url})` 
+                      : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundColor: !chatSettings?.wallpaper_url ? 'hsl(var(--muted) / 0.2)' : undefined
+                  }}
+                >
                   <div className="space-y-0.5 md:space-y-1">
                     {searchQuery.trim() && filteredMessages.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
@@ -571,6 +612,7 @@ const MessagesPage = () => {
                             isEdited={message.is_edited}
                             status={message.status}
                             isForwarded={message.is_forwarded}
+                            bubbleColor={chatSettings?.theme_color}
                             onEdit={isOwn ? handleEditMessage : undefined}
                             onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
                             onReply={() => setReplyingTo(message)}
@@ -889,6 +931,38 @@ const MessagesPage = () => {
             const contactText = `👤 Shared ${contactIds.length} contact${contactIds.length > 1 ? 's' : ''}`;
             await sendMessage(contactText);
             setShowContactDialog(false);
+          }}
+        />
+      )}
+
+      {showChatSettings && selectedChatId && (
+        <ChatSettingsDialog
+          chatId={selectedChatId}
+          open={showChatSettings}
+          onOpenChange={setShowChatSettings}
+        />
+      )}
+
+      {activeCall === 'voice' && selectedChatId && otherParticipant && (
+        <VoiceCall
+          chatId={selectedChatId}
+          isInitiator={isCallInitiator}
+          onEndCall={() => {
+            setActiveCall(null);
+            setIsCallInitiator(false);
+          }}
+          participantName={otherParticipant.profiles.display_name}
+          participantAvatar={otherParticipant.profiles.avatar_url}
+        />
+      )}
+
+      {activeCall === 'video' && selectedChatId && (
+        <VideoCall
+          chatId={selectedChatId}
+          isInitiator={isCallInitiator}
+          onEndCall={() => {
+            setActiveCall(null);
+            setIsCallInitiator(false);
           }}
         />
       )}

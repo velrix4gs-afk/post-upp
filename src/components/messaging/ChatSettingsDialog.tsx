@@ -79,27 +79,105 @@ export const ChatSettingsDialog = ({ chatId, open, onOpenChange }: ChatSettingsD
             </div>
           </div>
 
-          {/* Theme Color */}
-          <div className="space-y-2">
+          {/* Chat Bubble Color */}
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-muted-foreground" />
-              <Label>Theme Color</Label>
+              <Label>Chat Bubble Color</Label>
             </div>
-            <Select
-              value={settings?.theme_color || 'default'}
-              onValueChange={(value) => updateSettings({ theme_color: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="blue">Blue</SelectItem>
-                <SelectItem value="green">Green</SelectItem>
-                <SelectItem value="purple">Purple</SelectItem>
-                <SelectItem value="pink">Pink</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-5 gap-2">
+              <button
+                onClick={() => updateSettings({ theme_color: 'default' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  (!settings?.theme_color || settings.theme_color === 'default')
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: 'hsl(var(--primary))' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'blue' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'blue'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#3b82f6' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'green' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'green'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#10b981' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'purple' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'purple'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#a855f7' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'pink' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'pink'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#ec4899' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'orange' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'orange'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#f97316' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'red' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'red'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#ef4444' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'teal' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'teal'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#14b8a6' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'yellow' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'yellow'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#eab308' }}
+              />
+              <button
+                onClick={() => updateSettings({ theme_color: 'indigo' })}
+                className={`h-12 rounded-lg border-2 transition-all ${
+                  settings?.theme_color === 'indigo'
+                    ? 'border-primary ring-2 ring-primary/20'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                style={{ backgroundColor: '#6366f1' }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Your chat bubbles will use this color</p>
           </div>
 
           {/* Auto-delete messages */}

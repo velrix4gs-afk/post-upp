@@ -45,6 +45,22 @@ import { MessageReactions } from "./messaging/MessageReactions";
 import { ReactionPicker } from "./ReactionPicker";
 import { toast } from "@/hooks/use-toast";
 
+const getBubbleColorValue = (color: string): string => {
+  const colorMap: Record<string, string> = {
+    default: 'hsl(var(--primary))',
+    blue: '#3b82f6',
+    green: '#10b981',
+    purple: '#a855f7',
+    pink: '#ec4899',
+    orange: '#f97316',
+    red: '#ef4444',
+    teal: '#14b8a6',
+    yellow: '#eab308',
+    indigo: '#6366f1'
+  };
+  return colorMap[color] || colorMap.default;
+};
+
 interface MessageReaction {
   user_id: string;
   reaction_type: string;
@@ -67,6 +83,7 @@ interface EnhancedMessageBubbleProps {
   isStarred?: boolean;
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   reactions?: MessageReaction[];
+  bubbleColor?: string;
   onEdit?: (id: string, content: string) => void;
   onDelete?: (id: string, deleteFor: 'me' | 'everyone') => void;
   onReply?: () => void;
@@ -92,6 +109,7 @@ export const EnhancedMessageBubble = ({
   isStarred = false,
   status = 'sent',
   reactions: _reactions = [],
+  bubbleColor,
   onEdit,
   onDelete,
   onReply,
@@ -143,10 +161,15 @@ export const EnhancedMessageBubble = ({
               )}
               
               <div
+                style={{
+                  backgroundColor: isOwn && bubbleColor 
+                    ? getBubbleColorValue(bubbleColor)
+                    : undefined
+                }}
                 className={cn(
                   "rounded-2xl px-3 py-2 md:px-4 md:py-2 shadow-sm",
                   isOwn
-                    ? "bg-primary text-primary-foreground rounded-tr-sm"
+                    ? !bubbleColor ? "bg-primary text-primary-foreground rounded-tr-sm" : "text-primary-foreground rounded-tr-sm"
                     : "bg-muted rounded-tl-sm"
                 )}
               >
