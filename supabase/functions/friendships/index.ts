@@ -19,24 +19,7 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    // Create client with user's token for auth verification
-    const supabaseUserClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader }
-        }
-      }
-    );
-
-    // Get user from JWT
-    const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser();
-    if (userError || !user) {
-      throw new Error('Invalid or expired token');
-    }
-
-    // Create service role client for database operations
+    // Create service role client for auth verification
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -47,6 +30,18 @@ serve(async (req) => {
         }
       }
     );
+
+    // Get user from JWT using service role client
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    
+    if (userError || !user) {
+      console.error('Auth error:', userError);
+      throw new Error('Invalid or expired token');
+    }
+
+    console.log('Authenticated user:', user.id);
 
     const method = req.method;
     console.log(`Friendships API: ${method}`);
