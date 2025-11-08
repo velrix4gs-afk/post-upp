@@ -4,40 +4,48 @@ import { useMessages } from '@/hooks/useMessages';
 import { useChats } from '@/hooks/useChats';
 import { useFollowers } from '@/hooks/useFollowers';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
-import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import { usePresence } from '@/hooks/usePresence';
+import { useLastSeen } from '@/hooks/useLastSeen';
+import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
 import Navigation from '@/components/Navigation';
-import { MessageBubble } from '@/components/MessageBubble';
+import { EnhancedMessageBubble } from '@/components/EnhancedMessageBubble';
 import { MessagingMenu } from '@/components/MessagingMenu';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import { NewChatDialog } from '@/components/NewChatDialog';
 import TypingIndicator from '@/components/TypingIndicator';
 import { StarredMessagesDialog } from '@/components/messaging/StarredMessagesDialog';
 import { ForwardMessageDialog } from '@/components/messaging/ForwardMessageDialog';
+import { SearchInChatDialog } from '@/components/messaging/SearchInChatDialog';
+import { ChatMediaTab } from '@/components/messaging/ChatMediaTab';
+import { GroupInfoDialog } from '@/components/messaging/GroupInfoDialog';
+import { WallpaperDialog } from '@/components/messaging/WallpaperDialog';
+import { ClearChatDialog } from '@/components/messaging/ClearChatDialog';
+import { BlockUserDialog } from '@/components/messaging/BlockUserDialog';
+import { ReportUserDialog } from '@/components/messaging/ReportUserDialog';
+import { TranslateMessageDialog } from '@/components/messaging/TranslateMessageDialog';
+import { ScheduleMessageDialog } from '@/components/messaging/ScheduleMessageDialog';
+import { LocationShareDialog } from '@/components/messaging/LocationShareDialog';
+import { ContactShareDialog } from '@/components/messaging/ContactShareDialog';
+import { EncryptionBadge } from '@/components/messaging/EncryptionBadge';
+import { ChatMenu } from '@/components/ChatMenu';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as ContactsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ReactionPicker } from '@/components/ReactionPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const MessagesPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const { 
@@ -59,6 +67,11 @@ const MessagesPage = () => {
   const { createChat: createChatByUuid } = useChats();
   const { following } = useFollowers();
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
+  const { onlineUsers, isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
+  const selectedChat = chats.find(c => c.id === selectedChatId);
+  const otherParticipant = selectedChat?.participants.find(p => p.user_id !== user?.id);
+  const { formatLastSeen, isOnline } = useLastSeen(otherParticipant?.user_id);
+  
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [newChatSearch, setNewChatSearch] = useState('');
@@ -69,10 +82,27 @@ const MessagesPage = () => {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [showStarredDialog, setShowStarredDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [showMediaTab, setShowMediaTab] = useState(false);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [showWallpaper, setShowWallpaper] = useState(false);
+  const [showClearChat, setShowClearChat] = useState(false);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showTranslateDialog, setShowTranslateDialog] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [showContactDialog, setShowContactDialog] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [reactingToMessageId, setReactingToMessageId] = useState<string | null>(null);
+  const [translateMessageId, setTranslateMessageId] = useState<string | null>(null);
+  const [translateMessageText, setTranslateMessageText] = useState('');
   const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  const [encryptionEnabled, setEncryptionEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const unreadMessageRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -238,8 +268,6 @@ const MessagesPage = () => {
       throw error;
     }
   };
-
-  const selectedChat = chats.find(c => c.id === selectedChatId);
   
   // Filter chats by name or participant
   const filteredChats = chats.filter(chat => 
@@ -524,10 +552,10 @@ const MessagesPage = () => {
                     ) : (
                       filteredMessages.map((message) => {
                         const isOwn = message.sender_id === user?.id;
-                        const senderProfile = selectedChat.participants.find(p => p.user_id === message.sender_id)?.profiles;
+                        const senderProfile = selectedChat?.participants.find(p => p.user_id === message.sender_id)?.profiles;
                         
                         return (
-                          <MessageBubble
+                          <EnhancedMessageBubble
                             key={message.id}
                             id={message.id}
                             content={message.content || ''}
@@ -750,6 +778,130 @@ const MessagesPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Additional Dialogs */}
+      {showSearchDialog && selectedChatId && (
+        <SearchInChatDialog
+          chatId={selectedChatId}
+          open={showSearchDialog}
+          onOpenChange={setShowSearchDialog}
+          onMessageSelect={(msgId) => {
+            // Scroll to message
+            const msgEl = document.getElementById(`msg-${msgId}`);
+            msgEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setShowSearchDialog(false);
+          }}
+        />
+      )}
+
+      {showMediaTab && selectedChatId && (
+        <ChatMediaTab
+          chatId={selectedChatId}
+        />
+      )}
+
+      {showGroupInfo && selectedChatId && selectedChat?.is_group && (
+        <GroupInfoDialog
+          chatId={selectedChatId}
+          open={showGroupInfo}
+          onOpenChange={setShowGroupInfo}
+        />
+      )}
+
+      {showWallpaper && selectedChatId && (
+        <WallpaperDialog
+          chatId={selectedChatId}
+          open={showWallpaper}
+          onOpenChange={setShowWallpaper}
+        />
+      )}
+
+      {showClearChat && selectedChatId && (
+        <ClearChatDialog
+          chatId={selectedChatId}
+          open={showClearChat}
+          onOpenChange={setShowClearChat}
+          onCleared={() => {
+            refetchMessages();
+            setShowClearChat(false);
+          }}
+        />
+      )}
+
+      {showBlockDialog && otherParticipant && (
+        <BlockUserDialog
+          userId={otherParticipant.user_id}
+          userName={otherParticipant.profiles.display_name}
+          open={showBlockDialog}
+          onOpenChange={setShowBlockDialog}
+        />
+      )}
+
+      {showReportDialog && otherParticipant && (
+        <ReportUserDialog
+          userId={otherParticipant.user_id}
+          userName={otherParticipant.profiles.username || ''}
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
+        />
+      )}
+
+      {showTranslateDialog && translateMessageId && (
+        <TranslateMessageDialog
+          messageId={translateMessageId}
+          originalText={translateMessageText}
+          open={showTranslateDialog}
+          onOpenChange={setShowTranslateDialog}
+        />
+      )}
+
+      {showScheduleDialog && selectedChatId && (
+        <ScheduleMessageDialog
+          chatId={selectedChatId}
+          content={messageText}
+          open={showScheduleDialog}
+          onOpenChange={setShowScheduleDialog}
+          onScheduled={() => {
+            setMessageText('');
+            setShowScheduleDialog(false);
+            toast({ title: 'Message scheduled successfully' });
+          }}
+        />
+      )}
+
+      {showLocationDialog && (
+        <LocationShareDialog
+          open={showLocationDialog}
+          onOpenChange={setShowLocationDialog}
+          onShare={async (lat, lon, address) => {
+            const locationText = `📍 ${address || `${lat}, ${lon}`}`;
+            await sendMessage(locationText);
+            setShowLocationDialog(false);
+          }}
+        />
+      )}
+
+      {showContactDialog && (
+        <ContactShareDialog
+          open={showContactDialog}
+          onOpenChange={setShowContactDialog}
+          onShare={async (contactIds) => {
+            const contactText = `👤 Shared ${contactIds.length} contact${contactIds.length > 1 ? 's' : ''}`;
+            await sendMessage(contactText);
+            setShowContactDialog(false);
+          }}
+        />
+      )}
+
+      {showReactionPicker && reactingToMessageId && (
+        <ReactionPicker
+          onReact={(reaction) => {
+            reactToMessage(reactingToMessageId, reaction);
+            setShowReactionPicker(false);
+            setReactingToMessageId(null);
+          }}
+        />
+      )}
     </div>
   );
 };
