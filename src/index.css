@@ -329,13 +329,19 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
   }
 
   html, body, #root {
     background-color: hsl(var(--background)) !important;
+    background-attachment: fixed;
+  }
+  
+  /* Keep cards and content their own colors */
+  [class*="card"], [class*="Card"] {
+    background-color: hsl(var(--card)) !important;
   }
 }
 

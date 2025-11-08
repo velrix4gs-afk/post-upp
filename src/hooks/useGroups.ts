@@ -23,6 +23,9 @@ export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     if (user) {
@@ -52,13 +55,17 @@ export const useGroups = () => {
     }
   }, [user]);
 
-  const fetchGroups = async () => {
+  const fetchGroups = async (loadMore = false) => {
     try {
+      const from = loadMore ? page * ITEMS_PER_PAGE : 0;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
       const { data, error } = await supabase
         .from('groups')
         .select('*')
         .eq('privacy', 'public')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
 
@@ -81,7 +88,14 @@ export const useGroups = () => {
         })
       );
 
-      setGroups(groupsWithMembership);
+      if (loadMore) {
+        setGroups(prev => [...prev, ...groupsWithMembership]);
+      } else {
+        setGroups(groupsWithMembership);
+      }
+      
+      setHasMore((data || []).length === ITEMS_PER_PAGE);
+      if (loadMore) setPage(prev => prev + 1);
     } catch (err: any) {
       console.error('[GROUP_001] Failed to load groups:', err);
     } finally {
@@ -249,10 +263,13 @@ export const useGroups = () => {
     groups,
     myGroups,
     loading,
+    hasMore,
     createGroup,
     joinGroup,
     leaveGroup,
+    loadMore: () => fetchGroups(true),
     refetch: () => {
+      setPage(0);
       fetchGroups();
       fetchMyGroups();
     }

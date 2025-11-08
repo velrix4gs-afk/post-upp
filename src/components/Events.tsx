@@ -12,7 +12,7 @@ import { Calendar, MapPin, Users, Plus, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Events = () => {
-  const { events, loading, createEvent, toggleAttendance } = useEvents();
+  const { events, loading, hasMore, createEvent, toggleAttendance, loadMore } = useEvents();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -144,93 +144,102 @@ const Events = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {events.length === 0 ? (
-          <Card className="bg-gradient-card border-0 p-6 md:p-8 text-center">
-            <Calendar className="h-10 md:h-12 w-10 md:w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-base md:text-lg font-medium mb-2">No Events Yet</h3>
-            <p className="text-sm md:text-base text-muted-foreground mb-4">
-              Be the first to create an event in your community!
-            </p>
-          </Card>
-        ) : (
-          events.map((event) => (
-            <Card key={event.id} className="bg-gradient-card border-0">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center space-x-2 md:space-x-3 min-w-0">
-                    <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
-                      <AvatarImage src={event.creator.avatar_url} />
-                      <AvatarFallback className="bg-gradient-primary text-white text-xs md:text-sm">
-                        {event.creator.display_name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="font-medium text-xs md:text-sm truncate">{event.creator.display_name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        @{event.creator.username}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant={event.is_attending ? "default" : "outline"} className="text-xs flex-shrink-0">
-                    {event.is_attending ? "Attending" : "Not Attending"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 md:space-y-4">
-                {event.image_url && (
-                  <div className="rounded-lg overflow-hidden">
-                    <img 
-                      src={event.image_url} 
-                      alt={event.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  </div>
-                )}
-                
-                <div>
-                  <CardTitle className="text-base md:text-lg mb-2">{event.title}</CardTitle>
-                  {event.description && (
-                    <p className="text-xs md:text-sm text-muted-foreground mb-3">
-                      {event.description}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="space-y-2 text-xs md:text-sm">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
-                    <span className="truncate">
-                      {format(new Date(event.start_date), 'PPP p')}
-                      {event.end_date && (
-                        <> - {format(new Date(event.end_date), 'PPP p')}</>
-                      )}
-                    </span>
-                  </div>
-                  
-                  {event.location && (
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
-                      <span className="truncate">{event.location}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
-                    <span>{event.attendees_count} attendees</span>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={() => toggleAttendance(event.id)}
-                  variant={event.is_attending ? "outline" : "default"}
-                  className="w-full text-sm"
-                >
-                  {event.is_attending ? "Leave Event" : "Join Event"}
-                </Button>
-              </CardContent>
+      <div className="space-y-4">
+        <div className="grid gap-4">
+          {events.length === 0 ? (
+            <Card className="bg-gradient-card border-0 p-6 md:p-8 text-center">
+              <Calendar className="h-10 md:h-12 w-10 md:w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-base md:text-lg font-medium mb-2">No Events Yet</h3>
+              <p className="text-sm md:text-base text-muted-foreground mb-4">
+                Be the first to create an event in your community!
+              </p>
             </Card>
-          ))
+          ) : (
+            events.map((event) => (
+              <Card key={event.id} className="bg-gradient-card border-0">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center space-x-2 md:space-x-3 min-w-0">
+                      <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
+                        <AvatarImage src={event.creator.avatar_url} />
+                        <AvatarFallback className="bg-gradient-primary text-white text-xs md:text-sm">
+                          {event.creator.display_name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="font-medium text-xs md:text-sm truncate">{event.creator.display_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          @{event.creator.username}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={event.is_attending ? "default" : "outline"} className="text-xs flex-shrink-0">
+                      {event.is_attending ? "Attending" : "Not Attending"}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 md:space-y-4">
+                  {event.image_url && (
+                    <div className="rounded-lg overflow-hidden">
+                      <img 
+                        src={event.image_url} 
+                        alt={event.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  <div>
+                    <CardTitle className="text-base md:text-lg mb-2">{event.title}</CardTitle>
+                    {event.description && (
+                      <p className="text-xs md:text-sm text-muted-foreground mb-3">
+                        {event.description}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2 text-xs md:text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
+                      <span className="truncate">
+                        {format(new Date(event.start_date), 'PPP p')}
+                        {event.end_date && (
+                          <> - {format(new Date(event.end_date), 'PPP p')}</>
+                        )}
+                      </span>
+                    </div>
+                    
+                    {event.location && (
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center space-x-2">
+                      <Users className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
+                      <span>{event.attendees_count} attendees</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => toggleAttendance(event.id)}
+                    variant={event.is_attending ? "outline" : "default"}
+                    className="w-full text-sm"
+                  >
+                    {event.is_attending ? "Leave Event" : "Join Event"}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+        {hasMore && !loading && events.length > 0 && (
+          <div className="text-center">
+            <Button onClick={loadMore} variant="outline">
+              Load More Events
+            </Button>
+          </div>
         )}
       </div>
     </div>

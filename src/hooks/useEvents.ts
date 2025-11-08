@@ -26,6 +26,9 @@ export const useEvents = () => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     if (user) {
@@ -52,13 +55,17 @@ export const useEvents = () => {
     }
   }, [user]);
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (loadMore = false) => {
     try {
+      const from = loadMore ? page * ITEMS_PER_PAGE : 0;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
       const { data, error } = await supabase
         .from('events')
         .select('*')
         .gte('start_date', new Date().toISOString())
-        .order('start_date', { ascending: true });
+        .order('start_date', { ascending: true })
+        .range(from, to);
 
       if (error) throw error;
 
@@ -91,7 +98,14 @@ export const useEvents = () => {
         })
       );
 
-      setEvents(eventsWithInfo);
+      if (loadMore) {
+        setEvents(prev => [...prev, ...eventsWithInfo]);
+      } else {
+        setEvents(eventsWithInfo);
+      }
+      
+      setHasMore((data || []).length === ITEMS_PER_PAGE);
+      if (loadMore) setPage(prev => prev + 1);
     } catch (err: any) {
       console.error('[EVENT_001] Failed to load events:', err);
     } finally {
@@ -199,8 +213,13 @@ export const useEvents = () => {
   return {
     events,
     loading,
+    hasMore,
     createEvent,
     toggleAttendance,
-    refetch: fetchEvents
+    loadMore: () => fetchEvents(true),
+    refetch: () => {
+      setPage(0);
+      fetchEvents();
+    }
   };
 };

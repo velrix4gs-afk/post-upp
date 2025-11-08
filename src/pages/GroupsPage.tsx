@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useGroups } from '@/hooks/useGroups';
 
 const GroupsPage = () => {
-  const { groups, myGroups, loading, createGroup, joinGroup, leaveGroup } = useGroups();
+  const { groups, myGroups, loading, hasMore, createGroup, joinGroup, leaveGroup, loadMore } = useGroups();
   const [searchQuery, setSearchQuery] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -240,60 +240,69 @@ const GroupsPage = () => {
                 </p>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredGroups.map((group) => (
-                  <Card key={group.id} className="bg-gradient-card border-0 overflow-hidden">
-                    <div className="h-24 bg-gradient-primary relative">
-                      {group.cover_url && (
-                        <img src={group.cover_url} alt="" className="w-full h-full object-cover" />
-                      )}
-                    </div>
-                    <CardContent className="pt-0 -mt-10">
-                      <Avatar className="h-20 w-20 border-4 border-background mb-3">
-                        <AvatarImage src={group.avatar_url} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                          {group.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <h3 className="font-semibold text-base md:text-lg mb-1">{group.name}</h3>
-                      {group.description && (
-                        <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {group.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-                          <Users className="h-4 w-4" />
-                          <span>{group.member_count} members</span>
-                        </div>
-                        <Badge variant="outline" className="text-xs gap-1">
-                          {group.privacy === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                          {group.privacy}
-                        </Badge>
+              <>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredGroups.map((group) => (
+                    <Card key={group.id} className="bg-gradient-card border-0 overflow-hidden">
+                      <div className="h-24 bg-gradient-primary relative">
+                        {group.cover_url && (
+                          <img src={group.cover_url} alt="" className="w-full h-full object-cover" />
+                        )}
                       </div>
-                      
-                      {group.is_member ? (
-                        <Button 
-                          variant="outline" 
-                          className="w-full text-sm"
-                          onClick={() => leaveGroup(group.id)}
-                        >
-                          Leave Group
-                        </Button>
-                      ) : (
-                        <Button 
-                          className="w-full text-sm"
-                          onClick={() => joinGroup(group.id)}
-                        >
-                          Join Group
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      <CardContent className="pt-0 -mt-10">
+                        <Avatar className="h-20 w-20 border-4 border-background mb-3">
+                          <AvatarImage src={group.avatar_url} />
+                          <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                            {group.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <h3 className="font-semibold text-base md:text-lg mb-1">{group.name}</h3>
+                        {group.description && (
+                          <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {group.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                            <Users className="h-4 w-4" />
+                            <span>{group.member_count} members</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs gap-1">
+                            {group.privacy === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                            {group.privacy}
+                          </Badge>
+                        </div>
+                        
+                        {group.is_member ? (
+                          <Button 
+                            variant="outline" 
+                            className="w-full text-sm"
+                            onClick={() => leaveGroup(group.id)}
+                          >
+                            Leave Group
+                          </Button>
+                        ) : (
+                          <Button 
+                            className="w-full text-sm"
+                            onClick={() => joinGroup(group.id)}
+                          >
+                            Join Group
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                {hasMore && !loading && (
+                  <div className="text-center mt-6">
+                    <Button onClick={loadMore} variant="outline">
+                      Load More Groups
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>
