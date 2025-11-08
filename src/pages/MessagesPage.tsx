@@ -32,6 +32,8 @@ import { LocationShareDialog } from '@/components/messaging/LocationShareDialog'
 import { ContactShareDialog } from '@/components/messaging/ContactShareDialog';
 import { EncryptionBadge } from '@/components/messaging/EncryptionBadge';
 import { ChatMenu } from '@/components/ChatMenu';
+import { DisappearingMessagesDialog } from '@/components/messaging/DisappearingMessagesDialog';
+import { AISmartReplies } from '@/components/messaging/AISmartReplies';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -106,12 +108,34 @@ const MessagesPage = () => {
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [encryptionEnabled, setEncryptionEnabled] = useState(true);
   const [showChatSettings, setShowChatSettings] = useState(false);
+  const [showDisappearingDialog, setShowDisappearingDialog] = useState(false);
   const [activeCall, setActiveCall] = useState<'voice' | 'video' | null>(null);
   const [isCallInitiator, setIsCallInitiator] = useState(false);
   const { settings: chatSettings } = useChatSettings(selectedChatId || undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const unreadMessageRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
+  const [lastReceivedMessage, setLastReceivedMessage] = useState<string>('');
+
+  // Auto-focus input on mount and chat change
+  useEffect(() => {
+    if (selectedChatId && messageInputRef.current) {
+      setTimeout(() => {
+        messageInputRef.current?.focus();
+      }, 100);
+    }
+  }, [selectedChatId]);
+
+  // Track last received message for smart replies
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.sender_id !== user?.id && lastMsg.content) {
+        setLastReceivedMessage(lastMsg.content);
+      }
+    }
+  }, [messages, user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -570,40 +594,19 @@ const MessagesPage = () => {
                     >
                       <Star className="h-5 w-5" />
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-10 w-10 hover:bg-primary/10 hover:text-primary">
-                          <MoreVertical className="h-5 w-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => {
-                          const otherParticipant = selectedChat.participants.find(p => p.user_id !== user?.id);
-                          if (otherParticipant) {
-                            window.location.href = `/profile/${otherParticipant.user_id}`;
-                          }
-                        }}>
-                          View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowSearchDialog(true)}>
-                          Search Messages
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowChatSettings(true)}>
-                          Chat Settings
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowWallpaper(true)}>
-                          Change Wallpaper
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          const otherParticipant = selectedChat.participants.find(p => p.user_id !== user?.id);
-                          if (otherParticipant) {
-                            setShowBlockDialog(true);
-                          }
-                        }}>
-                          Block User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ChatMenu
+                      chatId={selectedChatId}
+                      otherUserId={otherParticipant?.user_id}
+                      otherUsername={otherParticipant?.profiles.username}
+                      onViewMedia={() => setShowMediaTab(true)}
+                      onSearchInChat={() => setShowSearchDialog(true)}
+                      onViewStarred={() => setShowStarredDialog(true)}
+                      onWallpaperChange={() => setShowWallpaper(true)}
+                      onClearChat={() => setShowClearChat(true)}
+                      onBlock={() => setShowBlockDialog(true)}
+                      onReport={() => setShowReportDialog(true)}
+                      onDisappearingMessages={() => setShowDisappearingDialog(true)}
+                    />
                   </div>
                 </div>
 
@@ -718,82 +721,99 @@ const MessagesPage = () => {
                     />
                   </div>
                 ) : (
-                  <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t border-primary/10 bg-gradient-subtle backdrop-blur-sm">
-                    <div className="flex gap-1.5 md:gap-2 items-end">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        className="hidden"
-                      />
-                      <Button 
-                        type="button" 
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="h-10 w-10 flex-shrink-0 hover:bg-primary/10 hover:text-primary"
-                      >
-                        <ImageIcon className="h-5 w-5" />
-                      </Button>
-                      <Button 
-                        type="button" 
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setIsRecordingVoice(true)}
-                        className="h-10 w-10 flex-shrink-0 hidden md:flex hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Mic className="h-5 w-5" />
-                      </Button>
-                      <Input
-                        placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
-                        value={messageText}
-                        onChange={(e) => {
-                          setMessageText(e.target.value);
-                          handleTyping();
-                        }}
-                        className="flex-1 h-10 text-base bg-background/50 border-primary/20 focus:border-primary transition-colors"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage();
-                          }
-                        }}
-                      />
-                      {editingMessageId && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingMessageId(null);
-                            setMessageText('');
+                  <>
+                    {/* AI Smart Replies */}
+                    {lastReceivedMessage && !editingMessageId && (
+                      <div className="px-3 pt-3 md:px-4">
+                        <AISmartReplies
+                          lastMessage={lastReceivedMessage}
+                          onSelectReply={(reply) => {
+                            setMessageText(reply);
+                            messageInputRef.current?.focus();
                           }}
-                          className="h-10 flex-shrink-0"
+                        />
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t border-primary/10 bg-gradient-subtle backdrop-blur-sm">
+                      <div className="flex gap-1.5 md:gap-2 items-end">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                        <Button 
+                          type="button" 
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="h-10 w-10 flex-shrink-0 hover:bg-primary/10 hover:text-primary"
                         >
-                          Cancel
+                          <ImageIcon className="h-5 w-5" />
                         </Button>
-                      )}
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        variant="ghost"
-                        className="h-10 w-10 flex-shrink-0 hidden md:flex"
-                      >
-                        <Smile className="h-5 w-5" />
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        size="icon"
-                        disabled={!messageText.trim() && !selectedImage}
-                        className="h-10 w-10 flex-shrink-0 bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                      >
-                        <Send className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </form>
+                        <Button 
+                          type="button" 
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setIsRecordingVoice(true)}
+                          className="h-10 w-10 flex-shrink-0 hidden md:flex hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Mic className="h-5 w-5" />
+                        </Button>
+                        <Input
+                          ref={messageInputRef}
+                          placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
+                          value={messageText}
+                          onChange={(e) => {
+                            setMessageText(e.target.value);
+                            handleTyping();
+                          }}
+                          className="flex-1 h-10 text-base bg-background/50 border-primary/20 focus:border-primary transition-colors"
+                          autoFocus
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                        />
+                        {editingMessageId && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingMessageId(null);
+                              setMessageText('');
+                            }}
+                            className="h-10 flex-shrink-0"
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                        <Button 
+                          type="button" 
+                          size="icon" 
+                          variant="ghost"
+                          className="h-10 w-10 flex-shrink-0 hidden md:flex"
+                        >
+                          <Smile className="h-5 w-5" />
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          size="icon"
+                          disabled={!messageText.trim() && !selectedImage}
+                          className="h-10 w-10 flex-shrink-0 bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                        >
+                          <Send className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </form>
+                  </>
                 )}
-              </>
+              </> 
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 <div className="text-center max-w-md px-6 space-y-4 animate-fade-in">
@@ -977,6 +997,14 @@ const MessagesPage = () => {
           chatId={selectedChatId}
           open={showChatSettings}
           onOpenChange={setShowChatSettings}
+        />
+      )}
+
+      {showDisappearingDialog && selectedChatId && (
+        <DisappearingMessagesDialog
+          chatId={selectedChatId}
+          isOpen={showDisappearingDialog}
+          onClose={() => setShowDisappearingDialog(false)}
         />
       )}
 

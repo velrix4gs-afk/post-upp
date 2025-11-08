@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX, Unlock, UserCircle, Heart } from 'lucide-react';
+import { MoreVertical, User, Image, BellOff, Download, AlertCircle, Star, Palette, Sparkles, Trash2, Search, Ban, FileText, UserX, Unlock, UserCircle, Heart, Link as LinkIcon, Clock, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -14,9 +14,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useChatSettings } from '@/hooks/useChatSettings';
 import { useBlockedUsers } from '@/hooks/useBlockedUsers';
 import { toast } from '@/hooks/use-toast';
+import { SharedLinksTab } from './messaging/SharedLinksTab';
 
 interface ChatMenuProps {
   chatId: string;
@@ -30,15 +32,18 @@ interface ChatMenuProps {
   onSearchInChat?: () => void;
   onViewStarred?: () => void;
   onWallpaperChange?: () => void;
+  onViewSharedLinks?: () => void;
+  onDisappearingMessages?: () => void;
 }
 
-export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred, onWallpaperChange }: ChatMenuProps) => {
+export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred, onWallpaperChange, onViewSharedLinks, onDisappearingMessages }: ChatMenuProps) => {
   const navigate = useNavigate();
   const { settings, setNickname, muteChat, unmuteChat, togglePin, setTheme } = useChatSettings(chatId);
   const { isBlocked, unblockUser } = useBlockedUsers();
   const [showNicknameDialog, setShowNicknameDialog] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [showThemeDialog, setShowThemeDialog] = useState(false);
+  const [showLinksDialog, setShowLinksDialog] = useState(false);
   const [nickname, setNicknameInput] = useState('');
   const [muteDuration, setMuteDuration] = useState<string>('30');
 
@@ -184,6 +189,10 @@ export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onV
             <Star className="mr-2 h-4 w-4" />
             Starred Messages
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setShowLinksDialog(true)}>
+            <LinkIcon className="mr-2 h-4 w-4" />
+            Shared Links
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setShowThemeDialog(true)}>
             <Palette className="mr-2 h-4 w-4" />
             Change Theme
@@ -193,6 +202,10 @@ export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onV
             Change Wallpaper
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onDisappearingMessages}>
+            <Clock className="mr-2 h-4 w-4" />
+            Disappearing Messages
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={togglePin}>
             <Star className={`mr-2 h-4 w-4 ${settings?.is_pinned ? 'fill-current' : ''}`} />
             {settings?.is_pinned ? 'Unpin Chat' : 'Pin Chat'}
@@ -314,6 +327,16 @@ export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onV
               />
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLinksDialog} onOpenChange={setShowLinksDialog}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Shared Links</DialogTitle>
+            <DialogDescription>All links shared in this conversation</DialogDescription>
+          </DialogHeader>
+          <SharedLinksTab chatId={chatId} />
         </DialogContent>
       </Dialog>
     </>
