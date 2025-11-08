@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
+type ColorTheme = 'default' | 'deep-teal' | 'lemon-yellow' | 'burnt-copper' | 'seamist';
 
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -8,6 +9,13 @@ export const useTheme = () => {
       return (localStorage.getItem('theme') as Theme) || 'system';
     }
     return 'system';
+  });
+
+  const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('colorTheme') as ColorTheme) || 'default';
+    }
+    return 'default';
   });
 
   useEffect(() => {
@@ -25,13 +33,25 @@ export const useTheme = () => {
     }
   }, [theme]);
 
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.setAttribute('data-color-theme', colorTheme);
+  }, [colorTheme]);
+
   const setThemeValue = (newTheme: Theme) => {
     localStorage.setItem('theme', newTheme);
     setTheme(newTheme);
   };
 
+  const setColorThemeValue = (newColorTheme: ColorTheme) => {
+    localStorage.setItem('colorTheme', newColorTheme);
+    setColorTheme(newColorTheme);
+  };
+
   return {
     theme,
     setTheme: setThemeValue,
+    colorTheme,
+    setColorTheme: setColorThemeValue,
   };
 };

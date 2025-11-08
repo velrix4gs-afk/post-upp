@@ -26,7 +26,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile, updateProfile } = useProfile();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
@@ -80,6 +80,13 @@ const SettingsPage = () => {
     show_sensitive: false
   });
 
+  // Request notification permission on mobile
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // Load settings and apply them
   useEffect(() => {
     const loadSettings = async () => {
@@ -113,6 +120,7 @@ const SettingsPage = () => {
           comments: data.notification_post_reactions ?? true,
           messages: data.notification_messages ?? true,
           follows: data.notification_friend_requests ?? true,
+          push_enabled: data.sms_notifications ?? true,
         }));
         setMessagingSettings(prev => ({
           ...prev,
@@ -453,6 +461,79 @@ const SettingsPage = () => {
                     </Select>
                   </div>
 
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <div>
+                      <Label className="text-base mb-2 block">Color Theme</Label>
+                      <p className="text-sm text-muted-foreground mb-4">Choose your preferred color scheme</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setColorTheme('default')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          colorTheme === 'default' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-[#3b82f6]" />
+                          <span className="font-medium text-sm">Default Blue</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">#3b82f6</p>
+                      </button>
+
+                      <button
+                        onClick={() => setColorTheme('deep-teal')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          colorTheme === 'deep-teal' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-[#28443F]" />
+                          <span className="font-medium text-sm">Deep Teal</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">#28443F</p>
+                      </button>
+
+                      <button
+                        onClick={() => setColorTheme('lemon-yellow')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          colorTheme === 'lemon-yellow' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-[#F2FD7D]" />
+                          <span className="font-medium text-sm">Lemon Yellow</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">#F2FD7D</p>
+                      </button>
+
+                      <button
+                        onClick={() => setColorTheme('burnt-copper')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          colorTheme === 'burnt-copper' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-[#A0430A]" />
+                          <span className="font-medium text-sm">Burnt Copper</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">#A0430A</p>
+                      </button>
+
+                      <button
+                        onClick={() => setColorTheme('seamist')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          colorTheme === 'seamist' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-[#DFE8E6] border border-border" />
+                          <span className="font-medium text-sm">Seamist</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">#DFE8E6</p>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <Label className="text-base">Accent Color</Label>
@@ -662,8 +743,21 @@ const SettingsPage = () => {
                     </div>
                     <Switch
                       checked={notificationSettings.push_enabled}
-                      onCheckedChange={(checked) => {
-                        setNotificationSettings({ ...notificationSettings, push_enabled: checked });
+                      onCheckedChange={async (checked) => {
+                        if (checked && 'Notification' in window) {
+                          const permission = await Notification.requestPermission();
+                          if (permission === 'granted') {
+                            setNotificationSettings({ ...notificationSettings, push_enabled: checked });
+                            toast({ description: 'Push notifications enabled' });
+                          } else {
+                            toast({ 
+                              description: 'Please enable notifications in your browser settings', 
+                              variant: 'destructive' 
+                            });
+                          }
+                        } else {
+                          setNotificationSettings({ ...notificationSettings, push_enabled: checked });
+                        }
                       }}
                     />
                   </div>

@@ -180,6 +180,86 @@ All colors MUST be HSL.
   --primary-glow: 330 81% 75%;
 }
 
+/* Custom Color Themes */
+[data-color-theme="deep-teal"] {
+  --primary: 169 25% 22%;
+  --primary-foreground: 0 0% 98%;
+  --primary-hover: 169 25% 18%;
+  --accent: 169 20% 30%;
+  --accent-foreground: 0 0% 98%;
+  --ring: 169 25% 22%;
+  --gradient-primary: linear-gradient(135deg, hsl(169 25% 22%) 0%, hsl(169 30% 30%) 100%);
+  --shadow-glow: 0 0 40px hsl(169 25% 22% / 0.3);
+}
+
+[data-color-theme="deep-teal"].dark {
+  --background: 169 20% 10%;
+  --card: 169 18% 14%;
+  --primary: 169 25% 35%;
+  --primary-hover: 169 25% 30%;
+  --border: 169 15% 20%;
+  --input: 169 15% 20%;
+}
+
+[data-color-theme="lemon-yellow"] {
+  --primary: 64 97% 74%;
+  --primary-foreground: 240 10% 3.9%;
+  --primary-hover: 64 97% 65%;
+  --accent: 64 90% 80%;
+  --accent-foreground: 240 10% 3.9%;
+  --ring: 64 97% 74%;
+  --gradient-primary: linear-gradient(135deg, hsl(64 97% 74%) 0%, hsl(64 90% 65%) 100%);
+  --shadow-glow: 0 0 40px hsl(64 97% 74% / 0.4);
+}
+
+[data-color-theme="lemon-yellow"].dark {
+  --primary: 64 90% 50%;
+  --primary-hover: 64 90% 45%;
+  --accent: 64 80% 30%;
+}
+
+[data-color-theme="burnt-copper"] {
+  --primary: 25 92% 33%;
+  --primary-foreground: 0 0% 98%;
+  --primary-hover: 25 92% 28%;
+  --accent: 25 80% 45%;
+  --accent-foreground: 0 0% 98%;
+  --ring: 25 92% 33%;
+  --gradient-primary: linear-gradient(135deg, hsl(25 92% 33%) 0%, hsl(25 85% 45%) 100%);
+  --shadow-glow: 0 0 40px hsl(25 92% 33% / 0.3);
+}
+
+[data-color-theme="burnt-copper"].dark {
+  --primary: 25 85% 40%;
+  --primary-hover: 25 85% 35%;
+  --accent: 25 75% 30%;
+}
+
+[data-color-theme="seamist"] {
+  --background: 162 15% 90%;
+  --card: 162 15% 93%;
+  --primary: 169 25% 35%;
+  --primary-foreground: 0 0% 98%;
+  --primary-hover: 169 25% 30%;
+  --secondary: 162 10% 85%;
+  --muted: 162 10% 87%;
+  --accent: 169 20% 40%;
+  --border: 162 12% 80%;
+  --input: 162 12% 80%;
+  --ring: 169 25% 35%;
+  --gradient-primary: linear-gradient(135deg, hsl(169 25% 35%) 0%, hsl(162 20% 50%) 100%);
+  --gradient-card: linear-gradient(to bottom, hsl(162 15% 93%), hsl(162 10% 87%));
+  --shadow-glow: 0 0 40px hsl(169 25% 35% / 0.2);
+}
+
+[data-color-theme="seamist"].dark {
+  --background: 169 15% 12%;
+  --card: 169 15% 16%;
+  --primary: 169 25% 40%;
+  --border: 169 12% 22%;
+  --input: 169 12% 22%;
+}
+
 /* Font size variants */
 :root[data-font-size="small"] { font-size: 14px; }
 :root[data-font-size="medium"] { font-size: 16px; }
