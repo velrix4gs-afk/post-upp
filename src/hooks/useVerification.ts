@@ -39,7 +39,7 @@ export const useVerification = () => {
         .from('verification_codes')
         .select('*')
         .or(`user_id.eq.${user.id},used_by.eq.${user.id}`)
-        .single();
+        .maybeSingle();
 
       setVerificationCode(code as VerificationCode | null);
     } catch (error) {
@@ -66,7 +66,7 @@ export const useVerification = () => {
         .from('verification_codes')
         .select('*')
         .eq('code', code)
-        .single();
+        .maybeSingle();
 
       if (findError || !verificationCode) {
         toast({

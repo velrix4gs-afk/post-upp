@@ -104,7 +104,7 @@ export default function VerificationCodes() {
           .from('verification_codes')
           .insert({
             code: codeStr,
-            status: 'issued'
+            status: 'available'
           })
           .select()
           .single();
@@ -169,6 +169,8 @@ export default function VerificationCodes() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'available':
+        return <Badge variant="default">Available</Badge>;
       case 'issued':
         return <Badge variant="default">Issued</Badge>;
       case 'used':
@@ -304,7 +306,7 @@ export default function VerificationCodes() {
                           {code.used_at ? new Date(code.used_at).toLocaleDateString() : '-'}
                         </TableCell>
                         <TableCell className="text-right">
-                          {code.status === 'issued' && (
+                          {(code.status === 'issued' || code.status === 'available') && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="destructive" size="sm">
