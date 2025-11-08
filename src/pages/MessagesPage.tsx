@@ -116,6 +116,11 @@ const MessagesPage = () => {
   useEffect(() => {
     if (user) {
       refetchChats();
+      
+      // Request notification permission
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
     }
   }, [user, refetchChats]);
 
@@ -510,6 +515,22 @@ const MessagesPage = () => {
                       onClick={() => {
                         setActiveCall('voice');
                         setIsCallInitiator(true);
+                        
+                        // Show notification
+                        toast({
+                          title: 'Starting voice call...',
+                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                        });
+
+                        // Browser notification
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                          new Notification('Voice Call', {
+                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                            icon: '/favicon.ico',
+                            badge: '/favicon.ico',
+                            tag: 'post-upp-call'
+                          });
+                        }
                       }}
                     >
                       <Phone className="h-5 w-5" />
@@ -521,6 +542,22 @@ const MessagesPage = () => {
                       onClick={() => {
                         setActiveCall('video');
                         setIsCallInitiator(true);
+                        
+                        // Show notification
+                        toast({
+                          title: 'Starting video call...',
+                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                        });
+
+                        // Browser notification
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                          new Notification('Video Call', {
+                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                            icon: '/favicon.ico',
+                            badge: '/favicon.ico',
+                            tag: 'post-upp-call'
+                          });
+                        }
                       }}
                     >
                       <Video className="h-5 w-5" />

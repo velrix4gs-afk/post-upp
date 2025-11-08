@@ -127,6 +127,24 @@ export const useMessages = (chatId?: string) => {
               avatar_url: profile?.avatar_url
             }
           };
+
+          // Show notification if message is from another user
+          if (newMessage.sender_id !== user?.id) {
+            toast({
+              title: profile?.display_name || 'New Message',
+              description: newMessage.content || 'Sent an attachment',
+            });
+
+            // Browser notification for mobile
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(profile?.display_name || 'New Message', {
+                body: newMessage.content || 'Sent an attachment',
+                icon: '/favicon.ico',
+                badge: '/favicon.ico',
+                tag: 'post-upp-message'
+              });
+            }
+          }
           
           setMessages(prev => {
             // Remove any existing message with same ID (avoid true duplicates)

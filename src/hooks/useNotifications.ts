@@ -6,13 +6,30 @@ import { toast } from './use-toast';
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'friend_request' | 'message' | 'like' | 'comment' | 'mention' | 'share' | 'follow';
+  type: 'friend_request' | 'message' | 'like' | 'comment' | 'mention' | 'share' | 'follow' | 'voice_call' | 'video_call';
   title: string;
   content?: string;
   data?: any;
   is_read: boolean;
   created_at: string;
 }
+
+const requestNotificationPermission = async () => {
+  if ('Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+};
+
+const showBrowserNotification = (title: string, body?: string, icon?: string) => {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      body,
+      icon: icon || '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'post-upp-notification'
+    });
+  }
+};
 
 export const useNotifications = () => {
   const { user } = useAuth();
@@ -22,6 +39,7 @@ export const useNotifications = () => {
 
   useEffect(() => {
     if (user) {
+      requestNotificationPermission();
       fetchNotifications();
       
       // Set up real-time subscription for new notifications
@@ -42,6 +60,12 @@ export const useNotifications = () => {
             title: newNotification.title,
             description: newNotification.content,
           });
+
+          // Show browser notification
+          showBrowserNotification(
+            newNotification.title,
+            newNotification.content
+          );
         })
         .subscribe();
 
