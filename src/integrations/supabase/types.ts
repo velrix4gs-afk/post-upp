@@ -1607,6 +1607,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          auto_delete_enabled: boolean | null
           chat_id: string | null
           content: string | null
           created_at: string | null
@@ -1614,6 +1615,7 @@ export type Database = {
           deleted_for: string[] | null
           edit_deadline: string | null
           edited_at: string | null
+          expires_at: string | null
           forwarded_from_message_id: string | null
           id: string
           is_edited: boolean | null
@@ -1626,6 +1628,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          auto_delete_enabled?: boolean | null
           chat_id?: string | null
           content?: string | null
           created_at?: string | null
@@ -1633,6 +1636,7 @@ export type Database = {
           deleted_for?: string[] | null
           edit_deadline?: string | null
           edited_at?: string | null
+          expires_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
           is_edited?: boolean | null
@@ -1645,6 +1649,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          auto_delete_enabled?: boolean | null
           chat_id?: string | null
           content?: string | null
           created_at?: string | null
@@ -1652,6 +1657,7 @@ export type Database = {
           deleted_for?: string[] | null
           edit_deadline?: string | null
           edited_at?: string | null
+          expires_at?: string | null
           forwarded_from_message_id?: string | null
           id?: string
           is_edited?: boolean | null

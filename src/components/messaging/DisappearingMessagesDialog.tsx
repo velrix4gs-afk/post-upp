@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DisappearingMessagesDialogProps {
   isOpen: boolean;
@@ -18,9 +19,31 @@ export const DisappearingMessagesDialog = ({ isOpen, onClose, chatId }: Disappea
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Store disappearing messages preference in localStorage for now
-      // In production, this would be stored in the database
-      localStorage.setItem(`disappearing_${chatId}`, duration);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Save to database
+      const autoDurationSeconds = duration === 'off' ? null : parseInt(duration) * 60;
+      
+      const { error } = await supabase
+        .from('chat_settings')
+        .upsert({
+          chat_id: chatId,
+          user_id: user.id,
+          auto_delete_duration: autoDurationSeconds
+        });
+
+      if (error) {
+        throw error;
+      }
 
       toast({
         title: duration === 'off' ? 'Disappearing messages disabled' : 'Disappearing messages enabled',
@@ -30,6 +53,7 @@ export const DisappearingMessagesDialog = ({ isOpen, onClose, chatId }: Disappea
       });
       onClose();
     } catch (error) {
+      console.error('Error saving disappearing messages:', error);
       toast({
         title: 'Error',
         description: 'Failed to update settings',

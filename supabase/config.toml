@@ -1,5 +1,8 @@
 project_id = "ccyyxkjpgebjnstevgkw"
 
+[functions.delete-expired-messages]
+verify_jwt = false
+
 [functions.publish-scheduled-posts]
 verify_jwt = true
 
