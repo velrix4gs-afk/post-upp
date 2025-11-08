@@ -268,10 +268,10 @@ export const useGroups = () => {
     joinGroup,
     leaveGroup,
     loadMore: () => fetchGroups(true),
-    refetch: () => {
+    refresh: async () => {
       setPage(0);
-      fetchGroups();
-      fetchMyGroups();
+      await fetchGroups();
+      await fetchMyGroups();
     }
   };
 };

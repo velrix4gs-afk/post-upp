@@ -217,9 +217,9 @@ export const useEvents = () => {
     createEvent,
     toggleAttendance,
     loadMore: () => fetchEvents(true),
-    refetch: () => {
+    refresh: async () => {
       setPage(0);
-      fetchEvents();
+      await fetchEvents();
     }
   };
 };

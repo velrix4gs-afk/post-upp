@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/PullToRefresh';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +16,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useGroups } from '@/hooks/useGroups';
 
 const GroupsPage = () => {
-  const { groups, myGroups, loading, hasMore, createGroup, joinGroup, leaveGroup, loadMore } = useGroups();
+  const { groups, myGroups, loading, hasMore, createGroup, joinGroup, leaveGroup, loadMore, refresh } = useGroups();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const { containerRef, isPulling, isRefreshing, pullDistance } = usePullToRefresh({
+    onRefresh: async () => {
+      await refresh();
+    },
+  });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -63,7 +71,12 @@ const GroupsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background">
+      <PullToRefreshIndicator 
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+      />
       <Navigation />
       
       <main className="container mx-auto p-4 max-w-6xl">

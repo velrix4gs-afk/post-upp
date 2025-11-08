@@ -11,12 +11,20 @@ import { Sparkles, Users, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useInView } from 'react-intersection-observer';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/PullToRefresh';
 
 const Feed = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'for-you' | 'following' | 'trending'>('for-you');
-  const { posts, loading, hasMore, loadMore } = useFeed(activeTab === 'trending' ? 'for-you' : activeTab);
+  const { posts, loading, hasMore, loadMore, refresh } = useFeed(activeTab === 'trending' ? 'for-you' : activeTab);
   const { ref: loadMoreRef, inView } = useInView();
+  
+  const { containerRef, isPulling, isRefreshing, pullDistance } = usePullToRefresh({
+    onRefresh: async () => {
+      await refresh();
+    },
+  });
 
   // Real-time subscription for posts
   useEffect(() => {
@@ -51,7 +59,12 @@ const Feed = () => {
   }, [inView, loading, hasMore, loadMore]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background">
+      <PullToRefreshIndicator 
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+      />
       <Navigation />
       
       <div className="container mx-auto flex gap-6 px-4 lg:px-8">

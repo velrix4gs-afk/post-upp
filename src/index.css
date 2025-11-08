@@ -214,38 +214,40 @@ All colors MUST be HSL.
 }
 
 [data-color-theme="lemon-yellow"] {
-  --background: 64 80% 88%;
-  --foreground: 64 30% 15%;
-  --card: 64 75% 92%;
-  --card-foreground: 64 30% 15%;
-  --popover: 64 75% 92%;
-  --popover-foreground: 64 30% 15%;
-  --primary: 64 85% 55%;
-  --primary-foreground: 64 30% 10%;
-  --primary-hover: 64 85% 50%;
-  --secondary: 64 60% 80%;
-  --secondary-foreground: 64 30% 15%;
-  --muted: 64 55% 85%;
-  --muted-foreground: 64 20% 35%;
-  --accent: 64 70% 65%;
-  --accent-foreground: 64 30% 10%;
-  --border: 64 50% 75%;
-  --input: 64 50% 75%;
-  --ring: 64 85% 55%;
-  --gradient-primary: linear-gradient(135deg, hsl(64 85% 55%) 0%, hsl(64 80% 65%) 100%);
-  --gradient-card: linear-gradient(to bottom, hsl(64 75% 92%), hsl(64 55% 85%));
-  --shadow-glow: 0 0 40px hsl(64 85% 55% / 0.4);
+  --background: 58 90% 85%;
+  --foreground: 58 40% 12%;
+  --card: 60 100% 98%;
+  --card-foreground: 58 40% 12%;
+  --popover: 60 100% 98%;
+  --popover-foreground: 58 40% 12%;
+  --primary: 58 95% 45%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 58 95% 40%;
+  --secondary: 60 80% 92%;
+  --secondary-foreground: 58 40% 15%;
+  --muted: 60 70% 94%;
+  --muted-foreground: 58 30% 30%;
+  --accent: 58 85% 50%;
+  --accent-foreground: 0 0% 100%;
+  --border: 60 50% 80%;
+  --input: 60 50% 80%;
+  --ring: 58 95% 45%;
+  --gradient-primary: linear-gradient(135deg, hsl(58 95% 45%) 0%, hsl(58 85% 55%) 100%);
+  --gradient-card: linear-gradient(to bottom, hsl(60 100% 98%), hsl(60 70% 94%));
+  --shadow-glow: 0 0 40px hsl(58 95% 45% / 0.4);
 }
 
 [data-color-theme="lemon-yellow"].dark {
-  --background: 64 40% 12%;
-  --foreground: 64 80% 95%;
-  --card: 64 35% 16%;
-  --primary: 64 75% 60%;
-  --primary-foreground: 64 30% 10%;
-  --border: 64 30% 22%;
-  --input: 64 30% 22%;
-  --muted-foreground: 64 40% 70%;
+  --background: 58 35% 10%;
+  --foreground: 60 80% 95%;
+  --card: 58 30% 14%;
+  --card-foreground: 60 80% 95%;
+  --primary: 58 85% 55%;
+  --primary-foreground: 0 0% 100%;
+  --border: 58 25% 20%;
+  --input: 58 25% 20%;
+  --muted: 58 25% 18%;
+  --muted-foreground: 60 40% 70%;
 }
 
 [data-color-theme="burnt-copper"] {

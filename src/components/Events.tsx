@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/PullToRefresh';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,8 +14,14 @@ import { Calendar, MapPin, Users, Plus, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Events = () => {
-  const { events, loading, hasMore, createEvent, toggleAttendance, loadMore } = useEvents();
+  const { events, loading, hasMore, createEvent, toggleAttendance, loadMore, refresh } = useEvents();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  
+  const { containerRef, isPulling, isRefreshing, pullDistance } = usePullToRefresh({
+    onRefresh: async () => {
+      await refresh();
+    },
+  });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -47,7 +55,12 @@ const Events = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div ref={containerRef} className="space-y-4 md:space-y-6">
+      <PullToRefreshIndicator 
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+      />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h2 className="text-xl md:text-2xl font-bold">Events</h2>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
