@@ -1,103 +1,82 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { toast } from '@/hooks/use-toast';
+import { Loader2, Plus, Copy, Check, X } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface VerificationCode {
   id: string;
   code: string;
-  user_id: string | null;
   status: string;
+  user_id: string | null;
   created_at: string;
-  issued_at: string | null;
   used_at: string | null;
-  used_by: string | null;
-  purchased_at: string | null;
-  op_notes: string | null;
-  user_display_name?: string;
-  user_username?: string;
+  issued_at: string;
+  purchased_at: string;
+  used_by: string;
+  op_notes: string;
 }
 
-export const VerificationCodes = () => {
+export default function VerificationCodes() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [codes, setCodes] = useState<VerificationCode[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [generateCount, setGenerateCount] = useState(10);
-  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
-  const [showRevokeDialog, setShowRevokeDialog] = useState(false);
-  const [selectedCode, setSelectedCode] = useState<VerificationCode | null>(null);
-  const [revokeReason, setRevokeReason] = useState('');
-  const { toast } = useToast();
+  const [generating, setGenerating] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   useEffect(() => {
+    checkAdminAccess();
     fetchCodes();
-  }, [statusFilter]);
+  }, [user]);
+
+  const checkAdminAccess = async () => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .single();
+
+    if (error || !data) {
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access this page',
+        variant: 'destructive'
+      });
+      navigate('/');
+    }
+  };
 
   const fetchCodes = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('verification_codes')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-
-      const { data, error } = await query;
-
       if (error) throw error;
-      
-      // Fetch profile data for users
-      const codesWithProfiles = await Promise.all((data || []).map(async (code) => {
-        if (code.user_id) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name, username')
-            .eq('id', code.user_id)
-            .single();
-          
-          return {
-            ...code,
-            user_display_name: profile?.display_name,
-            user_username: profile?.username,
-          };
-        }
-        return code;
-      }));
-      
-      setCodes(codesWithProfiles);
+      setCodes((data || []) as VerificationCode[]);
     } catch (error) {
       console.error('Error fetching codes:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch verification codes',
-        variant: 'destructive',
+        description: 'Failed to load verification codes',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -105,253 +84,260 @@ export const VerificationCodes = () => {
   };
 
   const generateCodes = async () => {
+    if (quantity < 1 || quantity > 100) {
+      toast({
+        title: 'Invalid Quantity',
+        description: 'Please enter a number between 1 and 100',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setGenerating(true);
     try {
       const newCodes = [];
-      for (let i = 0; i < generateCount; i++) {
-        const { data, error } = await supabase.rpc('generate_verification_code');
+      for (let i = 0; i < quantity; i++) {
+        const { data: codeStr, error } = await supabase.rpc('generate_verification_code');
         if (error) throw error;
         
-        const { error: insertError } = await supabase
+        const { data: code, error: insertError } = await supabase
           .from('verification_codes')
           .insert({
-            code: data,
-            status: 'available',
-          });
+            code: codeStr,
+            status: 'issued'
+          })
+          .select()
+          .single();
 
         if (insertError) throw insertError;
-        newCodes.push(data);
+        newCodes.push(code);
       }
 
       toast({
         title: 'Success',
-        description: `Generated ${generateCount} verification codes`,
+        description: `Generated ${quantity} verification code(s)`,
       });
 
-      setShowGenerateDialog(false);
       fetchCodes();
+      setQuantity(1);
     } catch (error) {
       console.error('Error generating codes:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate codes',
-        variant: 'destructive',
+        description: 'Failed to generate verification codes',
+        variant: 'destructive'
       });
+    } finally {
+      setGenerating(false);
     }
   };
 
-  const revokeCode = async () => {
-    if (!selectedCode) return;
-
+  const revokeCode = async (codeId: string) => {
     try {
       const { error } = await supabase
         .from('verification_codes')
-        .update({
-          status: 'revoked',
-          op_notes: revokeReason,
-        })
-        .eq('id', selectedCode.id);
+        .update({ status: 'revoked' })
+        .eq('id', codeId);
 
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Verification code revoked',
+        title: 'Code Revoked',
+        description: 'The verification code has been revoked',
       });
 
-      setShowRevokeDialog(false);
-      setSelectedCode(null);
-      setRevokeReason('');
       fetchCodes();
     } catch (error) {
       console.error('Error revoking code:', error);
       toast({
         title: 'Error',
         description: 'Failed to revoke code',
-        variant: 'destructive',
+        variant: 'destructive'
       });
     }
   };
 
-  const filteredCodes = codes.filter(
-    (code) =>
-      code.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      code.user_display_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const copyToClipboard = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+    toast({
+      title: 'Copied',
+      description: 'Code copied to clipboard',
+    });
+  };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      available: 'secondary',
-      issued: 'default',
-      used: 'outline',
-      revoked: 'destructive',
-    };
-    return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
+    switch (status) {
+      case 'issued':
+        return <Badge variant="default">Issued</Badge>;
+      case 'used':
+        return <Badge variant="secondary">Used</Badge>;
+      case 'revoked':
+        return <Badge variant="destructive">Revoked</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold">Verification Codes</h1>
-            <Button onClick={() => setShowGenerateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Generate Codes
-            </Button>
-          </div>
+      
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Verification Code Management</h1>
+          <p className="text-muted-foreground">
+            Generate and manage verification codes for users
+          </p>
+        </div>
 
-          <Card className="p-6 mb-6">
-            <div className="flex gap-4 mb-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Generate New Codes</CardTitle>
+            <CardDescription>
+              Create verification codes that users can redeem to get verified
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1 max-w-xs">
+                <label className="text-sm font-medium mb-2 block">Quantity</label>
                 <Input
-                  placeholder="Search by code or user..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={quantity}
+                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  placeholder="Enter quantity"
                 />
               </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border rounded-md"
+              <Button
+                onClick={generateCodes}
+                disabled={generating}
               >
-                <option value="all">All Status</option>
-                <option value="available">Available</option>
-                <option value="issued">Issued</option>
-                <option value="used">Used</option>
-                <option value="revoked">Revoked</option>
-              </select>
+                {generating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Generate Codes
+                  </>
+                )}
+              </Button>
             </div>
+          </CardContent>
+        </Card>
 
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Verification Codes</CardTitle>
+            <CardDescription>
+              All generated verification codes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Code</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Assigned User</TableHead>
+                    <TableHead>Used By</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead>Issued</TableHead>
-                    <TableHead>Used</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Used At</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCodes.map((code) => (
-                    <TableRow key={code.id}>
-                      <TableCell className="font-mono">{code.code}</TableCell>
-                      <TableCell>{getStatusBadge(code.status)}</TableCell>
-                      <TableCell>
-                        {code.user_display_name ? (
-                          <div>
-                            <div className="font-medium">{code.user_display_name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              @{code.user_username}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(code.created_at), 'MMM dd, yyyy')}
-                      </TableCell>
-                      <TableCell>
-                        {code.issued_at
-                          ? format(new Date(code.issued_at), 'MMM dd, yyyy')
-                          : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {code.used_at
-                          ? format(new Date(code.used_at), 'MMM dd, yyyy')
-                          : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {code.status !== 'revoked' && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedCode(code);
-                              setShowRevokeDialog(true);
-                            }}
-                          >
-                            Revoke
-                          </Button>
-                        )}
+                  {codes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        No verification codes found
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    codes.map((code) => (
+                      <TableRow key={code.id}>
+                        <TableCell className="font-mono">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate max-w-[150px]">{code.code}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(code.code)}
+                            >
+                              {copiedCode === code.code ? (
+                                <Check className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(code.status)}</TableCell>
+                        <TableCell>
+                          {code.user_id ? (
+                            <span className="text-sm">User #{code.user_id.substring(0, 8)}</span>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {new Date(code.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {code.used_at ? new Date(code.used_at).toLocaleDateString() : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {code.status === 'issued' && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  <X className="h-4 w-4 mr-1" />
+                                  Revoke
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Revoke Verification Code</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to revoke this code? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => revokeCode(code.id)}>
+                                    Revoke
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
-            )}
-          </Card>
-        </div>
-      </div>
-
-      <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generate Verification Codes</DialogTitle>
-            <DialogDescription>
-              Create new verification codes that can be assigned to users
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="count">Number of codes to generate</Label>
-            <Input
-              id="count"
-              type="number"
-              min="1"
-              max="100"
-              value={generateCount}
-              onChange={(e) => setGenerateCount(parseInt(e.target.value) || 1)}
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGenerateDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={generateCodes}>Generate</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Revoke Verification Code</DialogTitle>
-            <DialogDescription>
-              This will permanently revoke the code: {selectedCode?.code}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="reason">Reason for revocation</Label>
-            <Textarea
-              id="reason"
-              value={revokeReason}
-              onChange={(e) => setRevokeReason(e.target.value)}
-              placeholder="Enter reason..."
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRevokeDialog(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={revokeCode}>
-              Revoke Code
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
-};
+}

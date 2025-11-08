@@ -55,28 +55,29 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:absolute md:inset-auto">
-      {/* Mobile backdrop */}
+    <div className="fixed inset-0 z-50 md:relative md:inset-auto">
+      {/* Mobile full-screen backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 md:hidden"
+        className="fixed inset-0 bg-black/80 md:hidden"
         onClick={onClose}
       />
       
-      {/* Notification panel */}
-      <Card className="absolute top-0 right-0 w-full h-full md:w-96 md:h-[600px] md:top-2 md:right-2 bg-gradient-card border-0 shadow-xl">
+      {/* Notification panel - full screen on mobile, dropdown on desktop */}
+      <Card className="fixed inset-0 md:absolute md:inset-auto md:top-2 md:right-2 w-full md:w-96 h-full md:h-[600px] bg-card border-0 md:border shadow-xl overflow-hidden">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 border-b">
+          <div className="p-4 border-b bg-card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Notifications</h2>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={markAllAsRead}
+                    className="text-xs"
                   >
-                    <CheckCheck className="h-4 w-4 mr-2" />
+                    <CheckCheck className="h-4 w-4 mr-1" />
                     Mark all read
                   </Button>
                 )}

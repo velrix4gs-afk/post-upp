@@ -56,6 +56,11 @@ export const VoiceCall = ({
 
   const initializeCall = async () => {
     try {
+      // Request notification and microphone permissions
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -66,9 +71,12 @@ export const VoiceCall = ({
       
       setLocalStream(stream);
 
+      // Use STUN/TURN servers for better connectivity
       const configuration = {
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' }
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' }
         ]
       };
       
@@ -85,11 +93,32 @@ export const VoiceCall = ({
           audioRef.current.srcObject = event.streams[0];
         }
         setIsConnected(true);
+        
+        // Show notification
+        if (Notification.permission === 'granted') {
+          new Notification('Call Connected', {
+            body: `Voice call with ${participantName}`,
+            icon: participantAvatar
+          });
+        }
       };
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
           console.log('ICE candidate:', event.candidate);
+          // TODO: Send candidate to peer via signaling server
+        }
+      };
+
+      peerConnection.onconnectionstatechange = () => {
+        console.log('Connection state:', peerConnection.connectionState);
+        if (peerConnection.connectionState === 'disconnected' || 
+            peerConnection.connectionState === 'failed') {
+          toast({
+            title: 'Connection Lost',
+            description: 'The call was disconnected',
+            variant: 'destructive'
+          });
         }
       };
 
@@ -97,15 +126,31 @@ export const VoiceCall = ({
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         console.log('Created offer:', offer);
+        // TODO: Send offer to peer via signaling server
       }
 
     } catch (error) {
       console.error('Error initializing call:', error);
+      let errorMessage = 'Failed to access microphone';
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = 'Microphone permission denied';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'No microphone found';
+        } else if (error.name === 'NotReadableError') {
+          errorMessage = 'Microphone is being used by another application';
+        }
+      }
+      
       toast({
-        title: 'Error',
-        description: 'Failed to access microphone',
+        title: 'Call Error',
+        description: errorMessage,
         variant: 'destructive'
       });
+      
+      // Auto-close on error
+      setTimeout(() => handleEndCall(), 2000);
     }
   };
 

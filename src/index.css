@@ -14,7 +14,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Modern social media color palette */
-    --background: 0 0% 99%;
+    --background: 0 0% 100%;
     --foreground: 224 15% 15%;
 
     --card: 0 0% 100%;
@@ -93,10 +93,10 @@ All colors MUST be HSL.
 
   .dark {
     /* Dark mode: Modern dark with blue accents */
-    --background: 224 15% 8%;
+    --background: 224 15% 6%;
     --foreground: 0 0% 95%;
 
-    --card: 224 15% 10%;
+    --card: 224 15% 8%;
     --card-foreground: 0 0% 95%;
 
     --popover: 224 15% 10%;
@@ -329,8 +329,13 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+  }
+
+  html, body, #root {
+    background-color: hsl(var(--background)) !important;
   }
 }
 
