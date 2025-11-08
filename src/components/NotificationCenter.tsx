@@ -55,15 +55,15 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:relative md:inset-auto">
+    <>
       {/* Mobile full-screen backdrop */}
       <div 
-        className="fixed inset-0 bg-black/80 md:hidden"
+        className="fixed inset-0 bg-black/80 z-[60] md:hidden"
         onClick={onClose}
       />
       
       {/* Notification panel - full screen on mobile, dropdown on desktop */}
-      <Card className="fixed inset-0 md:absolute md:inset-auto md:top-2 md:right-2 w-full md:w-96 h-full md:h-[600px] bg-card border-0 md:border shadow-xl overflow-hidden">
+      <Card className="fixed inset-0 z-[70] md:absolute md:inset-auto md:top-2 md:right-2 md:z-50 w-full md:w-96 h-full md:h-[600px] bg-card border-0 md:border shadow-xl overflow-hidden">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-4 border-b bg-card">
@@ -190,7 +190,7 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
           )}
         </div>
       </Card>
-    </div>
+    </>
   );
 };
 

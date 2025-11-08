@@ -17,6 +17,17 @@ export const usePullToRefresh = ({
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const triggerHaptic = (style: 'light' | 'medium' | 'heavy' = 'medium') => {
+    if ('vibrate' in navigator) {
+      const patterns = {
+        light: 10,
+        medium: 20,
+        heavy: 30
+      };
+      navigator.vibrate(patterns[style]);
+    }
+  };
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container || typeof window === 'undefined' || window.innerWidth > 1024) return;
@@ -41,6 +52,7 @@ export const usePullToRefresh = ({
 
     const handleTouchEnd = async () => {
       if (pullDistance >= threshold && !isRefreshing) {
+        triggerHaptic('medium');
         setIsRefreshing(true);
         await onRefresh();
         setIsRefreshing(false);

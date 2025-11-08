@@ -14,6 +14,7 @@ import { MessageReactions } from "./messaging/MessageReactions";
 import { ReadReceiptIndicator } from "./messaging/ReadReceiptIndicator";
 import { ReactionPicker } from "./ReactionPicker";
 import { Badge } from "./ui/badge";
+import { SwipeToDelete } from "./SwipeToDelete";
 
 interface MessageBubbleProps {
   id: string;
@@ -70,10 +71,14 @@ export const MessageBubble = ({
   onForward,
 }: MessageBubbleProps) => {
   return (
-    <div className={cn(
-      "flex gap-2 md:gap-3 group mb-3 md:mb-4",
-      isOwn ? "flex-row-reverse" : "flex-row"
-    )}>
+    <SwipeToDelete
+      onDelete={() => onDelete?.(id)}
+      disabled={!isOwn || !onDelete}
+    >
+      <div className={cn(
+        "flex gap-2 md:gap-3 group mb-3 md:mb-4",
+        isOwn ? "flex-row-reverse" : "flex-row"
+      )}>
       <Avatar className="h-9 w-9 md:h-8 md:w-8 flex-shrink-0">
         <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
         <AvatarFallback>{sender.display_name[0]}</AvatarFallback>
@@ -211,6 +216,7 @@ export const MessageBubble = ({
           {isOwn && <ReadReceiptIndicator status={status} isOwn={isOwn} />}
         </div>
       </div>
-    </div>
+      </div>
+    </SwipeToDelete>
   );
 };

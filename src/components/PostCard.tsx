@@ -19,6 +19,7 @@ import { SharePostDialog } from "./SharePostDialog";
 import { TipDialog } from "./premium/TipDialog";
 import { ImageGalleryViewer } from "./ImageGalleryViewer";
 import { PostCardActions } from "./PostCard/PostCardActions";
+import { SwipeToDelete } from "./SwipeToDelete";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -265,10 +266,14 @@ export const PostCard = ({ post }: PostCardProps) => {
         </DialogContent>
       </Dialog>
 
-      <article 
-        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-        onClick={handleCardClick}
+      <SwipeToDelete 
+        onDelete={handleDelete}
+        disabled={!isOwner}
       >
+        <article 
+          className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+          onClick={handleCardClick}
+        >
         <div className="p-4 flex gap-3">
           <Avatar 
             className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
@@ -430,6 +435,7 @@ export const PostCard = ({ post }: PostCardProps) => {
           </div>
         </div>
       </article>
+      </SwipeToDelete>
 
       <SharePostDialog
         postId={post.id}

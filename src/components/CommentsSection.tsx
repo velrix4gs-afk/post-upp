@@ -6,6 +6,7 @@ import { Loader2, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useComments } from '@/hooks/useComments';
 import { formatDistanceToNow } from 'date-fns';
+import { SwipeToDelete } from './SwipeToDelete';
 
 interface CommentsSectionProps {
   postId: string;
@@ -77,7 +78,12 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
       ) : (
         <div className="space-y-3">
           {comments.map((comment) => (
-            <div key={comment.id} className="flex gap-2">
+            <SwipeToDelete
+              key={comment.id}
+              onDelete={() => deleteComment(comment.id)}
+              disabled={user?.id !== comment.user_id}
+            >
+              <div className="flex gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={comment.user?.avatar_url} />
                 <AvatarFallback>
@@ -108,6 +114,7 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
                 </p>
               </div>
             </div>
+            </SwipeToDelete>
           ))}
           {comments.length === 0 && (
             <p className="text-center text-muted-foreground text-sm py-4">
