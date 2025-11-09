@@ -14,7 +14,7 @@ import { formatDistanceToNow } from 'date-fns';
 const Stories = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
-  const { stories, createStory, viewStory } = useStories();
+  const { stories, createStory, viewStory, deleteStory } = useStories();
   const [selectedStory, setSelectedStory] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [content, setContent] = useState('');
@@ -45,10 +45,22 @@ const Stories = () => {
     setSelectedStory(story);
   };
 
+  const handleDeleteStory = async (storyId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteStory(storyId);
+    if (selectedStory?.id === storyId) {
+      setSelectedStory(null);
+    }
+  };
+
   return (
     <>
       <Card className="bg-gradient-card border-0 p-4">
-        <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+          <style>{`
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+          `}</style>
           {/* Add Story */}
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -145,7 +157,7 @@ const Stories = () => {
           {stories.map((story) => (
             <div 
               key={story.id} 
-              className="flex-shrink-0 w-16 text-center cursor-pointer"
+              className="flex-shrink-0 w-16 text-center cursor-pointer snap-start relative group"
               onClick={() => handleStoryClick(story)}
             >
               <div className="w-16 h-16 relative">
@@ -155,6 +167,16 @@ const Stories = () => {
                     {story.profiles.display_name[0]}
                   </AvatarFallback>
                 </Avatar>
+                {story.user_id === user?.id && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    onClick={(e) => handleDeleteStory(story.id, e)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
               <p className="text-xs mt-2 w-16 truncate">
                 {story.profiles.display_name}
@@ -186,14 +208,26 @@ const Stories = () => {
                     </p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                  onClick={() => setSelectedStory(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  {selectedStory.user_id === user?.id && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="hover:bg-destructive/90"
+                      onClick={(e) => handleDeleteStory(selectedStory.id, e)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-white/20"
+                    onClick={() => setSelectedStory(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               
               <div className="aspect-[9/16] flex items-center justify-center bg-black">

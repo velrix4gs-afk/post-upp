@@ -7,9 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Mail, Lock, User, Chrome, Twitter, Phone } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Chrome, Twitter, Sparkles } from 'lucide-react';
 import { z } from 'zod';
-import PhoneAuth from '@/components/PhoneAuth';
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -19,7 +18,7 @@ const signUpSchema = z.object({
 });
 
 const SignUp = () => {
-  const [authMode, setAuthMode] = useState<'email' | 'phone' | 'magic'>('email');
+  const [authMode, setAuthMode] = useState<'email' | 'magic'>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [magicLinkEmail, setMagicLinkEmail] = useState('');
@@ -153,23 +152,24 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gradient-card border-0 shadow-elegant">
-        <div className="p-6 md:p-8">
+    <div className="min-h-screen relative overflow-hidden bg-background flex items-center justify-center p-4">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
+      <Card className="w-full max-w-md bg-card/80 backdrop-blur-xl border-border shadow-elegant relative z-10">
+        <div className="p-8">
           <div className="text-center mb-8">
-            <div className="mb-4 bg-gradient-primary rounded-xl p-6">
+            <div className="mb-4 bg-gradient-primary rounded-2xl p-6 shadow-glow">
               <h1 className="text-4xl font-bold text-white">POST-UPP</h1>
             </div>
-            <h2 className="text-2xl font-semibold text-foreground">Sign Up</h2>
-            <p className="text-muted-foreground mt-2">Create your account and join the community</p>
+            <h2 className="text-2xl font-bold text-foreground">Create Account</h2>
+            <p className="text-muted-foreground mt-2">Join the community today</p>
           </div>
 
-          {authMode === 'phone' ? (
-            <PhoneAuth 
-              onBack={() => setAuthMode('email')}
-              onSuccess={() => navigate('/feed')}
-            />
-          ) : authMode === 'magic' ? (
+          {authMode === 'magic' ? (
             <div className="space-y-4">
               <Button
                 variant="ghost"
@@ -298,11 +298,11 @@ const SignUp = () => {
                 </span>
               </div>
 
-              <div className="space-y-3 mb-6">
+              <div className="grid grid-cols-2 gap-3 mb-6">
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
+                  className="gap-2 hover:bg-primary/5 transition-all"
                   onClick={handleGoogleSignIn}
                 >
                   <Chrome className="h-4 w-4" />
@@ -312,33 +312,23 @@ const SignUp = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
+                  className="gap-2 hover:bg-primary/5 transition-all"
                   onClick={handleTwitterSignIn}
                 >
                   <Twitter className="h-4 w-4" />
-                  Twitter/X
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
-                  onClick={() => setAuthMode('phone')}
-                >
-                  <Phone className="h-4 w-4" />
-                  Phone
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
-                  onClick={() => setAuthMode('magic')}
-                >
-                  <Mail className="h-4 w-4" />
-                  Magic Link
+                  Twitter
                 </Button>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 hover:bg-accent/20 transition-all mb-6"
+                onClick={() => setAuthMode('magic')}
+              >
+                <Sparkles className="h-4 w-4" />
+                Sign up with Magic Link
+              </Button>
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
