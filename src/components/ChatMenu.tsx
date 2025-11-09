@@ -216,7 +216,7 @@ export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onV
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => settings?.is_muted ? handleUnmute() : setShowMuteDialog(true)}>
             <BellOff className="mr-2 h-4 w-4" />
-            {settings?.is_muted ? 'Unmute' : 'Mute Notifications'}
+            {settings?.is_muted ? 'Unmute Chat' : 'Mute Chat'}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleAISummary}>

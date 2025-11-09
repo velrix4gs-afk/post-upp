@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { PostCard } from '@/components/PostCard';
 import ProfileEdit from '@/components/ProfileEdit';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CoinsDisplay } from '@/components/CoinsDisplay';
+import { FollowersDialog } from '@/components/FollowersDialog';
 import { 
   Edit, 
   MapPin, 
@@ -49,6 +51,8 @@ const ProfilePage = () => {
   const { friends } = useFriends();
   const { followers, following, followUser, unfollowUser } = useFollowers(profileUserId);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [showFollowersDialog, setShowFollowersDialog] = useState(false);
+  const [showFollowingDialog, setShowFollowingDialog] = useState(false);
 
   const handleProfileEditClose = () => {
     setShowProfileEdit(false);
@@ -179,6 +183,7 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <BackNavigation title={profile?.display_name} />
       
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Cover Photo */}
@@ -259,11 +264,11 @@ const ProfilePage = () => {
                     <div className="text-2xl font-bold">{userPosts.length}</div>
                     <div className="text-sm text-muted-foreground">Posts</div>
                   </div>
-                  <div className="text-center cursor-pointer hover:opacity-80">
+                  <div className="text-center cursor-pointer hover:opacity-80" onClick={() => setShowFollowersDialog(true)}>
                     <div className="text-2xl font-bold">{followers.length}</div>
                     <div className="text-sm text-muted-foreground">Followers</div>
                   </div>
-                  <div className="text-center cursor-pointer hover:opacity-80">
+                  <div className="text-center cursor-pointer hover:opacity-80" onClick={() => setShowFollowingDialog(true)}>
                     <div className="text-2xl font-bold">{following.length}</div>
                     <div className="text-sm text-muted-foreground">Following</div>
                   </div>
@@ -390,6 +395,21 @@ const ProfilePage = () => {
       {showProfileEdit && (
         <ProfileEdit onClose={handleProfileEditClose} />
       )}
+      
+      {/* Followers/Following Dialogs */}
+      <FollowersDialog
+        open={showFollowersDialog}
+        onClose={() => setShowFollowersDialog(false)}
+        users={followers.map(f => f.follower)}
+        title="Followers"
+      />
+      
+      <FollowersDialog
+        open={showFollowingDialog}
+        onClose={() => setShowFollowingDialog(false)}
+        users={following.map(f => f.following)}
+        title="Following"
+      />
     </div>
   );
 };

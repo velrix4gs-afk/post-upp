@@ -17,6 +17,7 @@ import { EnhancedMessageBubble } from '@/components/EnhancedMessageBubble';
 import { MessagingMenu } from '@/components/MessagingMenu';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import { NewChatDialog } from '@/components/NewChatDialog';
+import { GroupChatDialog } from '@/components/messaging/GroupChatDialog';
 import TypingIndicator from '@/components/TypingIndicator';
 import { StarredMessagesDialog } from '@/components/messaging/StarredMessagesDialog';
 import { ForwardMessageDialog } from '@/components/messaging/ForwardMessageDialog';
@@ -32,6 +33,7 @@ import { ScheduleMessageDialog } from '@/components/messaging/ScheduleMessageDia
 import { LocationShareDialog } from '@/components/messaging/LocationShareDialog';
 import { ContactShareDialog } from '@/components/messaging/ContactShareDialog';
 import { EncryptionBadge } from '@/components/messaging/EncryptionBadge';
+import { FileUpload } from '@/components/messaging/FileUpload';
 import { ChatMenu } from '@/components/ChatMenu';
 import { DisappearingMessagesDialog } from '@/components/messaging/DisappearingMessagesDialog';
 import { AISmartReplies } from '@/components/messaging/AISmartReplies';
@@ -41,7 +43,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as ContactsIcon } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -87,6 +89,7 @@ const MessagesPage = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [showGroupChatDialog, setShowGroupChatDialog] = useState(false);
   const [showStarredDialog, setShowStarredDialog] = useState(false);
   const [showForwardDialog, setShowForwardDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
@@ -333,14 +336,26 @@ const MessagesPage = () => {
             <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
-                <Button 
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setShowNewChatDialog(true)}
-                  className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setShowNewChatDialog(true)}
+                    className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+                    title="New Direct Message"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                  <Button 
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setShowGroupChatDialog(true)}
+                    className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+                    title="New Group Chat"
+                  >
+                    <UsersIcon className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -491,7 +506,16 @@ const MessagesPage = () => {
             {selectedChat ? (
               <>
                 {/* Chat Header */}
-                <div className="p-3 md:p-4 border-b border-primary/10 flex items-center justify-between bg-gradient-subtle backdrop-blur-sm sticky top-0 z-10">
+                <div 
+                  className="p-3 md:p-4 border-b border-primary/10 flex items-center justify-between bg-gradient-subtle backdrop-blur-sm sticky top-0 z-10 cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => {
+                    if (selectedChat?.is_group) {
+                      setShowGroupInfo(true);
+                    } else if (otherParticipant?.profiles.username) {
+                      navigate(`/profile/${otherParticipant.profiles.username}`);
+                    }
+                  }}
+                >
                   <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                     <Button
                       size="icon"
@@ -513,86 +537,71 @@ const MessagesPage = () => {
                             <AvatarFallback className="bg-gradient-primary text-white">{chatName[0]}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <Button
-                              variant="ghost"
-                              className="p-0 h-auto hover:bg-transparent"
-                              onClick={() => {
-                                if (otherParticipant?.profiles.username) {
-                                  window.location.href = `/profile/${otherParticipant.profiles.username}`;
-                                }
-                              }}
-                            >
-                              <p className="font-medium truncate hover:text-primary transition-colors">{chatName}</p>
-                            </Button>
-                            <p className="text-xs md:text-sm text-success">Online</p>
+                            <p className="font-medium truncate">{chatName}</p>
+                            <div className="flex items-center gap-2 text-xs md:text-sm">
+                              {isOnline ? (
+                                <>
+                                  <span className="w-2 h-2 bg-success rounded-full"></span>
+                                  <span className="text-success">Online</span>
+                                </>
+                              ) : (
+                                <span className="text-muted-foreground">{formatLastSeen()}</span>
+                              )}
+                            </div>
                           </div>
                         </>
                       );
                     })()}
                   </div>
                   <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
-                      onClick={() => {
-                        setActiveCall('voice');
-                        setIsCallInitiator(true);
-                        
-                        // Show notification
-                        toast({
-                          title: 'Starting voice call...',
-                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                        });
-
-                        // Browser notification
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                          new Notification('Voice Call', {
-                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                            icon: '/favicon.ico',
-                            badge: '/favicon.ico',
-                            tag: 'post-upp-call'
-                          });
-                        }
-                      }}
-                    >
-                      <Phone className="h-5 w-5" />
-                    </Button>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary"
-                      onClick={() => {
-                        setActiveCall('video');
-                        setIsCallInitiator(true);
-                        
-                        // Show notification
-                        toast({
-                          title: 'Starting video call...',
-                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                        });
-
-                        // Browser notification
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                          new Notification('Video Call', {
-                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                            icon: '/favicon.ico',
-                            badge: '/favicon.ico',
-                            tag: 'post-upp-call'
-                          });
-                        }
-                      }}
-                    >
-                      <Video className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
-                      onClick={() => setShowStarredDialog(true)}
-                    >
-                      <Star className="h-5 w-5" />
-                    </Button>
+                    {!selectedChat?.is_group && (
+                      <>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveCall('voice');
+                            setIsCallInitiator(true);
+                            toast({
+                              title: 'Starting voice call...',
+                              description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                            });
+                            if ('Notification' in window && Notification.permission === 'granted') {
+                              new Notification('Voice Call', {
+                                body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                                icon: '/favicon.ico',
+                              });
+                            }
+                          }}
+                        >
+                          <Phone className="h-5 w-5" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveCall('video');
+                            setIsCallInitiator(true);
+                            toast({
+                              title: 'Starting video call...',
+                              description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                            });
+                            if ('Notification' in window && Notification.permission === 'granted') {
+                              new Notification('Video Call', {
+                                body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                                icon: '/favicon.ico',
+                              });
+                            }
+                          }}
+                        >
+                          <Video className="h-5 w-5" />
+                        </Button>
+                      </>
+                    )}
                     <ChatMenu
                       chatId={selectedChatId}
                       otherUserId={otherParticipant?.user_id}
@@ -711,107 +720,101 @@ const MessagesPage = () => {
                   </div>
                 )}
 
-                {/* Voice Recorder */}
-                {isRecordingVoice ? (
-                  <div className="p-4 border-t">
-                    <VoiceRecorder
-                      onSend={handleVoiceSend}
-                      onCancel={() => setIsRecordingVoice(false)}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    {/* AI Smart Replies */}
-                    {lastReceivedMessage && !editingMessageId && (
-                      <div className="px-3 pt-3 md:px-4">
-                        <AISmartReplies
-                          lastMessage={lastReceivedMessage}
-                          onSelectReply={(reply) => {
-                            setMessageText(reply);
-                            messageInputRef.current?.focus();
-                          }}
+                    {/* Voice Recorder */}
+                    {isRecordingVoice ? (
+                      <div className="p-4 border-t">
+                        <VoiceRecorder
+                          onSend={handleVoiceSend}
+                          onCancel={() => setIsRecordingVoice(false)}
                         />
                       </div>
-                    )}
-
-                    <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t border-primary/10 bg-gradient-subtle backdrop-blur-sm">
-                      <div className="flex gap-1.5 md:gap-2 items-end">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageSelect}
-                          className="hidden"
-                        />
-                        <Button 
-                          type="button" 
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="h-10 w-10 flex-shrink-0 hover:bg-primary/10 hover:text-primary"
-                        >
-                          <ImageIcon className="h-5 w-5" />
-                        </Button>
-                        <Button 
-                          type="button" 
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setIsRecordingVoice(true)}
-                          className="h-10 w-10 flex-shrink-0 hidden md:flex hover:bg-primary/10 hover:text-primary"
-                        >
-                          <Mic className="h-5 w-5" />
-                        </Button>
-                        <Input
-                          ref={messageInputRef}
-                          placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
-                          value={messageText}
-                          onChange={(e) => {
-                            setMessageText(e.target.value);
-                            handleTyping();
-                          }}
-                          className="flex-1 h-10 text-base bg-background/50 border-primary/20 focus:border-primary transition-colors"
-                          autoFocus
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                        />
-                        {editingMessageId && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingMessageId(null);
-                              setMessageText('');
-                            }}
-                            className="h-10 flex-shrink-0"
-                          >
-                            Cancel
-                          </Button>
+                    ) : (
+                      <>
+                        {/* AI Smart Replies */}
+                        {lastReceivedMessage && !editingMessageId && (
+                          <div className="px-3 pt-3 md:px-4">
+                            <AISmartReplies
+                              lastMessage={lastReceivedMessage}
+                              onSelectReply={(reply) => {
+                                setMessageText(reply);
+                                messageInputRef.current?.focus();
+                              }}
+                            />
+                          </div>
                         )}
-                        <Button 
-                          type="button" 
-                          size="icon" 
-                          variant="ghost"
-                          className="h-10 w-10 flex-shrink-0 hidden md:flex"
-                        >
-                          <Smile className="h-5 w-5" />
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          size="icon"
-                          disabled={!messageText.trim() && !selectedImage}
-                          className="h-10 w-10 flex-shrink-0 bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                        >
-                          <Send className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </form>
-                  </>
-                )}
+
+                        <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t border-primary/10 bg-gradient-subtle backdrop-blur-sm">
+                          <div className="flex gap-1.5 md:gap-2 items-end">
+                            <FileUpload 
+                              onFileSelect={(file, type) => {
+                                // Handle file upload
+                                setSelectedImage(file);
+                                const reader = new FileReader();
+                                reader.onload = (e) => setImagePreview(e.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                            <Button 
+                              type="button" 
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setIsRecordingVoice(true)}
+                              className="h-10 w-10 flex-shrink-0 md:flex hover:bg-primary/10 hover:text-primary"
+                            >
+                              <Mic className="h-5 w-5" />
+                            </Button>
+                            <Button 
+                              type="button" 
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setShowLocationDialog(true)}
+                              className="h-10 w-10 flex-shrink-0 hidden md:flex hover:bg-primary/10 hover:text-primary"
+                            >
+                              <MapPin className="h-5 w-5" />
+                            </Button>
+                            <Input
+                              ref={messageInputRef}
+                              placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
+                              value={messageText}
+                              onChange={(e) => {
+                                setMessageText(e.target.value);
+                                handleTyping();
+                              }}
+                              className="flex-1 h-10 text-base bg-background/50 border-primary/20 focus:border-primary transition-colors"
+                              autoFocus
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendMessage();
+                                }
+                              }}
+                            />
+                            {editingMessageId && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingMessageId(null);
+                                  setMessageText('');
+                                }}
+                                className="h-10 flex-shrink-0"
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                            <Button 
+                              type="submit" 
+                              size="icon"
+                              disabled={!messageText.trim() && !selectedImage}
+                              className="h-10 w-10 flex-shrink-0 bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                            >
+                              <Send className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        </form>
+                      </>
+                    )}
               </> 
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
@@ -843,6 +846,15 @@ const MessagesPage = () => {
         open={showNewChatDialog}
         onClose={() => setShowNewChatDialog(false)}
         onSelectFriend={handleCreateNewChat}
+      />
+
+      <GroupChatDialog
+        open={showGroupChatDialog}
+        onOpenChange={setShowGroupChatDialog}
+        onGroupCreated={(chatId) => {
+          setSelectedChatId(chatId);
+          refetchChats();
+        }}
       />
 
       <StarredMessagesDialog

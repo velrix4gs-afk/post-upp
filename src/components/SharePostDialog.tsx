@@ -31,21 +31,70 @@ export const SharePostDialog = ({ postId, open, onOpenChange }: SharePostDialogP
 
     setSharing(true);
     try {
-      const { error } = await supabase
-        .from('post_shares')
+      // First, check if user has an existing chat with this friend
+      const { data: existingChats } = await supabase
+        .from('chat_participants')
+        .select('chat_id, chats!inner(type)')
+        .eq('user_id', user.id);
+
+      let chatId = null;
+      
+      if (existingChats) {
+        for (const ec of existingChats) {
+          const { data: otherParticipant } = await supabase
+            .from('chat_participants')
+            .select('user_id')
+            .eq('chat_id', ec.chat_id)
+            .eq('user_id', friendId)
+            .maybeSingle();
+
+          if (otherParticipant) {
+            chatId = ec.chat_id;
+            break;
+          }
+        }
+      }
+
+      // If no chat exists, create one
+      if (!chatId) {
+        const { data: newChat, error: chatError } = await supabase
+          .from('chats')
+          .insert({ type: 'private', created_by: user.id })
+          .select()
+          .single();
+
+        if (chatError) throw chatError;
+
+        const { error: participantsError } = await supabase
+          .from('chat_participants')
+          .insert([
+            { chat_id: newChat.id, user_id: user.id, role: 'member' },
+            { chat_id: newChat.id, user_id: friendId, role: 'member' }
+          ]);
+
+        if (participantsError) throw participantsError;
+        chatId = newChat.id;
+      }
+
+      // Share the post as a message
+      const { data: post } = await supabase
+        .from('posts')
+        .select('content')
+        .eq('id', postId)
+        .single();
+
+      const shareMessage = `🔗 Shared post: "${post?.content?.slice(0, 100)}${post?.content && post.content.length > 100 ? '...' : ''}"`;
+
+      const { error: messageError } = await supabase
+        .from('messages')
         .insert({
-          post_id: postId,
-          user_id: user.id,
-          shared_to_user_id: friendId
+          chat_id: chatId,
+          sender_id: user.id,
+          content: shareMessage,
+          reply_to_id: null,
         });
 
-      if (error) {
-        if (error.code === '23505') {
-          toast({ title: 'Already shared with this user' });
-          return;
-        }
-        throw error;
-      }
+      if (messageError) throw messageError;
 
       toast({ title: 'Post shared successfully!' });
       onOpenChange(false);

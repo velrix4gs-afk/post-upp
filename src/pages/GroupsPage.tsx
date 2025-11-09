@@ -78,6 +78,7 @@ const GroupsPage = () => {
         pullDistance={pullDistance}
       />
       <Navigation />
+      <BackNavigation title="Groups" />
       
       <main className="container mx-auto p-4 max-w-6xl">
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

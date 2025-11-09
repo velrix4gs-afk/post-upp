@@ -44,6 +44,7 @@ import { useMessageReactions } from "@/hooks/useMessageReactions";
 import { MessageReactions } from "./messaging/MessageReactions";
 import { ReactionPicker } from "./ReactionPicker";
 import { toast } from "@/hooks/use-toast";
+import { VoiceMessagePlayer } from "./messaging/VoiceMessagePlayer";
 
 const getBubbleColorValue = (color: string): string => {
   const colorMap: Record<string, string> = {
@@ -201,7 +202,7 @@ export const EnhancedMessageBubble = ({
                         className="rounded-lg max-w-full max-h-64"
                       />
                     ) : mediaType?.startsWith('audio') || mediaType === 'audio' ? (
-                      <audio controls src={mediaUrl} className="max-w-full" />
+                      <VoiceMessagePlayer audioUrl={mediaUrl} isOwn={isOwn} />
                     ) : (
                       <a 
                         href={mediaUrl} 
@@ -321,16 +322,6 @@ export const EnhancedMessageBubble = ({
                   )}
 
                   <DropdownMenuSeparator />
-
-                  <DropdownMenuItem onClick={() => {
-                    toast({
-                      title: 'Translate Message',
-                      description: 'Translation feature coming soon',
-                    });
-                  }}>
-                    <Languages className="h-4 w-4 mr-2" />
-                    Translate
-                  </DropdownMenuItem>
 
                   {isOwn && (
                     <DropdownMenuItem onClick={() => {
