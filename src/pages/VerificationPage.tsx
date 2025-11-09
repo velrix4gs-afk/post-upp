@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,33 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Check, Zap, Shield, Star, Award } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 const VerificationPage = () => {
   const { user } = useAuth();
   const { profile } = useProfile(user?.id);
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [paymentLink, setPaymentLink] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Fetch or create the verification product
-    fetchVerificationProduct();
-  }, []);
-
-  const fetchVerificationProduct = async () => {
-    try {
-      // In a real implementation, you would fetch the Stripe price ID
-      // For now, we'll create it on demand
-      const priceId = 'price_verification'; // This should be fetched from your Stripe products
-      setPaymentLink(`https://buy.stripe.com/test_verification_${user?.id}`);
-    } catch (error) {
-      console.error('Error fetching product:', error);
-    }
-  };
-
-  const handlePurchase = async () => {
+  const handlePurchase = () => {
     if (profile?.is_verified) {
       toast({
         title: 'Already Verified',
@@ -42,27 +19,16 @@ const VerificationPage = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      // Create Stripe checkout session via edge function
-      const { data, error } = await supabase.functions.invoke('create-verification-checkout', {
-        body: { userId: user?.id }
-      });
-
-      if (error) throw error;
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (error: any) {
+    if (!user) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to start checkout',
+        title: 'Please Sign In',
+        description: 'You need to be signed in to purchase verification.',
         variant: 'destructive'
       });
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    window.open('https://paystack.shop/pay/j8zpkx6t8j', '_blank');
   };
 
   return (
@@ -137,11 +103,9 @@ const VerificationPage = () => {
             <Button 
               className="w-full h-12 text-lg"
               onClick={handlePurchase}
-              disabled={loading || profile?.is_verified}
+              disabled={profile?.is_verified}
             >
-              {loading ? (
-                'Processing...'
-              ) : profile?.is_verified ? (
+              {profile?.is_verified ? (
                 <>
                   <Shield className="h-5 w-5 mr-2" />
                   Already Verified

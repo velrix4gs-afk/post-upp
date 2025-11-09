@@ -2,17 +2,13 @@ import Navigation from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Crown, Star, Zap, TrendingUp, Coins } from 'lucide-react';
+import { Check, Crown, Star, Zap, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { showCleanError } from '@/lib/errorHandler';
 import { CoinsDialog } from '@/components/premium/CoinsDialog';
 
 const PremiumPage = () => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
 
   const plans = [
     {
@@ -63,7 +59,7 @@ const PremiumPage = () => {
     }
   ];
 
-  const handleSubscribe = async (tier: string, price: number) => {
+  const handleSubscribe = (tier: string) => {
     if (!user) {
       toast({
         description: 'Please sign in to subscribe • AUTH_001',
@@ -72,26 +68,15 @@ const PremiumPage = () => {
       return;
     }
 
-    try {
-      setLoading(true);
+    const paymentLinks = {
+      basic: 'https://paystack.shop/pay/flqjzwvndy',
+      pro: 'https://paystack.shop/pay/kppl07pl5r',
+      elite: 'https://paystack.shop/pay/fap9ccj2m4'
+    };
 
-      const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
-        body: {
-          tier,
-          price_id: `price_${tier}`
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      console.error('[PREMIUM_001] Error creating checkout:', err);
-      showCleanError(err, toast);
-    } finally {
-      setLoading(false);
+    const link = paymentLinks[tier as keyof typeof paymentLinks];
+    if (link) {
+      window.open(link, '_blank');
     }
   };
 
@@ -162,10 +147,9 @@ const PremiumPage = () => {
                     'w-full bg-gradient-to-r text-white',
                     plan.color
                   )}
-                  onClick={() => handleSubscribe(plan.tier, plan.price)}
-                  disabled={loading}
+                  onClick={() => handleSubscribe(plan.tier)}
                 >
-                  {loading ? 'Processing...' : 'Subscribe Now'}
+                  Subscribe Now
                 </Button>
               </Card>
             );
