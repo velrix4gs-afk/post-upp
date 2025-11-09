@@ -47,7 +47,7 @@ const SignUp = () => {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Google sign-in is not configured yet. Please use email or phone.',
+        description: 'Google sign-in is not configured yet. Please use email or magic link.',
         variant: 'destructive'
       });
     }
@@ -66,7 +66,7 @@ const SignUp = () => {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Twitter/X sign-in is not configured yet. Please use email or phone.',
+        description: 'Twitter/X sign-in is not configured yet. Please use email or magic link.',
         variant: 'destructive'
       });
     }

@@ -7,9 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Mail, Lock, Chrome, Twitter, Phone } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Chrome, Twitter, Sparkles } from 'lucide-react';
 import { z } from 'zod';
-import PhoneAuth from '@/components/PhoneAuth';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -17,7 +16,7 @@ const signInSchema = z.object({
 });
 
 const SignIn = () => {
-  const [authMode, setAuthMode] = useState<'email' | 'phone' | 'magic'>('email');
+  const [authMode, setAuthMode] = useState<'email' | 'magic'>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [magicLinkEmail, setMagicLinkEmail] = useState('');
@@ -44,7 +43,7 @@ const SignIn = () => {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Google sign-in is not configured yet. Please use email or phone.',
+        description: 'Google sign-in is not configured yet. Please use email or magic link.',
         variant: 'destructive'
       });
     }
@@ -63,7 +62,7 @@ const SignIn = () => {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Twitter/X sign-in is not configured yet. Please use email or phone.',
+        description: 'Twitter/X sign-in is not configured yet. Please use email or magic link.',
         variant: 'destructive'
       });
     }
@@ -165,12 +164,7 @@ const SignIn = () => {
             <p className="text-muted-foreground">Sign in to continue</p>
           </div>
 
-          {authMode === 'phone' ? (
-            <PhoneAuth 
-              onBack={() => setAuthMode('email')}
-              onSuccess={() => navigate('/feed')}
-            />
-          ) : authMode === 'magic' ? (
+          {authMode === 'magic' ? (
             <div className="space-y-4">
               <Button
                 variant="ghost"
@@ -277,23 +271,33 @@ const SignIn = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  size="lg"
-                  className="h-12 gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
+                  className="gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
                   onClick={handleGoogleSignIn}
                 >
-                  <Chrome className="h-5 w-5" />
+                  <Chrome className="h-4 w-4" />
+                  Google
                 </Button>
                 
                 <Button
                   type="button"
                   variant="outline"
-                  size="lg"
-                  className="h-12 gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
-                  onClick={() => setAuthMode('phone')}
+                  className="gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
+                  onClick={handleTwitterSignIn}
                 >
-                  <Phone className="h-5 w-5" />
+                  <Twitter className="h-4 w-4" />
+                  Twitter
                 </Button>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2 hover:bg-accent/20 transition-all mb-6"
+                onClick={() => setAuthMode('magic')}
+              >
+                <Sparkles className="h-4 w-4" />
+                Sign in with Magic Link
+              </Button>
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
