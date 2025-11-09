@@ -76,7 +76,7 @@ const MessagesPage = () => {
   const { createChat: createChatByUuid } = useChats();
   const { following } = useFollowers();
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
-  const { onlineUsers, isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
+  const { isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
   const selectedChat = chats.find(c => c.id === selectedChatId);
   const otherParticipant = selectedChat?.participants.find(p => p.user_id !== user?.id);
   const { formatLastSeen, isOnline } = useLastSeen(otherParticipant?.user_id);

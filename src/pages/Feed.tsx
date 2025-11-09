@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFeed } from '@/hooks/useFeed';
-import { supabase } from '@/integrations/supabase/client';
+import { RealtimeFeed } from '@/components/RealtimeFeed';
 import Navigation from '@/components/Navigation';
 import CreatePost from '@/components/CreatePost';
 import { PostCard } from '@/components/PostCard';
@@ -26,30 +26,10 @@ const Feed = () => {
     },
   });
 
-  // Real-time subscription for posts
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('feed-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'posts'
-        },
-        (payload) => {
-          console.log('Post change:', payload);
-          window.location.reload();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
+  // Handle real-time post updates
+  const handleNewPost = () => {
+    refresh();
+  };
 
   // Infinite scroll
   useEffect(() => {
@@ -60,7 +40,8 @@ const Feed = () => {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background">
-      <PullToRefreshIndicator 
+      <RealtimeFeed onNewPost={handleNewPost} />
+      <PullToRefreshIndicator
         isPulling={isPulling}
         isRefreshing={isRefreshing}
         pullDistance={pullDistance}
