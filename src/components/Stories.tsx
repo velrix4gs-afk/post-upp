@@ -48,20 +48,20 @@ const Stories = () => {
   return (
     <>
       <Card className="bg-gradient-card border-0 p-4">
-        <div className="flex space-x-3 overflow-x-auto pb-2">
+        <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
           {/* Add Story */}
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <div className="flex-shrink-0 text-center cursor-pointer">
-                <div className="relative">
-                  <Avatar className="h-16 w-16 border-2 border-dashed border-muted-foreground">
+              <div className="flex-shrink-0 w-16 text-center cursor-pointer">
+                <div className="relative w-16 h-16">
+                  <Avatar className="w-16 h-16 border-2 border-dashed border-muted-foreground">
                     <AvatarImage src={profile?.avatar_url} />
                     <AvatarFallback className="bg-muted">
                       <Plus className="h-6 w-6 text-muted-foreground" />
                     </AvatarFallback>
                   </Avatar>
                 </div>
-                <p className="text-xs mt-2 text-muted-foreground">Add Story</p>
+                <p className="text-xs mt-2 text-muted-foreground truncate">Add Story</p>
               </div>
             </DialogTrigger>
             <DialogContent>
@@ -145,16 +145,18 @@ const Stories = () => {
           {stories.map((story) => (
             <div 
               key={story.id} 
-              className="flex-shrink-0 text-center cursor-pointer"
+              className="flex-shrink-0 w-16 text-center cursor-pointer"
               onClick={() => handleStoryClick(story)}
             >
-              <Avatar className="h-16 w-16 ring-4 ring-gradient-primary">
-                <AvatarImage src={story.profiles.avatar_url} />
-                <AvatarFallback className="bg-gradient-primary text-white">
-                  {story.profiles.display_name[0]}
-                </AvatarFallback>
-              </Avatar>
-              <p className="text-xs mt-2 max-w-[60px] truncate">
+              <div className="w-16 h-16 relative">
+                <Avatar className="w-16 h-16 ring-4 ring-primary">
+                  <AvatarImage src={story.profiles.avatar_url} className="object-cover" />
+                  <AvatarFallback className="bg-gradient-primary text-white">
+                    {story.profiles.display_name[0]}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <p className="text-xs mt-2 w-16 truncate">
                 {story.profiles.display_name}
               </p>
             </div>

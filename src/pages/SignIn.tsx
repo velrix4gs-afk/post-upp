@@ -148,15 +148,21 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gradient-card border-0 shadow-elegant">
-        <div className="p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+      
+      <Card className="w-full max-w-md bg-card/80 backdrop-blur-xl border shadow-2xl relative z-10">
+        <div className="p-8">
           <div className="text-center mb-8">
-            <div className="mb-4 bg-gradient-primary rounded-xl p-6">
-              <h1 className="text-4xl font-bold text-white">POST-UPP</h1>
+            <div className="mb-6 mx-auto w-20 h-20 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow">
+              <h1 className="text-2xl font-bold text-primary-foreground">PU</h1>
             </div>
-            <h2 className="text-2xl font-semibold text-foreground">Sign In</h2>
-            <p className="text-muted-foreground mt-2">Welcome back! Sign in to your account</p>
+            <h2 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
+            <p className="text-muted-foreground">Sign in to continue</p>
           </div>
 
           {authMode === 'phone' ? (
@@ -267,45 +273,25 @@ const SignIn = () => {
                 </span>
               </div>
 
-              <div className="space-y-3 mb-6">
+              <div className="grid grid-cols-2 gap-3 mb-6">
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
+                  size="lg"
+                  className="h-12 gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
                   onClick={handleGoogleSignIn}
                 >
-                  <Chrome className="h-4 w-4" />
-                  Google
+                  <Chrome className="h-5 w-5" />
                 </Button>
                 
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
-                  onClick={handleTwitterSignIn}
-                >
-                  <Twitter className="h-4 w-4" />
-                  Twitter/X
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
+                  size="lg"
+                  className="h-12 gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
                   onClick={() => setAuthMode('phone')}
                 >
-                  <Phone className="h-4 w-4" />
-                  Phone
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2 hover:bg-primary/5 transition-colors"
-                  onClick={() => setAuthMode('magic')}
-                >
-                  <Mail className="h-4 w-4" />
-                  Magic Link
+                  <Phone className="h-5 w-5" />
                 </Button>
               </div>
 
