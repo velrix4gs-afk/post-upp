@@ -41,6 +41,7 @@ const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 const PagesDirectory = lazy(() => import("./pages/PagesDirectory"));
 const ReelsPage = lazy(() => import("./pages/ReelsPage"));
 const PagesPage = lazy(() => import("./pages/PagesPage"));
+const PurchaseHistoryPage = lazy(() => import("./pages/PurchaseHistoryPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -294,6 +295,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ReelsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/purchases" 
+                element={
+                  <ProtectedRoute>
+                    <PurchaseHistoryPage />
                   </ProtectedRoute>
                 } 
               />

@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
 import { CoinsDisplay } from './CoinsDisplay';
-import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText } from 'lucide-react';
+import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText, Receipt } from 'lucide-react';
 import { useState } from 'react';
 import {
   DropdownMenu,
@@ -247,6 +247,10 @@ const Navigation = () => {
                     <DropdownMenuItem onClick={() => navigate('/premium')} className="lg:hidden">
                       <Crown className="h-4 w-4 mr-2 text-warning" />
                       Go Premium
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/purchases')}>
+                      <Receipt className="h-4 w-4 mr-2" />
+                      Purchase History
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
