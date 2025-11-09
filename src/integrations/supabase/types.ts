@@ -4282,6 +4282,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_reel_views: { Args: { reel_id: string }; Returns: undefined }
       is_chat_participant: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
