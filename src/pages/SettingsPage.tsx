@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -323,6 +324,7 @@ const SettingsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <BackNavigation title="Settings" />
       
       <main className="container mx-auto px-4 py-6 max-w-5xl">
         <div className="mb-6">
@@ -530,6 +532,32 @@ const SettingsPage = () => {
                           <span className="font-medium text-sm">Seamist</span>
                         </div>
                         <p className="text-xs text-muted-foreground text-left">#DFE8E6</p>
+                      </button>
+
+                      <button
+                        onClick={() => setColorTheme('curios-blue')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          colorTheme === 'curios-blue' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-[rgb(32,146,233)]" />
+                          <span className="font-medium text-sm">Curios Blue</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">RGB(32,146,233)</p>
+                      </button>
+
+                      <button
+                        onClick={() => setColorTheme('mulled-wine')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          colorTheme === 'mulled-wine' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="h-8 w-8 rounded-full bg-[rgb(97,77,112)]" />
+                          <span className="font-medium text-sm">Mulled Wine</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">RGB(97,77,112)</p>
                       </button>
                     </div>
                   </div>

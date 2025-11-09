@@ -179,6 +179,14 @@ All colors MUST be HSL.
   --primary: 330 81% 60%;
   --primary-glow: 330 81% 75%;
 }
+:root[data-accent="curios-blue"] {
+  --primary: 207 76% 52%;
+  --primary-glow: 207 76% 70%;
+}
+:root[data-accent="mulled-wine"] {
+  --primary: 280 18% 37%;
+  --primary-glow: 280 18% 55%;
+}
 
 /* Custom Color Themes - Full Page Backgrounds */
 [data-color-theme="deep-teal"] {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,10 +64,10 @@ const FriendsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <BackNavigation title="Friends" />
       
       <main className="container mx-auto p-4 max-w-6xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-4">Friends</h1>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
@@ -79,7 +80,7 @@ const FriendsPage = () => {
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1">
             <TabsTrigger value="all">
               Friends
               <Badge variant="secondary" className="ml-2">{friends.length}</Badge>
