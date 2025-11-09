@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const RealtimeNotifications = () => {
   const { user } = useAuth();
@@ -24,8 +24,7 @@ export const RealtimeNotifications = () => {
           const notification = payload.new;
           
           // Show toast
-          toast({
-            title: notification.title,
+          toast(notification.title, {
             description: notification.content,
           });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { toast } from './use-toast';
+import { toast } from 'sonner';
 
 export interface Notification {
   id: string;
@@ -56,8 +56,7 @@ export const useNotifications = () => {
           setUnreadCount(prev => prev + 1);
           
           // Show toast for new notification
-          toast({
-            title: newNotification.title,
+          toast(newNotification.title, {
             description: newNotification.content,
           });
 
@@ -90,11 +89,7 @@ export const useNotifications = () => {
       setNotifications((data || []) as Notification[]);
       setUnreadCount(data?.filter(n => !n.is_read).length || 0);
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load notifications',
-        variant: 'destructive'
-      });
+      toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
     }
@@ -114,11 +109,7 @@ export const useNotifications = () => {
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to mark notification as read',
-        variant: 'destructive'
-      });
+      toast.error('Failed to mark notification as read');
     }
   };
 
@@ -135,11 +126,7 @@ export const useNotifications = () => {
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
     } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to mark all notifications as read',
-        variant: 'destructive'
-      });
+      toast.error('Failed to mark all notifications as read');
     }
   };
 
