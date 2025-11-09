@@ -468,96 +468,77 @@ const SettingsPage = () => {
                       <Label className="text-base mb-2 block">Color Theme</Label>
                       <p className="text-sm text-muted-foreground mb-4">Choose your preferred color scheme</p>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                      <button
-                        onClick={() => setColorTheme('default')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          colorTheme === 'default' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-[#3b82f6]" />
-                          <span className="font-medium text-sm">Default Blue</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground text-left">#3b82f6</p>
-                      </button>
-
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <button
                         onClick={() => setColorTheme('deep-teal')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
+                        className={`p-6 rounded-lg border-2 transition-all ${
                           colorTheme === 'deep-teal' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
                         }`}
                       >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-[#28443F]" />
-                          <span className="font-medium text-sm">Deep Teal</span>
+                        <div className="flex items-start gap-4 mb-3">
+                          <div className="flex gap-2">
+                            <div className="h-10 w-10 rounded-full bg-[#28443F]" />
+                            <div className="h-10 w-10 rounded-full bg-[#F2FD7D]" />
+                          </div>
+                          <div className="text-left flex-1">
+                            <span className="font-semibold text-base block mb-1">Deep Teal</span>
+                            <p className="text-xs text-muted-foreground">Teal bg (#28443F) • Yellow text (#F2FD7D)</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground text-left">#28443F</p>
                       </button>
 
                       <button
                         onClick={() => setColorTheme('lemon-yellow')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
+                        className={`p-6 rounded-lg border-2 transition-all ${
                           colorTheme === 'lemon-yellow' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
                         }`}
                       >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-[#F2FD7D]" />
-                          <span className="font-medium text-sm">Lemon Yellow</span>
+                        <div className="flex items-start gap-4 mb-3">
+                          <div className="flex gap-2">
+                            <div className="h-10 w-10 rounded-full bg-[#F2FD7D]" />
+                            <div className="h-10 w-10 rounded-full bg-[#28443F]" />
+                          </div>
+                          <div className="text-left flex-1">
+                            <span className="font-semibold text-base block mb-1">Lemon Yellow</span>
+                            <p className="text-xs text-muted-foreground">Yellow bg (#F2FD7D) • Teal text (#28443F)</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground text-left">#F2FD7D</p>
                       </button>
 
                       <button
                         onClick={() => setColorTheme('burnt-copper')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
+                        className={`p-6 rounded-lg border-2 transition-all ${
                           colorTheme === 'burnt-copper' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
                         }`}
                       >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-[#A0430A]" />
-                          <span className="font-medium text-sm">Burnt Copper</span>
+                        <div className="flex items-start gap-4 mb-3">
+                          <div className="flex gap-2">
+                            <div className="h-10 w-10 rounded-full bg-[#A0430A]" />
+                            <div className="h-10 w-10 rounded-full bg-[#DFE8E6] border border-border" />
+                          </div>
+                          <div className="text-left flex-1">
+                            <span className="font-semibold text-base block mb-1">Burnt Copper</span>
+                            <p className="text-xs text-muted-foreground">Copper bg (#A0430A) • Mist text (#DFE8E6)</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground text-left">#A0430A</p>
                       </button>
 
                       <button
                         onClick={() => setColorTheme('seamist')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
+                        className={`p-6 rounded-lg border-2 transition-all ${
                           colorTheme === 'seamist' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
                         }`}
                       >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-[#DFE8E6] border border-border" />
-                          <span className="font-medium text-sm">Seamist</span>
+                        <div className="flex items-start gap-4 mb-3">
+                          <div className="flex gap-2">
+                            <div className="h-10 w-10 rounded-full bg-[#DFE8E6] border border-border" />
+                            <div className="h-10 w-10 rounded-full bg-[#A0430A]" />
+                          </div>
+                          <div className="text-left flex-1">
+                            <span className="font-semibold text-base block mb-1">Sea Mist</span>
+                            <p className="text-xs text-muted-foreground">Mist bg (#DFE8E6) • Copper text (#A0430A)</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground text-left">#DFE8E6</p>
-                      </button>
-
-                      <button
-                        onClick={() => setColorTheme('curios-blue')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          colorTheme === 'curios-blue' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-[rgb(32,146,233)]" />
-                          <span className="font-medium text-sm">Curios Blue</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground text-left">RGB(32,146,233)</p>
-                      </button>
-
-                      <button
-                        onClick={() => setColorTheme('mulled-wine')}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          colorTheme === 'mulled-wine' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-[rgb(97,77,112)]" />
-                          <span className="font-medium text-sm">Mulled Wine</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground text-left">RGB(97,77,112)</p>
                       </button>
                     </div>
                   </div>
