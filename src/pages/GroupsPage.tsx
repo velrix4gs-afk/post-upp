@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/PullToRefresh';
 import { Card, CardContent } from '@/components/ui/card';
