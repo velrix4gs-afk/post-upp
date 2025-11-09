@@ -96,8 +96,11 @@ const StoryViewer = ({ stories, currentIndex, onClose, onNext, onPrevious }: Sto
             src={currentStory.media_url}
             className="max-w-full max-h-full object-contain"
             autoPlay
-            muted
             loop
+            controls
+            playsInline
+            preload="metadata"
+            onError={(e) => console.error('Video error:', e)}
           />
         )}
 

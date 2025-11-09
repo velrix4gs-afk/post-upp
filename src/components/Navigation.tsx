@@ -127,6 +127,16 @@ const Navigation = () => {
                     Pages
                   </Button>
                 </Link>
+                <Link to="/reels">
+                  <Button 
+                    variant={isActive('/reels') ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className="gap-2"
+                  >
+                    <Star className="h-4 w-4" />
+                    Reels
+                  </Button>
+                </Link>
                 <Link to="/verification">
                   <Button 
                     variant={isActive('/verification') ? 'default' : 'ghost'} 

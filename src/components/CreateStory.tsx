@@ -25,9 +25,9 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      showCleanError({ code: 'STORY_001', message: 'File size must be less than 10MB' }, toast);
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      showCleanError({ code: 'STORY_001', message: 'File size must be less than 50MB' }, toast);
       return;
     }
 
@@ -87,8 +87,8 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
       }
 
       toast({
-        title: '✅ Success',
-        description: 'Story created!'
+        title: '🎉 STORY ADDED',
+        description: 'Your story is now live!'
       });
 
       // Reset form
@@ -167,7 +167,7 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
                       </div>
                       <p className="text-sm text-muted-foreground text-center">
                         Click to upload photo or video<br />
-                        <span className="text-xs">Max 10MB</span>
+                        <span className="text-xs">Max 50MB • Videos up to 60 seconds</span>
                       </p>
                     </div>
                   </Card>

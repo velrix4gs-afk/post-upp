@@ -38,6 +38,8 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 const PagesDirectory = lazy(() => import("./pages/PagesDirectory"));
+const ReelsPage = lazy(() => import("./pages/ReelsPage"));
+const PagesPage = lazy(() => import("./pages/PagesPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -281,7 +283,15 @@ const App = () => (
                 path="/pages" 
                 element={
                   <ProtectedRoute>
-                    <PagesDirectory />
+                    <PagesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/reels" 
+                element={
+                  <ProtectedRoute>
+                    <ReelsPage />
                   </ProtectedRoute>
                 } 
               />
