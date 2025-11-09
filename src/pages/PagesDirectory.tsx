@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePages } from '@/hooks/usePages';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +56,7 @@ const PagesDirectory = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <BackNavigation title="Pages" />
       
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">

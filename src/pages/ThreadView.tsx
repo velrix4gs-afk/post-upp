@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { PostCard } from '@/components/PostCard';
 import { CommentsSection } from '@/components/CommentsSection';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const ThreadView = () => {
@@ -47,13 +47,8 @@ export const ThreadView = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
+        <BackNavigation title="Post" />
         <main className="max-w-2xl mx-auto border-x min-h-screen">
-          <div className="sticky top-0 bg-background/95 backdrop-blur z-30 border-b p-4">
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <Skeleton className="h-6 w-32" />
-            </div>
-          </div>
           <div className="p-4">
             <div className="flex gap-3">
               <Skeleton className="h-10 w-10 rounded-full" />
@@ -84,24 +79,9 @@ export const ThreadView = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <BackNavigation title="Post" />
       
       <main className="max-w-2xl mx-auto border-x min-h-screen">
-        {/* Header */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-30 border-b">
-          <div className="flex items-center gap-4 p-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="font-bold text-xl">Post</h1>
-            </div>
-          </div>
-        </div>
 
         {/* Main Post */}
         <div className="border-b">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <BackNavigation title="Search" />
       
       <main className="container mx-auto p-4 max-w-4xl">
         <div className="mb-6">

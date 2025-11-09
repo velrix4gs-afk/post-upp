@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import PostCardModern from '@/components/PostCardModern';
 import { Card } from '@/components/ui/card';
 import { Post } from '@/hooks/usePosts';
@@ -58,6 +59,7 @@ const BookmarksPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <BackNavigation title="Bookmarks" />
       
       <main className="container mx-auto p-4 max-w-2xl">
         <div className="mb-6">
