@@ -17,6 +17,13 @@ export const BottomNavigation = () => {
   const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
   const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
   
+  // Only show on feed page
+  const isFeedPage = location.pathname === '/feed' || location.pathname === '/';
+  
+  if (!user || isAuthPage || !isFeedPage) {
+    return null;
+  }
+
   // Track scroll for dynamic sizing
   useEffect(() => {
     const handleScroll = () => {
@@ -26,10 +33,6 @@ export const BottomNavigation = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
-  if (!user || isAuthPage) {
-    return null;
-  }
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -149,9 +152,6 @@ export const BottomNavigation = () => {
           })}
         </div>
       </nav>
-
-      {/* Spacer for content to not be hidden behind bottom nav */}
-      <div className="md:hidden h-14" />
 
       {/* Create Post Dialog */}
       <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
