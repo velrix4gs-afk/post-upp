@@ -556,3 +556,30 @@ All colors MUST be HSL.
   }
 }
 
+/* Toast swipe-to-dismiss enhancements */
+[data-sonner-toast] {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+[data-sonner-toast]:active {
+  cursor: grabbing !important;
+}
+
+/* Support all direction swipes */
+[data-swiping="true"] {
+  transition: transform 0.2s ease-out !important;
+}
+
+[data-swiped="true"] {
+  animation: swipe-out 0.3s ease-out forwards;
+}
+
+@keyframes swipe-out {
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
