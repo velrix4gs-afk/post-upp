@@ -120,10 +120,10 @@ const App = () => (
     <AuthProvider>
       <TooltipProvider>
         <RealtimeNotifications />
-        <BottomNavigation />
         <Toaster />
         <ToasterMobile />
         <BrowserRouter>
+          <BottomNavigation />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Index />} />
