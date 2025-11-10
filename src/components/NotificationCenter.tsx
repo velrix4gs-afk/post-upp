@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import { 
   Bell, 
   Heart, 
@@ -52,73 +53,70 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
     ? notifications.filter(n => !n.is_read)
     : notifications;
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Mobile full-screen backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 z-[60] md:hidden"
-        onClick={onClose}
-      />
-      
-      {/* Notification panel - full screen on mobile, dropdown on desktop */}
-      <Card className="fixed top-0 right-0 bottom-0 z-[70] md:absolute md:top-2 md:right-2 md:bottom-auto w-full md:w-96 md:max-h-[600px] bg-card shadow-2xl overflow-hidden md:rounded-lg rounded-none border-0 md:border">
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="right" className="w-[400px] p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-l">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 border-b bg-card">
+          <div className="p-6 border-b bg-background/50">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Notifications</h2>
-              <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={markAllAsRead}
-                    className="text-xs"
-                  >
-                    <CheckCheck className="h-4 w-4 mr-1" />
-                    Mark all read
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={onClose}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <h2 className="text-xl font-semibold">Notifications</h2>
               </div>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="h-6 px-2">
+                  {unreadCount}
+                </Badge>
+              )}
             </div>
 
             {/* Filter buttons */}
-            <div className="flex space-x-2">
+            <div className="flex gap-2">
               <Button
                 variant={filter === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter('all')}
+                className="flex-1 rounded-xl transition-all duration-300"
               >
-                All ({notifications.length})
+                All <span className="ml-1.5 opacity-70">({notifications.length})</span>
               </Button>
               <Button
                 variant={filter === 'unread' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter('unread')}
+                className="flex-1 rounded-xl transition-all duration-300"
               >
-                Unread ({unreadCount})
+                Unread <span className="ml-1.5 opacity-70">({unreadCount})</span>
               </Button>
             </div>
+
+            {unreadCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={markAllAsRead}
+                className="w-full mt-3 rounded-xl hover:bg-primary/10 transition-all duration-300"
+              >
+                <CheckCheck className="h-4 w-4 mr-2" />
+                Mark all as read
+              </Button>
+            )}
           </div>
 
           {/* Notifications list */}
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 px-4">
             {filteredNotifications.length === 0 ? (
               <div className="p-8 text-center">
-                <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <div className="h-16 w-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                  <Bell className="h-8 w-8 text-muted-foreground" />
+                </div>
                 <h3 className="text-lg font-semibold mb-2">
                   {filter === 'unread' ? 'No unread notifications' : 'No notifications'}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {filter === 'unread' 
                     ? 'All caught up!' 
                     : 'Notifications will appear here when you receive them'
@@ -126,27 +124,33 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-1 p-2">
+              <div className="space-y-1.5 py-4">
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
-                      !notification.is_read ? 'bg-muted/30' : ''
+                    className={`group flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
+                      !notification.is_read 
+                        ? 'bg-primary/5 hover:bg-primary/10 border border-primary/20' 
+                        : 'hover:bg-muted'
                     }`}
                     onClick={() => !notification.is_read && markAsRead(notification.id)}
                   >
-                    <div className="flex-shrink-0 mt-1">
-                      {getNotificationIcon(notification.type)}
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        !notification.is_read ? 'bg-primary/10 group-hover:bg-primary/20' : 'bg-muted'
+                      }`}>
+                        {getNotificationIcon(notification.type)}
+                      </div>
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="text-sm font-medium mb-1">
+                          <h4 className="text-sm font-semibold mb-1 group-hover:text-primary transition-colors duration-300">
                             {notification.title}
                           </h4>
                           {notification.content && (
-                            <p className="text-sm text-muted-foreground mb-2">
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                               {notification.content}
                             </p>
                           )}
@@ -157,18 +161,18 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
                         
                         {!notification.is_read && (
                           <div className="flex-shrink-0 ml-2">
-                            <div className="w-2 h-2 bg-primary rounded-full" />
+                            <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
                           </div>
                         )}
                       </div>
 
                       {/* Action buttons for friend requests */}
                       {notification.type === 'friend_request' && notification.data?.friendship_id && (
-                        <div className="flex space-x-2 mt-2">
-                          <Button size="sm" className="h-7 px-2 text-xs">
+                        <div className="flex gap-2 mt-3">
+                          <Button size="sm" className="h-8 px-3 text-xs rounded-lg flex-1">
                             Accept
                           </Button>
-                          <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+                          <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg flex-1">
                             Decline
                           </Button>
                         </div>
@@ -182,15 +186,19 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="p-4 border-t">
-              <Button variant="ghost" className="w-full" size="sm">
+            <div className="p-4 border-t bg-background/50">
+              <Button 
+                variant="ghost" 
+                className="w-full rounded-xl hover:bg-primary/10 transition-all duration-300" 
+                size="sm"
+              >
                 View all notifications
               </Button>
             </div>
           )}
         </div>
-      </Card>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 };
 
