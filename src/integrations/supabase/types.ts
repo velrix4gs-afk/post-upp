@@ -3240,6 +3240,8 @@ export type Database = {
           timezone: string | null
           updated_at: string | null
           user_id: string
+          video_calls: boolean | null
+          voice_calls: boolean | null
         }
         Insert: {
           accent_color?: string | null
@@ -3285,6 +3287,8 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           user_id: string
+          video_calls?: boolean | null
+          voice_calls?: boolean | null
         }
         Update: {
           accent_color?: string | null
@@ -3330,6 +3334,8 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           user_id?: string
+          video_calls?: boolean | null
+          voice_calls?: boolean | null
         }
         Relationships: [
           {

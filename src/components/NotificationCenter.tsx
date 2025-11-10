@@ -222,13 +222,13 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
 
                 {unreadCount > 0 && (
                   <Button 
-                    variant="ghost" 
+                    variant="default" 
                     size="sm"
                     onClick={markAllAsRead}
-                    className="w-full mt-3 rounded-xl hover:bg-primary/10 transition-all duration-300"
+                    className="w-full mt-3 rounded-xl transition-all duration-300 bg-primary hover:bg-primary/90"
                   >
                     <CheckCheck className="h-4 w-4 mr-2" />
-                    Mark all as read
+                    Clear All Notifications
                   </Button>
                 )}
               </>

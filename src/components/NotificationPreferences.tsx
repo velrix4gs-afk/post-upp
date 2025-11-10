@@ -14,7 +14,9 @@ import {
   AtSign,
   Share2,
   Users,
-  CheckCheck
+  CheckCheck,
+  Phone,
+  Video
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +45,8 @@ export const NotificationPreferences = ({ isOpen, onOpenChange }: NotificationPr
   const [mentionsEnabled, setMentionsEnabled] = useState(true);
   const [sharesEnabled, setSharesEnabled] = useState(true);
   const [groupActivityEnabled, setGroupActivityEnabled] = useState(true);
+  const [voiceCallsEnabled, setVoiceCallsEnabled] = useState(true);
+  const [videoCallsEnabled, setVideoCallsEnabled] = useState(true);
 
   useEffect(() => {
     if (user && isOpen) {
@@ -75,6 +79,8 @@ export const NotificationPreferences = ({ isOpen, onOpenChange }: NotificationPr
         setMentionsEnabled(data.mentions ?? true);
         setSharesEnabled(data.shares ?? true);
         setGroupActivityEnabled(data.group_activity ?? true);
+        setVoiceCallsEnabled(data.voice_calls ?? true);
+        setVideoCallsEnabled(data.video_calls ?? true);
       }
     } catch (error) {
       console.error('Error loading notification preferences:', error);
@@ -289,6 +295,26 @@ export const NotificationPreferences = ({ isOpen, onOpenChange }: NotificationPr
                     onCheckedChange={(checked) => {
                       setGroupActivityEnabled(checked);
                       updatePreference('group_activity', checked);
+                    }}
+                  />
+                  <PreferenceItem
+                    icon={Phone}
+                    label="Voice Calls"
+                    description="Notifications for incoming voice calls"
+                    checked={voiceCallsEnabled}
+                    onCheckedChange={(checked) => {
+                      setVoiceCallsEnabled(checked);
+                      updatePreference('voice_calls', checked);
+                    }}
+                  />
+                  <PreferenceItem
+                    icon={Video}
+                    label="Video Calls"
+                    description="Notifications for incoming video calls"
+                    checked={videoCallsEnabled}
+                    onCheckedChange={(checked) => {
+                      setVideoCallsEnabled(checked);
+                      updatePreference('video_calls', checked);
                     }}
                   />
                 </div>
