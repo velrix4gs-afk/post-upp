@@ -118,15 +118,23 @@ const SettingsPage = () => {
         setNotificationSettings(prev => ({
           ...prev,
           likes: data.notification_post_reactions ?? true,
-          comments: data.notification_post_reactions ?? true,
+          comments: data.notification_post_comments ?? true,
           messages: data.notification_messages ?? true,
           follows: data.notification_friend_requests ?? true,
           push_enabled: data.sms_notifications ?? true,
+          email_enabled: data.email_notifications ?? true,
+          sms_enabled: data.sms_notifications ?? false
         }));
         setMessagingSettings(prev => ({
           ...prev,
           read_receipts: data.show_read_receipts ?? true,
-          typing_indicators: data.show_typing_indicator ?? true
+          typing_indicators: data.show_typing_indicator ?? true,
+          message_preview: true
+        }));
+        setContentSettings(prev => ({
+          ...prev,
+          autoplay_videos: data.autoplay_videos ?? true,
+          show_sensitive: data.show_sensitive_content ?? false
         }));
       }
     };
@@ -190,8 +198,9 @@ const SettingsPage = () => {
 
   const handleClearSearchHistory = async () => {
     try {
-      // Implement when search history table exists
-      toast({ description: 'Search history cleared' });
+      // Clear search history from local storage
+      localStorage.removeItem('search-history');
+      toast({ description: 'Search history cleared successfully' });
     } catch (error) {
       showCleanError(error, toast);
     }
@@ -264,7 +273,8 @@ const SettingsPage = () => {
       setIsLoading(true);
       const { error } = await supabase.from('profiles').update({ username: newUsername }).eq('id', user?.id);
       if (error) throw error;
-      toast({ description: 'Username updated' });
+      await updateProfile({ username: newUsername });
+      toast({ description: 'Username updated successfully' });
       setShowUsernameDialog(false);
       setNewUsername('');
     } catch (error) {
@@ -280,7 +290,8 @@ const SettingsPage = () => {
       setIsLoading(true);
       const { error } = await supabase.from('profiles').update({ display_name: newDisplayName }).eq('id', user?.id);
       if (error) throw error;
-      toast({ description: 'Display name updated' });
+      await updateProfile({ display_name: newDisplayName });
+      toast({ description: 'Display name updated successfully' });
       setShowDisplayNameDialog(false);
       setNewDisplayName('');
     } catch (error) {
@@ -295,7 +306,8 @@ const SettingsPage = () => {
       setIsLoading(true);
       const { error } = await supabase.from('profiles').update({ bio: newBio }).eq('id', user?.id);
       if (error) throw error;
-      toast({ description: 'Bio updated' });
+      await updateProfile({ bio: newBio });
+      toast({ description: 'Bio updated successfully' });
       setShowBioDialog(false);
       setNewBio('');
     } catch (error) {
@@ -552,6 +564,7 @@ const SettingsPage = () => {
                       setAccentColor(value);
                       document.documentElement.setAttribute('data-accent', value);
                       handleSettingUpdate({ accent_color: value });
+                      toast({ description: `Accent color changed to ${value}` });
                     }}>
                       <SelectTrigger className="w-32">
                         <SelectValue />
@@ -577,6 +590,7 @@ const SettingsPage = () => {
                       setFontSize(value);
                       document.documentElement.setAttribute('data-font-size', value);
                       handleSettingUpdate({ font_size: value });
+                      toast({ description: `Font size set to ${value}` });
                     }}>
                       <SelectTrigger className="w-32">
                         <SelectValue />
@@ -598,6 +612,7 @@ const SettingsPage = () => {
                       setLayoutMode(value);
                       document.documentElement.setAttribute('data-layout', value);
                       handleSettingUpdate({ layout_mode: value });
+                      toast({ description: `Layout mode set to ${value}` });
                     }}>
                       <SelectTrigger className="w-32">
                         <SelectValue />
@@ -629,6 +644,7 @@ const SettingsPage = () => {
                       onValueChange={(value) => {
                         setPrivacySettings({ ...privacySettings, profile_visibility: value });
                         handleSettingUpdate({ privacy_who_can_view_profile: value });
+                        toast({ description: `Profile visibility set to ${value}` });
                       }}
                     >
                       <SelectTrigger className="w-40">
@@ -652,6 +668,7 @@ const SettingsPage = () => {
                       onValueChange={(value) => {
                         setPrivacySettings({ ...privacySettings, who_can_message: value });
                         handleSettingUpdate({ privacy_who_can_message: value });
+                        toast({ description: `Messaging privacy set to ${value}` });
                       }}
                     >
                       <SelectTrigger className="w-40">
@@ -675,6 +692,7 @@ const SettingsPage = () => {
                       onValueChange={(value) => {
                         setPrivacySettings({ ...privacySettings, who_can_tag: value });
                         handleSettingUpdate({ privacy_who_can_tag: value });
+                        toast({ description: `Tagging privacy set to ${value}` });
                       }}
                     >
                       <SelectTrigger className="w-40">
@@ -698,6 +716,7 @@ const SettingsPage = () => {
                       onCheckedChange={(checked) => {
                         setPrivacySettings({ ...privacySettings, location_sharing: checked });
                         handleSettingUpdate({ location_sharing: checked });
+                        toast({ description: checked ? 'Location sharing enabled' : 'Location sharing disabled' });
                       }}
                     />
                   </div>
@@ -757,6 +776,7 @@ const SettingsPage = () => {
                           const permission = await Notification.requestPermission();
                           if (permission === 'granted') {
                             setNotificationSettings({ ...notificationSettings, push_enabled: checked });
+                            handleSettingUpdate({ sms_notifications: checked });
                             toast({ description: 'Push notifications enabled' });
                           } else {
                             toast({ 
@@ -766,6 +786,8 @@ const SettingsPage = () => {
                           }
                         } else {
                           setNotificationSettings({ ...notificationSettings, push_enabled: checked });
+                          handleSettingUpdate({ sms_notifications: checked });
+                          toast({ description: checked ? 'Push notifications enabled' : 'Push notifications disabled' });
                         }
                       }}
                     />
@@ -783,6 +805,7 @@ const SettingsPage = () => {
                       onCheckedChange={(checked) => {
                         setNotificationSettings({ ...notificationSettings, likes: checked });
                         handleSettingUpdate({ notification_post_reactions: checked });
+                        toast({ description: checked ? 'Reaction notifications enabled' : 'Reaction notifications disabled' });
                       }}
                     />
                   </div>
@@ -797,6 +820,7 @@ const SettingsPage = () => {
                       onCheckedChange={(checked) => {
                         setNotificationSettings({ ...notificationSettings, comments: checked });
                         handleSettingUpdate({ notification_post_comments: checked });
+                        toast({ description: checked ? 'Comment notifications enabled' : 'Comment notifications disabled' });
                       }}
                     />
                   </div>
@@ -811,6 +835,7 @@ const SettingsPage = () => {
                       onCheckedChange={(checked) => {
                         setNotificationSettings({ ...notificationSettings, messages: checked });
                         handleSettingUpdate({ notification_messages: checked });
+                        toast({ description: checked ? 'Message notifications enabled' : 'Message notifications disabled' });
                       }}
                     />
                   </div>
@@ -825,6 +850,7 @@ const SettingsPage = () => {
                       onCheckedChange={(checked) => {
                         setNotificationSettings({ ...notificationSettings, follows: checked });
                         handleSettingUpdate({ notification_friend_requests: checked });
+                        toast({ description: checked ? 'Follow notifications enabled' : 'Follow notifications disabled' });
                       }}
                     />
                   </div>
@@ -845,6 +871,8 @@ const SettingsPage = () => {
                       checked={notificationSettings.email_enabled}
                       onCheckedChange={(checked) => {
                         setNotificationSettings({ ...notificationSettings, email_enabled: checked });
+                        handleSettingUpdate({ email_notifications: checked });
+                        toast({ description: checked ? 'Email notifications enabled' : 'Email notifications disabled' });
                       }}
                     />
                   </div>
@@ -858,6 +886,8 @@ const SettingsPage = () => {
                       checked={notificationSettings.sms_enabled}
                       onCheckedChange={(checked) => {
                         setNotificationSettings({ ...notificationSettings, sms_enabled: checked });
+                        handleSettingUpdate({ sms_notifications: checked });
+                        toast({ description: checked ? 'SMS notifications enabled' : 'SMS notifications disabled' });
                       }}
                     />
                   </div>
@@ -882,6 +912,7 @@ const SettingsPage = () => {
                       onCheckedChange={(checked) => {
                         setMessagingSettings({ ...messagingSettings, read_receipts: checked });
                         handleSettingUpdate({ show_read_receipts: checked });
+                        toast({ description: checked ? 'Read receipts enabled' : 'Read receipts disabled' });
                       }}
                     />
                   </div>
@@ -896,6 +927,7 @@ const SettingsPage = () => {
                       onCheckedChange={(checked) => {
                         setMessagingSettings({ ...messagingSettings, typing_indicators: checked });
                         handleSettingUpdate({ show_typing_indicator: checked });
+                        toast({ description: checked ? 'Typing indicators enabled' : 'Typing indicators disabled' });
                       }}
                     />
                   </div>
@@ -909,6 +941,7 @@ const SettingsPage = () => {
                       checked={messagingSettings.message_preview}
                       onCheckedChange={(checked) => {
                         setMessagingSettings({ ...messagingSettings, message_preview: checked });
+                        toast({ description: checked ? 'Message preview enabled' : 'Message preview disabled' });
                       }}
                     />
                   </div>
@@ -932,6 +965,8 @@ const SettingsPage = () => {
                       checked={contentSettings.autoplay_videos}
                       onCheckedChange={(checked) => {
                         setContentSettings({ ...contentSettings, autoplay_videos: checked });
+                        handleSettingUpdate({ autoplay_videos: checked });
+                        toast({ description: checked ? 'Autoplay enabled' : 'Autoplay disabled' });
                       }}
                     />
                   </div>
@@ -945,6 +980,8 @@ const SettingsPage = () => {
                       checked={contentSettings.show_sensitive}
                       onCheckedChange={(checked) => {
                         setContentSettings({ ...contentSettings, show_sensitive: checked });
+                        handleSettingUpdate({ show_sensitive_content: checked });
+                        toast({ description: checked ? 'Sensitive content will be shown' : 'Sensitive content will be hidden' });
                       }}
                     />
                   </div>
