@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -12,14 +12,23 @@ import {
   UserPlus, 
   Share2,
   AtSign,
-  Check,
   CheckCheck,
-  X,
-  Settings2
+  Settings2,
+  ChevronRight,
+  ArrowLeft
 } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+
+interface NotificationGroup {
+  id: string;
+  type: string;
+  count: number;
+  notifications: any[];
+  latestTimestamp: string;
+  relatedId?: string;
+}
 
 interface NotificationCenterProps {
   isOpen: boolean;
@@ -29,6 +38,7 @@ interface NotificationCenterProps {
 const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [expandedGroup, setExpandedGroup] = useState<NotificationGroup | null>(null);
   const navigate = useNavigate();
 
   const getNotificationIcon = (type: string) => {
@@ -56,6 +66,99 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
     ? notifications.filter(n => !n.is_read)
     : notifications;
 
+  // Group notifications by type and related content
+  const groupedNotifications = useMemo(() => {
+    const groups: { [key: string]: NotificationGroup } = {};
+    
+    filteredNotifications.forEach((notification) => {
+      // Create a grouping key based on type and related content
+      let groupKey: string = notification.type;
+      
+      // For post-related notifications, group by post_id
+      if (notification.data?.post_id) {
+        groupKey = `${notification.type}_post_${notification.data.post_id}` as string;
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          id: groupKey,
+          type: notification.type as string,
+          count: 0,
+          notifications: [],
+          latestTimestamp: notification.created_at,
+          relatedId: notification.data?.post_id
+        };
+      }
+      
+      groups[groupKey].notifications.push(notification);
+      groups[groupKey].count++;
+      
+      // Update to latest timestamp
+      if (new Date(notification.created_at) > new Date(groups[groupKey].latestTimestamp)) {
+        groups[groupKey].latestTimestamp = notification.created_at;
+      }
+    });
+    
+    // Convert to array and sort by latest timestamp
+    return Object.values(groups).sort((a, b) => 
+      new Date(b.latestTimestamp).getTime() - new Date(a.latestTimestamp).getTime()
+    );
+  }, [filteredNotifications]);
+
+  const getGroupTitle = (group: NotificationGroup) => {
+    const { type, count } = group;
+    
+    if (count === 1) {
+      return group.notifications[0].title;
+    }
+    
+    switch (type) {
+      case 'like':
+        return `${count} people liked your post`;
+      case 'comment':
+        return `${count} new comments on your post`;
+      case 'follow':
+        return `${count} new followers`;
+      case 'friend_request':
+        return `${count} friend requests`;
+      case 'mention':
+        return `${count} mentions`;
+      case 'share':
+        return `${count} people shared your post`;
+      case 'message':
+        return `${count} new messages`;
+      default:
+        return `${count} notifications`;
+    }
+  };
+
+  const getGroupDescription = (group: NotificationGroup) => {
+    if (group.count === 1) {
+      return group.notifications[0].content || '';
+    }
+    
+    const names = group.notifications
+      .slice(0, 3)
+      .map(n => n.title.split(' ')[0])
+      .join(', ');
+    
+    return group.count > 3 
+      ? `${names} and ${group.count - 3} others`
+      : names;
+  };
+
+  const hasUnreadInGroup = (group: NotificationGroup) => {
+    return group.notifications.some(n => !n.is_read);
+  };
+
+  const markGroupAsRead = (group: NotificationGroup) => {
+    group.notifications.forEach(notification => {
+      if (!notification.is_read) {
+        markAsRead(notification.id);
+      }
+    });
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="right" className="w-[400px] p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-l">
@@ -64,71 +167,80 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
           <div className="p-6 border-b bg-background/50">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Bell className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="text-xl font-semibold">Notifications</h2>
+                {expandedGroup ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setExpandedGroup(null)}
+                      className="h-10 w-10 rounded-full hover:bg-primary/10"
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div>
+                      <h2 className="text-xl font-semibold">{getGroupTitle(expandedGroup)}</h2>
+                      <p className="text-xs text-muted-foreground">{expandedGroup.count} notifications</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Bell className="h-5 w-5 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-semibold">Notifications</h2>
+                  </>
+                )}
               </div>
-              {unreadCount > 0 && (
+              {!expandedGroup && unreadCount > 0 && (
                 <Badge variant="destructive" className="h-6 px-2">
                   {unreadCount}
                 </Badge>
               )}
             </div>
 
-            {/* Filter buttons */}
-            <div className="flex gap-2">
-              <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('all')}
-                className="flex-1 rounded-xl transition-all duration-300"
-              >
-                All <span className="ml-1.5 opacity-70">({notifications.length})</span>
-              </Button>
-              <Button
-                variant={filter === 'unread' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('unread')}
-                className="flex-1 rounded-xl transition-all duration-300"
-              >
-                Unread <span className="ml-1.5 opacity-70">({unreadCount})</span>
-              </Button>
-            </div>
+            {!expandedGroup && (
+              <>
+                {/* Filter buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant={filter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('all')}
+                    className="flex-1 rounded-xl transition-all duration-300"
+                  >
+                    All <span className="ml-1.5 opacity-70">({notifications.length})</span>
+                  </Button>
+                  <Button
+                    variant={filter === 'unread' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter('unread')}
+                    className="flex-1 rounded-xl transition-all duration-300"
+                  >
+                    Unread <span className="ml-1.5 opacity-70">({unreadCount})</span>
+                  </Button>
+                </div>
 
-            {unreadCount > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={markAllAsRead}
-                className="w-full mt-3 rounded-xl hover:bg-primary/10 transition-all duration-300"
-              >
-                <CheckCheck className="h-4 w-4 mr-2" />
-                Mark all as read
-              </Button>
+                {unreadCount > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={markAllAsRead}
+                    className="w-full mt-3 rounded-xl hover:bg-primary/10 transition-all duration-300"
+                  >
+                    <CheckCheck className="h-4 w-4 mr-2" />
+                    Mark all as read
+                  </Button>
+                )}
+              </>
             )}
           </div>
 
           {/* Notifications list */}
           <ScrollArea className="flex-1 px-4">
-            {filteredNotifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <div className="h-16 w-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                  <Bell className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">
-                  {filter === 'unread' ? 'No unread notifications' : 'No notifications'}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {filter === 'unread' 
-                    ? 'All caught up!' 
-                    : 'Notifications will appear here when you receive them'
-                  }
-                </p>
-              </div>
-            ) : (
+            {expandedGroup ? (
+              // Show individual notifications in expanded group
               <div className="space-y-1.5 py-4">
-                {filteredNotifications.map((notification) => (
+                {expandedGroup.notifications.map((notification) => (
                   <div
                     key={notification.id}
                     className={`group flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
@@ -184,11 +296,92 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
                   </div>
                 ))}
               </div>
+            ) : (
+              // Show grouped notifications
+              <>
+                {groupedNotifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <div className="h-16 w-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                      <Bell className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {filter === 'unread' ? 'No unread notifications' : 'No notifications'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {filter === 'unread' 
+                        ? 'All caught up!' 
+                        : 'Notifications will appear here when you receive them'
+                      }
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 py-4">
+                    {groupedNotifications.map((group) => (
+                      <div
+                        key={group.id}
+                        className={`group flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-[1.02] ${
+                          hasUnreadInGroup(group)
+                            ? 'bg-primary/5 hover:bg-primary/10 border border-primary/20' 
+                            : 'hover:bg-muted'
+                        }`}
+                        onClick={() => {
+                          if (group.count > 1) {
+                            setExpandedGroup(group);
+                            markGroupAsRead(group);
+                          } else {
+                            if (!group.notifications[0].is_read) {
+                              markAsRead(group.notifications[0].id);
+                            }
+                          }
+                        }}
+                      >
+                        <div className="flex-shrink-0 mt-0.5">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 relative ${
+                            hasUnreadInGroup(group) ? 'bg-primary/10 group-hover:bg-primary/20' : 'bg-muted'
+                          }`}>
+                            {getNotificationIcon(group.type)}
+                            {group.count > 1 && (
+                              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                                {group.count}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="text-sm font-semibold mb-1 group-hover:text-primary transition-colors duration-300">
+                                {getGroupTitle(group)}
+                              </h4>
+                              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                                {getGroupDescription(group)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(group.latestTimestamp), { addSuffix: true })}
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              {hasUnreadInGroup(group) && (
+                                <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
+                              )}
+                              {group.count > 1 && (
+                                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </ScrollArea>
 
           {/* Footer */}
-          {notifications.length > 0 && (
+          {notifications.length > 0 && !expandedGroup && (
             <div className="p-4 border-t bg-background/50 space-y-2">
               <Button 
                 variant="outline" 
