@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import { Home, MessageCircle, PlusCircle, Star, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
@@ -10,6 +11,7 @@ export const BottomNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { unreadCount } = useUnreadMessages();
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -48,7 +50,7 @@ export const BottomNavigation = () => {
       icon: MessageCircle,
       path: '/messages',
       isActive: isActive('/messages'),
-      badge: 3, // You can connect this to actual unread messages count
+      badge: unreadCount,
     },
     {
       label: 'Create',
