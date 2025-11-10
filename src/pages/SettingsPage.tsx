@@ -171,26 +171,53 @@ const SettingsPage = () => {
     try {
       setIsLoading(true);
       
-      const { data: posts } = await supabase.from('posts').select('*').eq('user_id', user?.id);
-      const { data: friends } = await supabase.from('friendships').select('*').or(`requester_id.eq.${user?.id},addressee_id.eq.${user?.id}`);
+      // Fetch user data
+      const [
+        { data: posts },
+        { data: friends },
+        { data: bookmarks },
+        { data: stories },
+        { data: comments }
+      ] = await Promise.all([
+        supabase.from('posts').select('*').eq('user_id', user?.id),
+        supabase.from('friendships').select('*').or(`requester_id.eq.${user?.id},addressee_id.eq.${user?.id}`),
+        supabase.from('bookmarks').select('*').eq('user_id', user?.id),
+        supabase.from('stories').select('*').eq('user_id', user?.id),
+        supabase.from('post_comments').select('*').eq('user_id', user?.id)
+      ]);
       
       const exportData = {
         profile,
-        posts,
-        friends,
-        export_date: new Date().toISOString()
+        posts: posts || [],
+        friends: friends || [],
+        bookmarks: bookmarks || [],
+        stories: stories || [],
+        comments: comments || [],
+        export_date: new Date().toISOString(),
+        export_version: '1.0'
       };
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `post-upp-data-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `social-app-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-      toast({ description: 'Data exported successfully' });
-    } catch (error) {
-      showCleanError(error, toast);
+      toast({ 
+        title: 'Data Exported',
+        description: 'Your data has been downloaded successfully' 
+      });
+    } catch (error: any) {
+      console.error('Export data error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to export data',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -209,56 +236,133 @@ const SettingsPage = () => {
   const handleDeactivateAccount = async () => {
     try {
       setIsLoading(true);
-      await supabase.from('profiles').update({ is_active: false }).eq('id', user?.id);
-      toast({ description: 'Account deactivated' });
-      await signOut();
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: false })
+        .eq('id', user?.id);
+      
+      if (error) throw error;
+      
+      toast({ 
+        title: 'Account Deactivated',
+        description: 'Your account has been deactivated. Login again to reactivate.' 
+      });
+      
+      // Sign out after deactivating
+      await supabase.auth.signOut();
       navigate('/auth');
-    } catch (error) {
-      showCleanError(error, toast);
+    } catch (error: any) {
+      console.error('Deactivate account error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to deactivate account',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
+      setShowDeactivateDialog(false);
     }
   };
 
   const handleDeleteAccount = async () => {
+    if (!user?.id) return;
+    
     try {
       setIsLoading(true);
-      await supabase.from('posts').delete().eq('user_id', user?.id);
-      await supabase.from('profiles').delete().eq('id', user?.id);
-      toast({ description: 'Account deleted' });
-      await signOut();
+      
+      // Delete user's data in order (to avoid foreign key issues)
+      const deletions = [
+        supabase.from('bookmarks').delete().eq('user_id', user.id),
+        supabase.from('post_comments').delete().eq('user_id', user.id),
+        supabase.from('post_reactions').delete().eq('user_id', user.id),
+        supabase.from('message_reactions').delete().eq('user_id', user.id),
+        supabase.from('follows').delete().eq('follower_id', user.id),
+        supabase.from('follows').delete().eq('following_id', user.id),
+        supabase.from('friendships').delete().eq('requester_id', user.id),
+        supabase.from('friendships').delete().eq('addressee_id', user.id),
+        supabase.from('posts').delete().eq('user_id', user.id),
+        supabase.from('stories').delete().eq('user_id', user.id),
+      ];
+      
+      // Execute all deletions
+      await Promise.all(deletions);
+      
+      // Finally delete profile (this will cascade to auth.users)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+      
+      if (profileError) throw profileError;
+      
+      toast({ 
+        title: 'Account Deleted',
+        description: 'Your account and all data have been permanently deleted' 
+      });
+      
+      // Sign out
+      await supabase.auth.signOut();
       navigate('/auth');
-    } catch (error) {
-      showCleanError(error, toast);
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete account. Please contact support.',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
+      setShowDeleteDialog(false);
     }
   };
 
   const handleLogoutAllSessions = async () => {
     try {
+      setIsLoading(true);
       await supabase.auth.signOut({ scope: 'global' });
-      toast({ description: 'Logged out from all devices' });
+      toast({ 
+        title: 'Logged Out',
+        description: 'Successfully logged out from all devices' 
+      });
       navigate('/auth');
-    } catch (error) {
-      showCleanError(error, toast);
+    } catch (error: any) {
+      console.error('Logout all sessions error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to logout from all devices',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleChangePassword = async () => {
     if (!newPassword || newPassword.length < 6) {
-      toast({ description: 'Password must be at least 6 characters', variant: 'destructive' });
+      toast({ 
+        title: 'Invalid Password',
+        description: 'Password must be at least 6 characters', 
+        variant: 'destructive' 
+      });
       return;
     }
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      toast({ description: 'Password updated' });
+      toast({ 
+        title: 'Success',
+        description: 'Password updated successfully' 
+      });
       setShowPasswordDialog(false);
       setNewPassword('');
-    } catch (error) {
-      showCleanError(error, toast);
+    } catch (error: any) {
+      console.error('Password update error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update password',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -266,19 +370,66 @@ const SettingsPage = () => {
 
   const handleChangeUsername = async () => {
     if (!newUsername || newUsername.length < 3) {
-      toast({ description: 'Username must be at least 3 characters', variant: 'destructive' });
+      toast({ 
+        title: 'Invalid Username',
+        description: 'Username must be at least 3 characters', 
+        variant: 'destructive' 
+      });
       return;
     }
+    
+    // Validate username format (alphanumeric and underscores only)
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(newUsername)) {
+      toast({ 
+        title: 'Invalid Username',
+        description: 'Username can only contain letters, numbers, and underscores', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     try {
       setIsLoading(true);
-      const { error } = await supabase.from('profiles').update({ username: newUsername }).eq('id', user?.id);
+      
+      // Check if username is already taken
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', newUsername)
+        .neq('id', user?.id)
+        .single();
+      
+      if (existing) {
+        toast({ 
+          title: 'Username Taken',
+          description: 'This username is already in use', 
+          variant: 'destructive' 
+        });
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: newUsername })
+        .eq('id', user?.id);
+        
       if (error) throw error;
+      
       await updateProfile({ username: newUsername });
-      toast({ description: 'Username updated successfully' });
+      toast({ 
+        title: 'Success',
+        description: 'Username updated successfully' 
+      });
       setShowUsernameDialog(false);
       setNewUsername('');
-    } catch (error) {
-      showCleanError(error, toast);
+    } catch (error: any) {
+      console.error('Username update error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update username',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -302,16 +453,38 @@ const SettingsPage = () => {
   };
 
   const handleChangeBio = async () => {
+    if (newBio.length > 160) {
+      toast({ 
+        title: 'Bio Too Long',
+        description: 'Bio must be 160 characters or less', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     try {
       setIsLoading(true);
-      const { error } = await supabase.from('profiles').update({ bio: newBio }).eq('id', user?.id);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ bio: newBio })
+        .eq('id', user?.id);
+        
       if (error) throw error;
+      
       await updateProfile({ bio: newBio });
-      toast({ description: 'Bio updated successfully' });
+      toast({ 
+        title: 'Success',
+        description: 'Bio updated successfully' 
+      });
       setShowBioDialog(false);
       setNewBio('');
-    } catch (error) {
-      showCleanError(error, toast);
+    } catch (error: any) {
+      console.error('Bio update error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update bio',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -319,15 +492,35 @@ const SettingsPage = () => {
 
   const handleChangeEmail = async () => {
     if (!newEmail) return;
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast({ 
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address',
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.updateUser({ email: newEmail });
       if (error) throw error;
-      toast({ description: 'Email update sent - check your inbox to confirm' });
+      toast({ 
+        title: 'Email Update Sent',
+        description: 'Check both your old and new email to confirm the change'
+      });
       setShowEmailDialog(false);
       setNewEmail('');
-    } catch (error) {
-      showCleanError(error, toast);
+    } catch (error: any) {
+      console.error('Email update error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update email',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -1098,7 +1291,17 @@ const SettingsPage = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>New Password</Label>
-              <Input type="password" placeholder="Min 6 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <Input 
+                type="password" 
+                placeholder="At least 6 characters" 
+                value={newPassword} 
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={6}
+                autoComplete="new-password"
+              />
+              <p className="text-xs text-muted-foreground">
+                Password must be at least 6 characters long
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -1116,7 +1319,16 @@ const SettingsPage = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>New Username</Label>
-              <Input placeholder="Min 3 characters" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} />
+              <Input 
+                placeholder="At least 3 characters" 
+                value={newUsername} 
+                onChange={(e) => setNewUsername(e.target.value.toLowerCase())}
+                minLength={3}
+                pattern="[a-zA-Z0-9_]+"
+              />
+              <p className="text-xs text-muted-foreground">
+                Only letters, numbers, and underscores allowed
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -1177,8 +1389,16 @@ const SettingsPage = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>New Email</Label>
-              <Input type="email" placeholder="your@email.com" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
-              <p className="text-xs text-muted-foreground">You'll receive a confirmation email</p>
+              <Input 
+                type="email" 
+                placeholder="your@email.com" 
+                value={newEmail} 
+                onChange={(e) => setNewEmail(e.target.value)}
+                autoComplete="email"
+              />
+              <p className="text-xs text-muted-foreground">
+                You'll receive confirmation emails to both your old and new addresses
+              </p>
             </div>
           </div>
           <DialogFooter>
