@@ -5,13 +5,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
 import { CoinsDisplay } from './CoinsDisplay';
-import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText, Receipt } from 'lucide-react';
+import { Home, Calendar, User, Bell, Menu, LogOut, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText, Receipt, HelpCircle, Shield, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -216,81 +218,236 @@ const Navigation = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-popover">
-                    <div className="flex items-center gap-2 p-2">
-                      <Avatar>
+                  <DropdownMenuContent align="end" className="w-96 p-2 bg-background shadow-lg">
+                    {/* Profile Section */}
+                    <div 
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors mb-2"
+                      onClick={() => navigate(`/profile/${user.id}`)}
+                    >
+                      <Avatar className="h-12 w-12">
                         <AvatarImage src={profile?.avatar_url} />
-                        <AvatarFallback>{profile?.display_name?.[0] || 'U'}</AvatarFallback>
+                        <AvatarFallback className="text-base">{profile?.display_name?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{profile?.display_name || 'User'}</p>
-                        <p className="text-xs text-muted-foreground truncate">@{profile?.username || 'username'}</p>
+                        <p className="font-semibold text-base truncate text-foreground">{profile?.display_name || 'User'}</p>
+                        <p className="text-sm text-muted-foreground truncate">@{profile?.username || 'username'}</p>
                       </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <CoinsDisplay />
-                    <DropdownMenuItem onClick={() => navigate(`/profile/${user.id}`)}>
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                      <Home className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/analytics')}>
-                      <BarChart3 className="mr-2 h-4 w-4" />
-                      <span>Analytics</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/verification')} className="lg:hidden">
-                      <BadgeCheck className="h-4 w-4 mr-2 text-warning" />
-                      Get Verified
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/premium')} className="lg:hidden">
-                      <Crown className="h-4 w-4 mr-2 text-warning" />
-                      Go Premium
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/purchases')}>
-                      <Receipt className="h-4 w-4 mr-2" />
-                      Purchase History
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/search')} className="md:hidden">
-                      <Search className="h-4 w-4 mr-2" />
-                      Search
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/messages')} className="lg:hidden">
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Messages
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/friends')} className="lg:hidden">
-                      <Users className="h-4 w-4 mr-2" />
-                      Friends
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/groups')} className="lg:hidden">
-                      <UsersRound className="h-4 w-4 mr-2" />
-                      Groups
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/events')} className="lg:hidden">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Events
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/explore')} className="lg:hidden">
-                      <Compass className="h-4 w-4 mr-2" />
-                      Explore
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/bookmarks')} className="lg:hidden">
-                      <Bookmark className="h-4 w-4 mr-2" />
-                      Saved
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/pages')} className="lg:hidden">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Pages
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
+
+                    <DropdownMenuSeparator className="my-2" />
+
+                    {/* Shortcuts Section */}
+                    <div className="space-y-1">
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/messages')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <MessageCircle className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Messages</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/friends')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Users className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Friends</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/groups')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <UsersRound className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Groups</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/events')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Calendar className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Events</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/explore')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Compass className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Explore</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/bookmarks')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Bookmark className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Saved</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/pages')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <FileText className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Pages</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/reels')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors lg:hidden"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Star className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Reels</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/dashboard')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Home className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Dashboard</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/analytics')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <BarChart3 className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Analytics</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </div>
+
+                    <DropdownMenuSeparator className="my-2" />
+
+                    {/* Premium & Verification */}
+                    <div className="space-y-1">
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/verification')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <BadgeCheck className="h-5 w-5 text-warning" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Get Verified</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/premium')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Crown className="h-5 w-5 text-warning" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Go Premium</span>
+                        </div>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/purchases')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Receipt className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Purchase History</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </div>
+
+                    <DropdownMenuSeparator className="my-2" />
+
+                    {/* Settings & Privacy */}
+                    <div className="space-y-1">
+                      <DropdownMenuItem 
+                        onClick={() => navigate('/settings')} 
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <Settings className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Settings & Privacy</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </div>
+
+                    <DropdownMenuSeparator className="my-2" />
+
+                    {/* Help & Support */}
+                    <div className="space-y-1">
+                      <DropdownMenuItem 
+                        onClick={() => window.open('https://docs.lovable.dev', '_blank')}
+                        className="p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                            <HelpCircle className="h-5 w-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">Help & Support</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </div>
+
+                    <DropdownMenuSeparator className="my-2" />
+
+                    {/* Logout */}
+                    <DropdownMenuItem 
+                      onClick={handleSignOut}
+                      className="p-3 rounded-lg cursor-pointer hover:bg-destructive/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                          <LogOut className="h-5 w-5 text-destructive" />
+                        </div>
+                        <span className="text-sm font-medium text-destructive">Log Out</span>
+                      </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
