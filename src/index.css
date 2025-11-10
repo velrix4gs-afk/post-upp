@@ -543,3 +543,16 @@ All colors MUST be HSL.
 [data-layout="spacious"] .p-4 {
   padding: 1.5rem;
 }
+
+/* Mobile safe area support for bottom navigation */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Prevent content from being hidden behind bottom nav on mobile */
+@media (max-width: 768px) {
+  main {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+  }
+}
+

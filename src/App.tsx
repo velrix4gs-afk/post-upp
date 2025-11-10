@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { RealtimeNotifications } from "@/components/RealtimeNotifications";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { lazy, Suspense, Component, ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -119,6 +120,7 @@ const App = () => (
     <AuthProvider>
       <TooltipProvider>
         <RealtimeNotifications />
+        <BottomNavigation />
         <Toaster />
         <ToasterMobile />
         <BrowserRouter>
