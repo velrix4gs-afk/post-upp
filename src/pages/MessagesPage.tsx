@@ -499,9 +499,9 @@ const MessagesPage = () => {
           <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-gradient-to-br from-background to-primary/5`}>
             {selectedChat ? (
               <>
-                {/* Chat Header */}
+                {/* WhatsApp-Style Chat Header - Tappable */}
                 <div 
-                  className="p-3 md:p-4 border-b border-primary/10 flex items-center justify-between bg-gradient-subtle backdrop-blur-sm sticky top-0 z-10 cursor-pointer hover:bg-muted/30 transition-colors"
+                  className="p-2 border-b border-border/50 flex items-center justify-between bg-[#f0f2f5] dark:bg-[#202c33] sticky top-0 z-10 cursor-pointer hover:bg-[#e9edef] dark:hover:bg-[#2a3942] active:bg-[#d9dfe3] dark:active:bg-[#1f2b32] transition-colors"
                   onClick={() => {
                     if (selectedChat?.is_group) {
                       setShowGroupInfo(true);
@@ -510,12 +510,15 @@ const MessagesPage = () => {
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="md:hidden flex-shrink-0 h-10 w-10 hover:bg-primary/10"
-                      onClick={() => setSelectedChatId(null)}
+                      className="md:hidden flex-shrink-0 h-10 w-10 hover:bg-black/5 dark:hover:bg-white/5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedChatId(null);
+                      }}
                     >
                       ←
                     </Button>
@@ -526,18 +529,15 @@ const MessagesPage = () => {
                       
                       return (
                         <>
-                          <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/30">
+                          <Avatar className="h-10 w-10 flex-shrink-0">
                             <AvatarImage src={chatAvatar} />
-                            <AvatarFallback className="bg-gradient-primary text-white">{chatName[0]}</AvatarFallback>
+                            <AvatarFallback className="bg-[#00a884] text-white">{chatName[0]}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate">{chatName}</p>
-                            <div className="flex items-center gap-2 text-xs md:text-sm">
+                            <p className="font-medium truncate text-[15px]">{chatName}</p>
+                            <div className="flex items-center gap-2 text-[13px]">
                               {isOnline ? (
-                                <>
-                                  <span className="w-2 h-2 bg-success rounded-full"></span>
-                                  <span className="text-success">Online</span>
-                                </>
+                                <span className="text-[#00a884]">online</span>
                               ) : (
                                 <span className="text-muted-foreground">{formatLastSeen()}</span>
                               )}
@@ -612,20 +612,18 @@ const MessagesPage = () => {
                   </div>
                 </div>
 
-                {/* Messages */}
-                <ScrollArea 
-                  className="flex-1 px-2 py-3 md:px-4 md:py-4"
+                {/* Messages Area - WhatsApp Style */}
+                <div 
+                  className="flex-1 overflow-y-auto px-4 py-3 bg-[#efeae2] dark:bg-[#0b141a]"
                   style={{
                     backgroundImage: chatSettings?.wallpaper_url 
                       ? `url(${chatSettings.wallpaper_url})` 
-                      : undefined,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundColor: !chatSettings?.wallpaper_url ? 'hsl(var(--muted) / 0.2)' : undefined
+                      : 'url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgeD0iMCIgeT0iMCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxLjUiIGZpbGw9IiMwMDAwMDAiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9InVybCgjcGF0dGVybikiLz48L3N2Zz4=)',
+                    backgroundSize: chatSettings?.wallpaper_url ? 'cover' : '40px 40px',
+                    backgroundPosition: 'center'
                   }}
                 >
-                  <div className="space-y-0.5 md:space-y-1">
+                  <div className="space-y-1 max-w-4xl mx-auto">
                     {searchQuery.trim() && filteredMessages.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -672,110 +670,120 @@ const MessagesPage = () => {
                     )}
                     <div ref={messagesEndRef} />
                   </div>
-                  
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Bottom Section - WhatsApp Style */}
+                <div className="bg-[#f0f2f5] dark:bg-[#202c33] border-t border-border/50">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
-                </ScrollArea>
 
-                {/* Reply Preview */}
-                {replyingTo && (
-                  <div className="px-4 py-2 bg-muted/50 border-t flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Replying to</p>
-                      <p className="text-sm truncate">{replyingTo.content}</p>
+                  {/* Reply Preview */}
+                  {replyingTo && (
+                    <div className="px-4 py-2 flex items-center justify-between bg-white/80 dark:bg-[#1a2429]/80">
+                      <div className="flex-1 min-w-0 border-l-4 border-[#00a884] pl-3">
+                        <p className="text-xs font-medium text-[#00a884] mb-0.5">
+                          {replyingTo.sender?.display_name}
+                        </p>
+                        <p className="text-sm truncate text-muted-foreground">
+                          {replyingTo.content}
+                        </p>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setReplyingTo(null)}
+                        className="h-8 w-8 hover:bg-black/5 dark:hover:bg-white/5"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setReplyingTo(null)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                  )}
 
-                {/* Image Preview */}
-                {imagePreview && (
-                  <div className="px-4 py-2 bg-muted/50 border-t">
-                    <div className="relative inline-block">
-                      <img src={imagePreview} alt="Preview" className="h-20 rounded" />
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                  {/* Image Preview */}
+                  {imagePreview && (
+                    <div className="px-4 py-2 flex items-center gap-3 bg-white/80 dark:bg-[#1a2429]/80">
+                      <img src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-lg" />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
                         onClick={() => {
                           setSelectedImage(null);
                           setImagePreview(null);
                         }}
+                        className="h-8 w-8 hover:bg-black/5 dark:hover:bg-white/5"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                    {/* Voice Recorder */}
-                    {isRecordingVoice ? (
-                      <div className="p-4 border-t">
-                        <VoiceRecorder
-                          onSend={handleVoiceSend}
-                          onCancel={() => setIsRecordingVoice(false)}
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        {/* AI Smart Replies */}
-                        {lastReceivedMessage && !editingMessageId && (
-                          <div className="px-3 pt-3 md:px-4">
-                            <AISmartReplies
-                              lastMessage={lastReceivedMessage}
-                              onSelectReply={(reply) => {
-                                setMessageText(reply);
-                                messageInputRef.current?.focus();
-                              }}
-                            />
-                          </div>
-                        )}
+                  {/* Voice Recorder UI */}
+                  {isRecordingVoice ? (
+                    <div className="p-2">
+                      <VoiceRecorder
+                        onSend={(audioBlob, duration) => {
+                          handleVoiceSend(audioBlob, duration);
+                          setIsRecordingVoice(false);
+                        }}
+                        onCancel={() => setIsRecordingVoice(false)}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      {/* AI Smart Replies */}
+                      {lastReceivedMessage && !editingMessageId && (
+                        <div className="px-4 pt-2">
+                          <AISmartReplies
+                            lastMessage={lastReceivedMessage}
+                            onSelectReply={(reply) => {
+                              setMessageText(reply);
+                              messageInputRef.current?.focus();
+                            }}
+                          />
+                        </div>
+                      )}
 
-                        <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t border-primary/10 bg-gradient-subtle backdrop-blur-sm">
-                          <div className="flex gap-1.5 md:gap-2 items-end">
-                            <FileUpload 
-                              onFileSelect={(file, type) => {
-                                // Handle file upload
-                                setSelectedImage(file);
-                                const reader = new FileReader();
-                                reader.onload = (e) => setImagePreview(e.target?.result as string);
-                                reader.readAsDataURL(file);
-                              }}
-                            />
-                            <Button 
-                              type="button" 
+                      {/* Message Input - WhatsApp Style */}
+                      <form onSubmit={handleSendMessage} className="p-2">
+                        <div className="flex items-end gap-2">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-10 w-10 rounded-full hover:bg-black/5 dark:hover:bg-white/5 flex-shrink-0"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Plus className="h-5 w-5" />
+                          </Button>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleImageSelect}
+                          />
+                          
+                          <div className="flex-1 flex items-center gap-2 bg-white dark:bg-[#2a3942] rounded-[24px] px-3 py-2">
+                            <Button
+                              type="button"
                               size="icon"
                               variant="ghost"
-                              onClick={() => setIsRecordingVoice(true)}
-                              className="h-10 w-10 flex-shrink-0 md:flex hover:bg-primary/10 hover:text-primary"
+                              className="h-8 w-8 hover:bg-black/5 dark:hover:bg-white/5 flex-shrink-0"
                             >
-                              <Mic className="h-5 w-5" />
+                              <Smile className="h-5 w-5" />
                             </Button>
-                            <Button 
-                              type="button" 
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setShowLocationDialog(true)}
-                              className="h-10 w-10 flex-shrink-0 hidden md:flex hover:bg-primary/10 hover:text-primary"
-                            >
-                              <MapPin className="h-5 w-5" />
-                            </Button>
+                            
                             <Input
                               ref={messageInputRef}
-                              placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
                               value={messageText}
                               onChange={(e) => {
                                 setMessageText(e.target.value);
                                 handleTyping();
                               }}
-                              className="flex-1 h-10 text-base bg-background/50 border-primary/20 focus:border-primary transition-colors"
-                              autoFocus
+                              placeholder={editingMessageId ? "Edit message..." : "Message"}
+                              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-0 text-[15px]"
+                              disabled={isRecordingVoice}
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault();
@@ -783,32 +791,31 @@ const MessagesPage = () => {
                                 }
                               }}
                             />
-                            {editingMessageId && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setEditingMessageId(null);
-                                  setMessageText('');
-                                }}
-                                className="h-10 flex-shrink-0"
-                              >
-                                Cancel
-                              </Button>
-                            )}
-                            <Button 
-                              type="submit" 
-                              size="icon"
-                              disabled={!messageText.trim() && !selectedImage}
-                              className="h-10 w-10 flex-shrink-0 bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                            >
-                              <Send className="h-5 w-5" />
-                            </Button>
                           </div>
-                        </form>
-                      </>
-                    )}
+                          
+                          {messageText.trim() || selectedImage ? (
+                            <Button 
+                              type="submit"
+                              size="icon"
+                              className="h-11 w-11 rounded-full bg-[#00a884] hover:bg-[#008f6f] flex-shrink-0"
+                            >
+                              <Send className="h-5 w-5 text-white" />
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              size="icon"
+                              className="h-11 w-11 rounded-full bg-[#00a884] hover:bg-[#008f6f] flex-shrink-0"
+                              onClick={() => setIsRecordingVoice(true)}
+                            >
+                              <Mic className="h-5 w-5 text-white" />
+                            </Button>
+                          )}
+                        </div>
+                      </form>
+                    </>
+                  )}
+                </div>
               </> 
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">

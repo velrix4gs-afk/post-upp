@@ -71,66 +71,69 @@ export const MessageBubble = ({
 }: MessageBubbleProps) => {
   return (
     <div className={cn(
-      "flex gap-2 md:gap-3 group mb-3 md:mb-4",
+      "flex gap-2 group mb-1",
         isOwn ? "flex-row-reverse" : "flex-row"
       )}>
-      <Avatar className="h-9 w-9 md:h-8 md:w-8 flex-shrink-0">
-        <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
-        <AvatarFallback>{sender.display_name[0]}</AvatarFallback>
-      </Avatar>
+      {!isOwn && (
+        <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
+          <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
+          <AvatarFallback className="bg-[#00a884] text-white text-xs">{sender.display_name[0]}</AvatarFallback>
+        </Avatar>
+      )}
       
       <div className={cn(
-        "flex flex-col max-w-[85%] md:max-w-[70%]",
+        "flex flex-col max-w-[75%]",
         isOwn ? "items-end" : "items-start"
       )}>
-        {!isOwn && (
-          <span className="text-xs text-muted-foreground mb-1 px-2 md:px-3">
-            {sender.display_name}
-          </span>
-        )}
-
         {isForwarded && (
-          <Badge variant="secondary" className="mb-1 text-xs">
+          <Badge variant="secondary" className="mb-1 text-[11px] h-5">
             <Forward className="h-3 w-3 mr-1" />
             Forwarded
           </Badge>
         )}
 
-        <div className="flex items-start gap-1 md:gap-2">
+        <div className="flex items-end gap-1 relative group/bubble">
           <div
             className={cn(
-              "rounded-2xl px-3 py-2 md:px-4 shadow-sm relative",
+              "rounded-lg px-3 py-2 shadow-sm relative min-w-[60px]",
               isOwn
-                ? "bg-primary text-primary-foreground rounded-tr-sm"
-                : "bg-muted rounded-tl-sm"
+                ? "bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-white rounded-tr-none"
+                : "bg-white dark:bg-[#202c33] text-[#111b21] dark:text-white rounded-tl-none"
             )}
           >
             {isStarred && (
-              <Star className="absolute -top-2 -right-2 h-4 w-4 fill-yellow-500 text-yellow-500" />
+              <Star className="absolute -top-1 -right-1 h-3 w-3 fill-yellow-400 text-yellow-400" />
             )}
             
             {mediaUrl && (
-              <div className="mb-2">
+              <div className="mb-1 -mx-1 -mt-1">
                 {mediaType?.startsWith('image/') ? (
                   <img 
                     src={mediaUrl} 
                     alt="Message attachment" 
-                    className="rounded-lg max-w-full max-h-48 md:max-h-64 cursor-pointer hover:opacity-90 active:opacity-80"
+                    className="rounded-lg max-w-full max-h-64 cursor-pointer hover:opacity-95 active:opacity-90"
                     onClick={() => window.open(mediaUrl, '_blank')}
                   />
                 ) : mediaType?.startsWith('audio/') ? (
-                  <audio controls src={mediaUrl} className="max-w-full" />
+                  <audio controls src={mediaUrl} className="max-w-full h-10" />
                 ) : null}
               </div>
             )}
             {content && (
-              <p className="text-sm md:text-base break-words whitespace-pre-wrap">
+              <p className="text-[14.2px] leading-[19px] break-words whitespace-pre-wrap pr-12">
                 {content}
-                {isEdited && (
-                  <span className="text-xs opacity-70 ml-2">(edited)</span>
-                )}
               </p>
             )}
+            
+            {/* WhatsApp-style timestamp and status */}
+            <div className={cn(
+              "flex items-center gap-1 text-[11px] absolute bottom-1 right-2",
+              isOwn ? "text-[#667781] dark:text-[#8696a0]" : "text-[#667781] dark:text-[#8696a0]"
+            )}>
+              {isEdited && <span>edited</span>}
+              <span>{new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+              {isOwn && <ReadReceiptIndicator status={status} isOwn={isOwn} />}
+            </div>
           </div>
           
           {(onEdit || onDelete || onReply || onReact || onStar || onForward) && (
@@ -139,31 +142,29 @@ export const MessageBubble = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                  className="h-6 w-6 opacity-0 group-hover/bubble:opacity-100 transition-opacity hover:bg-black/5 dark:hover:bg-white/5"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={isOwn ? "end" : "start"} className="min-w-[160px]">
+              <DropdownMenuContent align={isOwn ? "end" : "start"} className="min-w-[180px]">
                 {onReact && (
-                  <div className="p-2 flex items-center gap-1">
+                  <div className="p-2 flex items-center gap-1 border-b">
                     <ReactionPicker onReact={(reaction) => onReact(id, reaction)} />
-                    <span className="text-xs text-muted-foreground ml-2">React</span>
                   </div>
                 )}
-                {onReact && <DropdownMenuSeparator />}
                 {onReply && (
-                  <DropdownMenuItem onClick={onReply} className="py-3 md:py-2">
+                  <DropdownMenuItem onClick={onReply} className="py-2.5">
                     <Reply className="h-4 w-4 mr-3" />
                     Reply
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(content)} className="py-3 md:py-2">
+                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(content)} className="py-2.5">
                   <Copy className="h-4 w-4 mr-3" />
                   Copy
                 </DropdownMenuItem>
                 {onForward && (
-                  <DropdownMenuItem onClick={() => onForward(id)} className="py-3 md:py-2">
+                  <DropdownMenuItem onClick={() => onForward(id)} className="py-2.5">
                     <Forward className="h-4 w-4 mr-3" />
                     Forward
                   </DropdownMenuItem>
@@ -171,23 +172,25 @@ export const MessageBubble = ({
                 {(onStar || onUnstar) && (
                   <DropdownMenuItem 
                     onClick={() => isStarred ? onUnstar?.(id) : onStar?.(id)} 
-                    className="py-3 md:py-2"
+                    className="py-2.5"
                   >
-                    <Star className={cn("h-4 w-4 mr-3", isStarred && "fill-yellow-500 text-yellow-500")} />
+                    <Star className={cn("h-4 w-4 mr-3", isStarred && "fill-yellow-400 text-yellow-400")} />
                     {isStarred ? 'Unstar' : 'Star'}
                   </DropdownMenuItem>
                 )}
-                {(onStar || onUnstar) && <DropdownMenuSeparator />}
                 {isOwn && onEdit && (
-                  <DropdownMenuItem onClick={() => onEdit(id, content)} className="py-3 md:py-2">
-                    <Edit2 className="h-4 w-4 mr-3" />
-                    Edit
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onEdit(id, content)} className="py-2.5">
+                      <Edit2 className="h-4 w-4 mr-3" />
+                      Edit
+                    </DropdownMenuItem>
+                  </>
                 )}
                 {isOwn && onDelete && (
                   <DropdownMenuItem 
                     onClick={() => onDelete(id)}
-                    className="text-destructive focus:text-destructive py-3 md:py-2"
+                    className="text-destructive focus:text-destructive py-2.5"
                   >
                     <Trash2 className="h-4 w-4 mr-3" />
                     Delete
@@ -198,18 +201,13 @@ export const MessageBubble = ({
           )}
         </div>
 
-        {onReact && onUnreact && (
+        {onReact && onUnreact && reactions.length > 0 && (
           <MessageReactions
             reactions={reactions}
             onReact={(type) => onReact(id, type)}
             onUnreact={(type) => onUnreact(id, type)}
           />
         )}
-
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 px-2 md:px-3">
-          <span>{formatDistanceToNow(new Date(timestamp), { addSuffix: true })}</span>
-          {isOwn && <ReadReceiptIndicator status={status} isOwn={isOwn} />}
-        </div>
       </div>
     </div>
   );
