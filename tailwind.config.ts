@@ -58,8 +58,6 @@ export default {
         },
         online: "hsl(var(--online))",
         offline: "hsl(var(--offline))",
-        "curios-blue": "207 76% 52%",
-        "mulled-wine": "280 18% 37%",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
