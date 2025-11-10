@@ -19,9 +19,10 @@ import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { showCleanError } from '@/lib/errorHandler';
-import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark, ShieldCheck, Sparkles } from 'lucide-react';
+import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark, ShieldCheck, Sparkles, Settings2 } from 'lucide-react';
 import { VerificationSettings } from './settings/VerificationSettings';
 import { CreatorStudio } from './settings/CreatorStudio';
+import { NotificationPreferences } from '@/components/NotificationPreferences';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ const SettingsPage = () => {
   const [showDisplayNameDialog, setShowDisplayNameDialog] = useState(false);
   const [showBioDialog, setShowBioDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [showNotificationPreferences, setShowNotificationPreferences] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const [newPassword, setNewPassword] = useState('');
@@ -954,8 +956,32 @@ const SettingsPage = () => {
           {/* Notifications */}
           <TabsContent value="notifications" className="space-y-4">
             <Card className="p-6 space-y-6">
+              {/* Quick Access to Full Preferences */}
+              <div className="p-6 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Settings2 className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Notification Preferences</h3>
+                      <p className="text-sm text-muted-foreground">Customize all notification types and delivery methods</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setShowNotificationPreferences(true)}
+                    className="rounded-xl"
+                  >
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Manage Preferences
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
               <div>
-                <h3 className="text-lg font-semibold mb-4">Push Notifications</h3>
+                <h3 className="text-lg font-semibold mb-4">Quick Settings</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
@@ -1407,6 +1433,12 @@ const SettingsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Notification Preferences Panel */}
+      <NotificationPreferences 
+        isOpen={showNotificationPreferences}
+        onOpenChange={setShowNotificationPreferences}
+      />
     </div>
   );
 };

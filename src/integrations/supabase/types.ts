@@ -3201,14 +3201,22 @@ export type Database = {
           allow_friend_requests: boolean | null
           auto_play_videos: boolean | null
           autoplay_videos: boolean | null
+          comments: boolean | null
           created_at: string | null
           data_saver_mode: boolean | null
+          email_enabled: boolean | null
           email_notifications: boolean | null
+          follows: boolean | null
           font_size: string | null
+          friend_requests: boolean | null
+          group_activity: boolean | null
           id: string
           language: string | null
           layout_mode: string | null
+          likes: boolean | null
           location_sharing: boolean | null
+          mentions: boolean | null
+          messages: boolean | null
           notification_friend_requests: boolean | null
           notification_messages: boolean | null
           notification_post_comments: boolean | null
@@ -3221,10 +3229,12 @@ export type Database = {
           privacy_who_can_tag: string | null
           privacy_who_can_view_profile: string | null
           profile_visibility: string | null
+          shares: boolean | null
           show_online_status: boolean | null
           show_read_receipts: boolean | null
           show_sensitive_content: boolean | null
           show_typing_indicator: boolean | null
+          sms_enabled: boolean | null
           sms_notifications: boolean | null
           theme_preference: string | null
           timezone: string | null
@@ -3236,14 +3246,22 @@ export type Database = {
           allow_friend_requests?: boolean | null
           auto_play_videos?: boolean | null
           autoplay_videos?: boolean | null
+          comments?: boolean | null
           created_at?: string | null
           data_saver_mode?: boolean | null
+          email_enabled?: boolean | null
           email_notifications?: boolean | null
+          follows?: boolean | null
           font_size?: string | null
+          friend_requests?: boolean | null
+          group_activity?: boolean | null
           id?: string
           language?: string | null
           layout_mode?: string | null
+          likes?: boolean | null
           location_sharing?: boolean | null
+          mentions?: boolean | null
+          messages?: boolean | null
           notification_friend_requests?: boolean | null
           notification_messages?: boolean | null
           notification_post_comments?: boolean | null
@@ -3256,10 +3274,12 @@ export type Database = {
           privacy_who_can_tag?: string | null
           privacy_who_can_view_profile?: string | null
           profile_visibility?: string | null
+          shares?: boolean | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           show_sensitive_content?: boolean | null
           show_typing_indicator?: boolean | null
+          sms_enabled?: boolean | null
           sms_notifications?: boolean | null
           theme_preference?: string | null
           timezone?: string | null
@@ -3271,14 +3291,22 @@ export type Database = {
           allow_friend_requests?: boolean | null
           auto_play_videos?: boolean | null
           autoplay_videos?: boolean | null
+          comments?: boolean | null
           created_at?: string | null
           data_saver_mode?: boolean | null
+          email_enabled?: boolean | null
           email_notifications?: boolean | null
+          follows?: boolean | null
           font_size?: string | null
+          friend_requests?: boolean | null
+          group_activity?: boolean | null
           id?: string
           language?: string | null
           layout_mode?: string | null
+          likes?: boolean | null
           location_sharing?: boolean | null
+          mentions?: boolean | null
+          messages?: boolean | null
           notification_friend_requests?: boolean | null
           notification_messages?: boolean | null
           notification_post_comments?: boolean | null
@@ -3291,10 +3319,12 @@ export type Database = {
           privacy_who_can_tag?: string | null
           privacy_who_can_view_profile?: string | null
           profile_visibility?: string | null
+          shares?: boolean | null
           show_online_status?: boolean | null
           show_read_receipts?: boolean | null
           show_sensitive_content?: boolean | null
           show_typing_indicator?: boolean | null
+          sms_enabled?: boolean | null
           sms_notifications?: boolean | null
           theme_preference?: string | null
           timezone?: string | null

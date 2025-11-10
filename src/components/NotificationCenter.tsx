@@ -14,10 +14,12 @@ import {
   AtSign,
   Check,
   CheckCheck,
-  X
+  X,
+  Settings2
 } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface NotificationCenterProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ interface NotificationCenterProps {
 const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const navigate = useNavigate();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -186,13 +189,18 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="p-4 border-t bg-background/50">
+            <div className="p-4 border-t bg-background/50 space-y-2">
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 className="w-full rounded-xl hover:bg-primary/10 transition-all duration-300" 
                 size="sm"
+                onClick={() => {
+                  onClose();
+                  navigate('/settings?tab=notifications');
+                }}
               >
-                View all notifications
+                <Settings2 className="h-4 w-4 mr-2" />
+                Notification Preferences
               </Button>
             </div>
           )}
