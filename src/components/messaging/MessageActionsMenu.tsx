@@ -5,7 +5,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { Reply, Forward, Copy, Star, Edit, Trash2, Languages, Clock } from 'lucide-react';
+import { Reply, Forward, Copy, Star, Edit, Trash2, Clock } from 'lucide-react';
 
 interface MessageActionsMenuProps {
   children: React.ReactNode;
@@ -17,7 +17,6 @@ interface MessageActionsMenuProps {
   onStar: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-  onTranslate?: () => void;
   onSchedule?: () => void;
 }
 
@@ -31,7 +30,6 @@ export const MessageActionsMenu = ({
   onStar,
   onEdit,
   onDelete,
-  onTranslate,
   onSchedule,
 }: MessageActionsMenuProps) => {
   return (
@@ -70,16 +68,6 @@ export const MessageActionsMenu = ({
           </>
         )}
 
-        {onTranslate && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={onTranslate}>
-              <Languages className="mr-2 h-4 w-4" />
-              Translate
-            </ContextMenuItem>
-          </>
-        )}
-        
         {isOwn && onEdit && (
           <>
             <ContextMenuSeparator />

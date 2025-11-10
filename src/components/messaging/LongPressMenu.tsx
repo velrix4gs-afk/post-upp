@@ -6,7 +6,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { Reply, Forward, Copy, Star, Edit, Trash2, Smile, Pin, Download, Info, Languages, Clock } from 'lucide-react';
+import { Reply, Forward, Copy, Star, Edit, Trash2, Smile, Pin, Download, Info, Clock } from 'lucide-react';
 
 interface LongPressMenuProps {
   children: ReactNode;
@@ -23,7 +23,6 @@ interface LongPressMenuProps {
   onPin?: () => void;
   onDownload?: () => void;
   onInfo?: () => void;
-  onTranslate?: () => void;
   onSchedule?: () => void;
 }
 
@@ -42,7 +41,6 @@ export const LongPressMenu = ({
   onPin,
   onDownload,
   onInfo,
-  onTranslate,
   onSchedule,
 }: LongPressMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -135,13 +133,6 @@ export const LongPressMenu = ({
           <ContextMenuItem onClick={onPin}>
             <Pin className="mr-2 h-4 w-4" />
             Pin Message
-          </ContextMenuItem>
-        )}
-
-        {onTranslate && (
-          <ContextMenuItem onClick={onTranslate}>
-            <Languages className="mr-2 h-4 w-4" />
-            Translate
           </ContextMenuItem>
         )}
 

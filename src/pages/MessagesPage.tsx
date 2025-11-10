@@ -28,7 +28,6 @@ import { WallpaperDialog } from '@/components/messaging/WallpaperDialog';
 import { ClearChatDialog } from '@/components/messaging/ClearChatDialog';
 import { BlockUserDialog } from '@/components/messaging/BlockUserDialog';
 import { ReportUserDialog } from '@/components/messaging/ReportUserDialog';
-import { TranslateMessageDialog } from '@/components/messaging/TranslateMessageDialog';
 import { ScheduleMessageDialog } from '@/components/messaging/ScheduleMessageDialog';
 import { LocationShareDialog } from '@/components/messaging/LocationShareDialog';
 import { ContactShareDialog } from '@/components/messaging/ContactShareDialog';
@@ -99,14 +98,11 @@ const MessagesPage = () => {
   const [showClearChat, setShowClearChat] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
-  const [showTranslateDialog, setShowTranslateDialog] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [reactingToMessageId, setReactingToMessageId] = useState<string | null>(null);
-  const [translateMessageId, setTranslateMessageId] = useState<string | null>(null);
-  const [translateMessageText, setTranslateMessageText] = useState('');
   const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
@@ -953,15 +949,6 @@ const MessagesPage = () => {
           userName={otherParticipant.profiles.username || ''}
           open={showReportDialog}
           onOpenChange={setShowReportDialog}
-        />
-      )}
-
-      {showTranslateDialog && translateMessageId && (
-        <TranslateMessageDialog
-          messageId={translateMessageId}
-          originalText={translateMessageText}
-          open={showTranslateDialog}
-          onOpenChange={setShowTranslateDialog}
         />
       )}
 

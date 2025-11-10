@@ -16,7 +16,6 @@ import {
   Pin,
   Download,
   Info,
-  Languages,
   Clock,
 } from 'lucide-react';
 
@@ -35,7 +34,6 @@ interface MessageActionSheetProps {
   onPin?: () => void;
   onDownload?: () => void;
   onInfo?: () => void;
-  onTranslate?: () => void;
   onSchedule?: () => void;
 }
 
@@ -54,7 +52,6 @@ export const MessageActionSheet = ({
   onPin,
   onDownload,
   onInfo,
-  onTranslate,
   onSchedule,
 }: MessageActionSheetProps) => {
   const handleAction = (action: () => void) => {
@@ -177,17 +174,6 @@ export const MessageActionSheet = ({
             >
               <Info className="h-5 w-5" />
               <span className="text-xs">Info</span>
-            </Button>
-          )}
-
-          {onTranslate && (
-            <Button
-              variant="ghost"
-              className="flex flex-col h-auto py-4 gap-2"
-              onClick={() => handleAction(onTranslate)}
-            >
-              <Languages className="h-5 w-5" />
-              <span className="text-xs">Translate</span>
             </Button>
           )}
 

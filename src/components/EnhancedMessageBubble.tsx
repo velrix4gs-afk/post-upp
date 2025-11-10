@@ -93,7 +93,6 @@ interface EnhancedMessageBubbleProps {
   onStar?: (messageId: string) => void;
   onUnstar?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
-  onTranslate?: () => void;
   onSchedule?: () => void;
 }
 
@@ -119,7 +118,6 @@ export const EnhancedMessageBubble = ({
   onStar,
   onUnstar,
   onForward,
-  onTranslate,
   onSchedule,
 }: EnhancedMessageBubbleProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
