@@ -48,7 +48,7 @@ const Feed = () => {
       />
       <Navigation />
       
-      <div className="container mx-auto flex gap-6 px-4 lg:px-8">
+      <div className="container mx-auto flex gap-6 px-4 lg:px-8 -mt-2">
         {/* Main Feed - Left/Center */}
         <main className="flex-1 max-w-2xl mx-auto lg:mx-0 border-x min-h-screen pb-20">
         {/* Sticky Tab Navigation */}
@@ -57,7 +57,7 @@ const Feed = () => {
             <button
               onClick={() => setActiveTab('for-you')}
               className={cn(
-                "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
+                "flex-1 px-4 py-2.5 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
                 activeTab === 'for-you' && "font-bold"
               )}
             >
@@ -73,7 +73,7 @@ const Feed = () => {
             <button
               onClick={() => setActiveTab('following')}
               className={cn(
-                "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
+                "flex-1 px-4 py-2.5 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
                 activeTab === 'following' && "font-bold"
               )}
             >
@@ -89,7 +89,7 @@ const Feed = () => {
             <button
               onClick={() => setActiveTab('trending')}
               className={cn(
-                "flex-1 px-4 py-4 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
+                "flex-1 px-4 py-2.5 text-sm font-semibold hover:bg-muted/50 transition-colors relative",
                 activeTab === 'trending' && "font-bold"
               )}
             >

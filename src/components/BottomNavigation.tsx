@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useNotifications } from '@/hooks/useNotifications';
-import { Home, MessageCircle, PlusCircle, Bell, User } from 'lucide-react';
+import { Home, MessageCircle, PlusCircle, Star, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -11,7 +10,6 @@ export const BottomNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { unreadCount } = useNotifications();
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -56,12 +54,10 @@ export const BottomNavigation = () => {
       isCenter: true,
     },
     {
-      label: 'Notifications',
-      icon: Bell,
-      path: '/feed', // Opens notification panel
-      action: () => {}, // Will be handled separately
-      isActive: false,
-      badge: unreadCount,
+      label: 'Reels',
+      icon: Star,
+      path: '/reels',
+      isActive: isActive('/reels'),
     },
     {
       label: 'Profile',
