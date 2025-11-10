@@ -80,29 +80,29 @@ const FriendsPage = () => {
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-6">
-            <TabsTrigger value="all" className="flex items-center justify-center gap-2">
+          <TabsList className="inline-flex w-full overflow-x-auto overflow-y-hidden mb-6 lg:grid lg:grid-cols-6 h-auto p-1">
+            <TabsTrigger value="all" className="flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <span>Friends</span>
               <Badge variant="secondary" className="h-5 px-2">{friends.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="following" className="flex items-center justify-center gap-2">
+            <TabsTrigger value="following" className="flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <span>Following</span>
               <Badge variant="secondary" className="h-5 px-2">{following.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="followers" className="flex items-center justify-center gap-2">
+            <TabsTrigger value="followers" className="flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <span>Followers</span>
               <Badge variant="secondary" className="h-5 px-2">{followers.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="online" className="flex items-center justify-center gap-2">
+            <TabsTrigger value="online" className="flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <span>Online</span>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="flex items-center justify-center gap-2">
+            <TabsTrigger value="requests" className="flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <span>Requests</span>
               {pendingRequests.length > 0 && (
                 <Badge variant="destructive" className="h-5 px-2">{pendingRequests.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="suggestions" className="flex items-center justify-center gap-2">
+            <TabsTrigger value="suggestions" className="flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0">
               <span>Suggestions</span>
             </TabsTrigger>
           </TabsList>
