@@ -13,6 +13,16 @@ export const BottomNavigation = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // Track scroll for dynamic sizing (must be before early return)
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Hide bottom nav on auth pages
   const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
   const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
@@ -23,16 +33,6 @@ export const BottomNavigation = () => {
   if (!user || isAuthPage || !isFeedPage) {
     return null;
   }
-
-  // Track scroll for dynamic sizing
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
