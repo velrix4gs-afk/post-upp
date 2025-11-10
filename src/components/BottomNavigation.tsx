@@ -72,8 +72,8 @@ export const BottomNavigation = () => {
 
   return (
     <>
-      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t shadow-lg transition-all duration-300 ${
-        isScrolled ? 'py-0.5' : 'py-1'
+      <nav className={`md:hidden fixed left-4 right-4 z-50 bg-background/95 backdrop-blur-xl border shadow-2xl transition-all duration-300 ${
+        isScrolled ? 'bottom-2 rounded-2xl py-0.5' : 'bottom-4 rounded-3xl py-1'
       }`}>
         <div className="flex items-center justify-around px-1 safe-area-bottom">
           {navItems.map((item, index) => {
@@ -86,14 +86,14 @@ export const BottomNavigation = () => {
                   key={index}
                   onClick={item.action}
                   className={`flex flex-col items-center justify-center relative transition-all duration-300 ${
-                    isScrolled ? '-mt-3' : '-mt-4'
+                    isScrolled ? '-mt-2' : '-mt-3'
                   }`}
                 >
-                  <div className={`rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-300 ${
-                    isScrolled ? 'h-10 w-10' : 'h-12 w-12'
+                  <div className={`rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-300 ${
+                    isScrolled ? 'h-11 w-11' : 'h-14 w-14'
                   }`}>
                     <Icon className={`text-primary-foreground transition-all duration-300 ${
-                      isScrolled ? 'h-5 w-5' : 'h-5 w-5'
+                      isScrolled ? 'h-5 w-5' : 'h-6 w-6'
                     }`} />
                   </div>
                 </button>

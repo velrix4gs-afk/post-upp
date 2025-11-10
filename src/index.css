@@ -552,7 +552,7 @@ All colors MUST be HSL.
 /* Prevent content from being hidden behind bottom nav on mobile */
 @media (max-width: 768px) {
   main {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
   }
 }
 
