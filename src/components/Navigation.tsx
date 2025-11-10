@@ -23,16 +23,32 @@ const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Hide navigation on auth pages
+  const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
+  const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
+  
+  if (isAuthPage) {
+    return null;
+  }
+
+  // Compact mode for non-feed pages
+  const isHomePage = location.pathname === '/feed' || location.pathname === '/' || location.pathname === '/dashboard';
+  const isCompactMode = !isHomePage;
+
   return (
-    <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3">
+    <nav className={`border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50 transition-all duration-300 ${
+      isCompactMode ? 'py-1.5' : 'py-3'
+    }`}>
+      <div className="container mx-auto px-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
-            <Link to="/feed" className="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
+            <Link to="/feed" className={`font-bold text-primary hover:opacity-80 transition-all duration-300 ${
+              isCompactMode ? 'text-lg' : 'text-2xl'
+            }`}>
               POST UP
             </Link>
             
-            {user && (
+            {user && !isCompactMode && (
               <div className="hidden lg:flex items-center gap-2">
                 <Link to="/feed">
                   <Button 
@@ -151,7 +167,7 @@ const Navigation = () => {
             )}
           </div>
 
-          {user && (
+          {user && !isCompactMode && (
             <div className="flex md:hidden">
               <Button variant="ghost" size="sm" onClick={() => navigate('/search')}>
                 <Search className="h-5 w-5" />
@@ -159,7 +175,7 @@ const Navigation = () => {
             </div>
           )}
 
-          {user && (
+          {user && !isCompactMode && (
             <div className="hidden md:flex flex-1 max-w-md">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -173,18 +189,20 @@ const Navigation = () => {
             </div>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center transition-all duration-300 ${
+            isCompactMode ? 'gap-2' : 'gap-3'
+          }`}>
             <ThemeToggle />
             
             {user ? (
               <>
                 <Button 
                   variant="ghost" 
-                  size="sm" 
+                  size={isCompactMode ? "icon" : "sm"}
                   className="relative"
                   onClick={() => setShowNotifications(true)}
                 >
-                  <Bell className="h-5 w-5" />
+                  <Bell className={isCompactMode ? "h-4 w-4" : "h-5 w-5"} />
                   {unreadCount > 0 && (
                     <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
                       {unreadCount}
@@ -201,8 +219,10 @@ const Navigation = () => {
                   isOpen={showMenu} 
                   onOpenChange={setShowMenu}
                   trigger={
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar>
+                    <Button variant="ghost" className={`relative rounded-full transition-all duration-300 ${
+                      isCompactMode ? 'h-8 w-8' : 'h-10 w-10'
+                    }`}>
+                      <Avatar className={isCompactMode ? 'h-7 w-7' : ''}>
                         <AvatarImage src={profile?.avatar_url} />
                         <AvatarFallback>{profile?.display_name?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
