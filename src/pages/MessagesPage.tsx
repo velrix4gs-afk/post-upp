@@ -322,8 +322,7 @@ const MessagesPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      <main className="container mx-auto px-0 md:px-4 h-[calc(100dvh-80px)]">
+      <main className="container mx-auto px-0 md:px-4 h-screen">
         <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}
           <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
@@ -662,7 +661,7 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
-                <div className="fixed inset-x-0 bottom-0 md:absolute md:left-auto md:right-auto bg-card/95 backdrop-blur-md border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-[100]">
+                <div className="fixed inset-x-0 bottom-0 md:absolute md:left-auto md:right-auto bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100]">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
