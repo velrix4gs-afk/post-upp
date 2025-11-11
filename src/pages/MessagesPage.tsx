@@ -604,7 +604,7 @@ const MessagesPage = () => {
 
                 {/* Messages Area */}
                 <div 
-                  className="flex-1 overflow-y-auto px-4 py-3 pb-[180px] bg-gradient-to-br from-background to-muted/20"
+                  className="flex-1 overflow-y-auto px-4 py-3 pb-28 bg-gradient-to-br from-background to-muted/20"
                   style={chatSettings?.wallpaper_url ? {
                     backgroundImage: `url(${chatSettings.wallpaper_url})`,
                     backgroundSize: 'cover',
@@ -662,7 +662,7 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
-                <div className="fixed bottom-0 left-0 right-0 md:absolute bg-card/95 backdrop-blur-md border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-50">
+                <div className="fixed inset-x-0 bottom-0 md:absolute md:left-auto md:right-auto bg-card/95 backdrop-blur-md border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-[100]">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
