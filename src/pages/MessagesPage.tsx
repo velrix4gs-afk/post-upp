@@ -362,32 +362,43 @@ const MessagesPage = () => {
               </div>
             </div>
 
-            <ScrollArea className="flex-1 h-[calc(100vh-260px)] md:h-full">
-              <div className="p-2 pb-4">
-                {/* Friends & Previous Chats Section */}
-                {!selectedChatId && friends.length > 0 && (
-                  <div className="mb-4">
-                    <Input
-                      placeholder="Search friends..."
-                      value={newChatSearch}
-                      onChange={(e) => setNewChatSearch(e.target.value)}
-                      className="mb-3"
-                    />
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase px-3 mb-2">
-                      Friends ({friends.filter(f => 
-                        !newChatSearch || 
-                        f.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
-                        f.username?.toLowerCase().includes(newChatSearch.toLowerCase())
-                      ).length})
-                    </h3>
-                    <div className="space-y-1">
-                      {friends
-                        .filter(f => 
-                          !newChatSearch || 
+            <ScrollArea className="flex-1">
+              <div className="p-2 pb-20">
+                {/* Unified Friends & Chats List */}
+                {!selectedChatId && (
+                  <Input
+                    placeholder="Search friends and chats..."
+                    value={newChatSearch}
+                    onChange={(e) => setNewChatSearch(e.target.value)}
+                    className="mb-3 mx-1"
+                  />
+                )}
+
+                {loading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="p-3 rounded animate-pulse">
+                        <div className="flex gap-3">
+                          <div className="h-12 w-12 rounded-full bg-muted" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-muted rounded w-3/4" />
+                            <div className="h-3 bg-muted rounded w-1/2" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {/* Friends who aren't in chats yet */}
+                    {!selectedChatId && friends
+                      .filter(f => 
+                        !chats.some(c => c.participants.some(p => p.user_id === f.id)) &&
+                        (!newChatSearch || 
                           f.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
-                          f.username?.toLowerCase().includes(newChatSearch.toLowerCase())
-                        )
-                        .slice(0, 10).map((friend) => (
+                          f.username?.toLowerCase().includes(newChatSearch.toLowerCase()))
+                      )
+                      .map((friend) => (
                         <div
                           key={friend.id}
                           className="p-3 rounded-lg cursor-pointer hover:bg-primary/10 transition-all duration-200 group border border-transparent hover:border-primary/20 active:scale-[0.98]"
@@ -412,76 +423,61 @@ const MessagesPage = () => {
                           </div>
                         </div>
                       ))}
-                    </div>
-                    <Separator className="my-4" />
-                  </div>
-                )}
 
-                {loading ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="p-3 rounded animate-pulse">
-                        <div className="flex gap-3">
-                          <div className="h-12 w-12 rounded-full bg-muted" />
-                          <div className="flex-1 space-y-2">
-                            <div className="h-4 bg-muted rounded w-3/4" />
-                            <div className="h-3 bg-muted rounded w-1/2" />
-                          </div>
-                        </div>
+                    {/* Existing Chats */}
+                    {filteredChats.length === 0 && searchQuery ? (
+                      <div className="text-center py-8 px-4 text-muted-foreground">
+                        <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                        <p className="text-sm">No results found</p>
                       </div>
-                    ))}
-                  </div>
-                ) : filteredChats.length === 0 && searchQuery ? (
-                  <div className="text-center py-8 px-4 text-muted-foreground">
-                    <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">No results found</p>
-                  </div>
-                ) : filteredChats.length === 0 ? (
-                  <div className="text-center py-12 px-4 text-muted-foreground">
-                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium mb-2">No conversations yet</p>
-                    <p className="text-sm">Tap on a friend above to start chatting</p>
-                  </div>
-                ) : (
-                  filteredChats.map(chat => {
-                    const otherParticipant = chat.participants.find(p => p.user_id !== user?.id);
-                    const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
-                    const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
+                    ) : filteredChats.length === 0 && friends.length === 0 ? (
+                      <div className="text-center py-12 px-4 text-muted-foreground">
+                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p className="font-medium mb-2">No conversations yet</p>
+                        <p className="text-sm">Add friends to start chatting</p>
+                      </div>
+                    ) : (
+                      filteredChats.map(chat => {
+                        const otherParticipant = chat.participants.find(p => p.user_id !== user?.id);
+                        const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
+                        const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
 
-                    return (
-                      <div
-                        key={chat.id}
-                        className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
-                          selectedChatId === chat.id 
-                            ? 'bg-gradient-primary/10 border-primary/30 shadow-md' 
-                            : 'hover:bg-primary/5 border-transparent hover:border-primary/10'
-                        }`}
-                        onClick={() => setSelectedChatId(chat.id)}
-                      >
-                        <div className="flex gap-3">
-                          <div className="relative flex-shrink-0">
-                            <Avatar className={`h-12 w-12 ring-2 transition-all ${
-                              selectedChatId === chat.id ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'
-                            }`}>
-                              <AvatarImage src={avatar} />
-                              <AvatarFallback className={selectedChatId === chat.id ? "bg-gradient-primary text-white" : "bg-muted"}>{chatName[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute bottom-0 right-0 h-3 w-3 bg-success rounded-full border-2 border-background" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className={`font-medium truncate text-sm md:text-base transition-colors ${
-                                selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
-                              }`}>{chatName}</p>
+                        return (
+                          <div
+                            key={chat.id}
+                            className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
+                              selectedChatId === chat.id 
+                                ? 'bg-gradient-primary/10 border-primary/30 shadow-md' 
+                                : 'hover:bg-primary/5 border-transparent hover:border-primary/10'
+                            }`}
+                            onClick={() => setSelectedChatId(chat.id)}
+                          >
+                            <div className="flex gap-3">
+                              <div className="relative flex-shrink-0">
+                                <Avatar className={`h-12 w-12 ring-2 transition-all ${
+                                  selectedChatId === chat.id ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'
+                                }`}>
+                                  <AvatarImage src={avatar} />
+                                  <AvatarFallback className={selectedChatId === chat.id ? "bg-gradient-primary text-white" : "bg-muted"}>{chatName[0]}</AvatarFallback>
+                                </Avatar>
+                                <div className="absolute bottom-0 right-0 h-3 w-3 bg-success rounded-full border-2 border-background" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <p className={`font-medium truncate text-sm md:text-base transition-colors ${
+                                    selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
+                                  }`}>{chatName}</p>
+                                </div>
+                                <p className="text-xs md:text-sm text-muted-foreground truncate">
+                                  {chat.is_group ? `${chat.participants.length} members` : 'Direct message'}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-xs md:text-sm text-muted-foreground truncate">
-                              {chat.is_group ? `${chat.participants.length} members` : 'Direct message'}
-                            </p>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })
+                        );
+                      })
+                    )}
+                  </div>
                 )}
               </div>
             </ScrollArea>
@@ -608,7 +604,7 @@ const MessagesPage = () => {
 
                 {/* Messages Area */}
                 <div 
-                  className="flex-1 overflow-y-auto px-4 py-3 pb-32 bg-gradient-to-br from-background to-muted/20"
+                  className="flex-1 overflow-y-auto px-4 py-3 mb-36 bg-gradient-to-br from-background to-muted/20"
                   style={chatSettings?.wallpaper_url ? {
                     backgroundImage: `url(${chatSettings.wallpaper_url})`,
                     backgroundSize: 'cover',
@@ -665,8 +661,8 @@ const MessagesPage = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Section */}
-                <div className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
+                {/* Input Section - Fixed at bottom */}
+                <div className="fixed bottom-0 left-0 right-0 md:absolute bg-card/95 backdrop-blur-md border-t border-border/50 pb-[env(safe-area-inset-bottom)] z-50">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
