@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Image, Video, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Plus, Image, Video, X, Send, Type } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -127,139 +127,196 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
         Add Story
       </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">
-              Create Story
-            </DialogTitle>
-          </DialogHeader>
+      {/* Instagram-style Full Screen Sheet */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent 
+          side="bottom" 
+          className="h-[100dvh] w-full p-0 border-0 rounded-none bg-black"
+        >
+          {/* No Preview - Upload Selection */}
+          {!previewUrl ? (
+            <div className="h-full flex flex-col items-center justify-center gap-6 p-6 bg-gradient-to-br from-background via-muted/20 to-primary/5">
+              <div className="absolute top-4 left-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsOpen(false)}
+                  className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
 
-          <div className="space-y-5">
-            {previewUrl ? (
-              <div className="relative rounded-2xl overflow-hidden">
+              <div className="text-center space-y-2 mb-4">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">
+                  Create Story
+                </h2>
+                <p className="text-muted-foreground">Share a moment with your friends</p>
+              </div>
+
+              <input
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="story-upload"
+              />
+
+              <div className="w-full max-w-sm space-y-4">
+                {/* Photo Upload */}
+                <label htmlFor="story-upload" className="cursor-pointer block">
+                  <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-success/20 to-success/5 border-2 border-success/30 hover:border-success hover:scale-[1.02] transition-all p-8">
+                    <div className="flex items-center gap-6">
+                      <div className="p-4 bg-success/20 rounded-2xl group-hover:scale-110 transition-transform">
+                        <Image className="h-8 w-8 text-success" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-xl font-bold text-foreground mb-1">Add Photo</p>
+                        <p className="text-sm text-muted-foreground">Max 50MB • PNG, JPG, WEBP</p>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                {/* Video Upload */}
+                <label htmlFor="story-upload" className="cursor-pointer block">
+                  <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-destructive/20 to-destructive/5 border-2 border-destructive/30 hover:border-destructive hover:scale-[1.02] transition-all p-8">
+                    <div className="flex items-center gap-6">
+                      <div className="p-4 bg-destructive/20 rounded-2xl group-hover:scale-110 transition-transform">
+                        <Video className="h-8 w-8 text-destructive" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-xl font-bold text-foreground mb-1">Add Video</p>
+                        <p className="text-sm text-muted-foreground">Up to 60s • MP4, MOV</p>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          ) : (
+            /* Preview Mode - Instagram Style */
+            <div className="h-full flex flex-col bg-black">
+              {/* Top Bar */}
+              <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4 pb-20">
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setPreviewUrl(null);
+                      setSelectedFilter('none');
+                      setContent('');
+                    }}
+                    className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white"
+                    >
+                      <Type className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Media Preview */}
+              <div className="flex-1 relative overflow-hidden">
                 {selectedFile?.type.startsWith('image/') ? (
                   <img
                     src={previewUrl}
                     alt="Preview"
-                    className="w-full h-80 object-cover"
+                    className="w-full h-full object-contain"
                     style={{ filter: filters.find(f => f.id === selectedFilter)?.css || 'none' }}
                   />
                 ) : (
                   <video
                     src={previewUrl}
-                    className="w-full h-80 object-cover"
+                    className="w-full h-full object-contain"
                     style={{ filter: filters.find(f => f.id === selectedFilter)?.css || 'none' }}
                     controls
+                    playsInline
                   />
                 )}
-                
-                {/* Close Button */}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute top-3 right-3 rounded-full shadow-lg"
-                  onClick={() => {
-                    setSelectedFile(null);
-                    setPreviewUrl(null);
-                    setSelectedFilter('none');
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              </div>
 
-                {/* Filter Selector - Horizontal Scroll */}
+              {/* Bottom Controls */}
+              <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black via-black/95 to-transparent p-4 pt-12">
+                {/* Caption Input */}
+                <div className="mb-4">
+                  <Input
+                    placeholder="Add a caption..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    maxLength={200}
+                    className="bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/50 rounded-full px-4 py-6 text-base focus:bg-white/20 focus:border-white/40"
+                  />
+                </div>
+
+                {/* Filter Selector - Only for images */}
                 {selectedFile?.type.startsWith('image/') && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  <div className="mb-4">
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                       {filters.map((filter) => (
                         <button
                           key={filter.id}
                           onClick={() => setSelectedFilter(filter.id)}
-                          className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-all ${
-                            selectedFilter === filter.id
-                              ? 'bg-gradient-primary text-white shadow-glow'
-                              : 'bg-white/20 text-white hover:bg-white/30'
-                          }`}
+                          className="flex-shrink-0 flex flex-col items-center gap-2 group"
                         >
-                          {filter.name}
+                          <div
+                            className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
+                              selectedFilter === filter.id
+                                ? 'border-white scale-110 shadow-lg shadow-white/30'
+                                : 'border-white/30 hover:border-white/50'
+                            }`}
+                          >
+                            <img
+                              src={previewUrl}
+                              alt={filter.name}
+                              className="w-full h-full object-cover"
+                              style={{ filter: filter.css }}
+                            />
+                          </div>
+                          <span
+                            className={`text-xs font-medium transition-all ${
+                              selectedFilter === filter.id
+                                ? 'text-white scale-110'
+                                : 'text-white/60 group-hover:text-white/80'
+                            }`}
+                          >
+                            {filter.name}
+                          </span>
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
+
+                {/* Share Button */}
+                <Button
+                  onClick={handleCreateStory}
+                  disabled={!selectedFile || isUploading}
+                  className="w-full h-14 rounded-full bg-gradient-primary hover:shadow-glow text-white font-bold text-lg disabled:opacity-50"
+                >
+                  {isUploading ? (
+                    <>⏳ Sharing...</>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5 mr-2" />
+                      Share to Story
+                    </>
+                  )}
+                </Button>
               </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="story-media"
-                />
-                
-                {/* Photo Button */}
-                <label htmlFor="story-media" className="cursor-pointer">
-                  <div className="group p-6 border-2 border-dashed border-primary/30 rounded-2xl hover:border-primary hover:bg-primary/5 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-success/10 rounded-xl group-hover:scale-110 transition-transform">
-                        <Image className="h-6 w-6 text-success" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-semibold text-foreground">Add Photo</p>
-                        <p className="text-xs text-muted-foreground">Max 50MB</p>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-
-                {/* Video Button */}
-                <label htmlFor="story-media" className="cursor-pointer">
-                  <div className="group p-6 border-2 border-dashed border-destructive/30 rounded-2xl hover:border-destructive hover:bg-destructive/5 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-destructive/10 rounded-xl group-hover:scale-110 transition-transform">
-                        <Video className="h-6 w-6 text-destructive" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-semibold text-foreground">Add Video</p>
-                        <p className="text-xs text-muted-foreground">Up to 60 seconds</p>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-              </div>
-            )}
-
-            <Textarea
-              placeholder="What's on your mind? 💭"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={3}
-              maxLength={200}
-              className="rounded-2xl resize-none border-2 focus:border-primary"
-            />
-
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="outline"
-                className="flex-1 rounded-full border-2 font-semibold"
-                onClick={() => setIsOpen(false)}
-                disabled={isUploading}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1 rounded-full bg-gradient-primary font-semibold shadow-lg hover:shadow-glow"
-                onClick={handleCreateStory}
-                disabled={!selectedFile || isUploading}
-              >
-                {isUploading ? '⏳ Creating...' : '✨ Share Story'}
-              </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
