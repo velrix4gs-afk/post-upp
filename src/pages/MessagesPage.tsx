@@ -490,11 +490,11 @@ const MessagesPage = () => {
           {/* NewChatDialog is rendered at bottom of component */}
 
           {/* Chat Area */}
-          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
+          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col relative`}>
             {selectedChat ? (
               <>
                 {/* Chat Header */}
-                <div 
+                <div
                   className="p-2 border-b border-border/50 flex items-center justify-between bg-card/80 backdrop-blur-sm sticky top-0 z-10 cursor-pointer hover:bg-card/90 transition-colors"
                   onClick={() => {
                     if (selectedChat?.is_group) {
@@ -608,14 +608,14 @@ const MessagesPage = () => {
 
                 {/* Messages Area */}
                 <div 
-                  className="flex-1 overflow-y-auto px-4 py-3 bg-gradient-to-br from-background to-muted/20"
+                  className="flex-1 overflow-y-auto px-4 py-3 pb-32 bg-gradient-to-br from-background to-muted/20"
                   style={chatSettings?.wallpaper_url ? {
                     backgroundImage: `url(${chatSettings.wallpaper_url})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                   } : {}}
                 >
-                  <div className="space-y-1 max-w-4xl mx-auto">
+                  <div className="space-y-2 max-w-4xl mx-auto">
                     {searchQuery.trim() && filteredMessages.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -666,7 +666,7 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Input Section */}
-                <div className="bg-card/80 backdrop-blur-sm border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
+                <div className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
