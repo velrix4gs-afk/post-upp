@@ -604,7 +604,7 @@ const MessagesPage = () => {
 
                 {/* Messages Area */}
                 <div 
-                  className="flex-1 overflow-y-auto px-4 py-3 mb-36 bg-gradient-to-br from-background to-muted/20"
+                  className="flex-1 overflow-y-auto px-4 py-3 pb-[180px] bg-gradient-to-br from-background to-muted/20"
                   style={chatSettings?.wallpaper_url ? {
                     backgroundImage: `url(${chatSettings.wallpaper_url})`,
                     backgroundSize: 'cover',
