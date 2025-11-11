@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
 import { useChats } from '@/hooks/useChats';
-import { useFollowers } from '@/hooks/useFollowers';
+import { useFriends } from '@/hooks/useFriends';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePresence } from '@/hooks/usePresence';
 import { useLastSeen } from '@/hooks/useLastSeen';
@@ -72,7 +72,7 @@ const MessagesPage = () => {
     refetchMessages 
   } = useMessages(selectedChatId || undefined);
   const { createChat: createChatByUuid } = useChats();
-  const { following } = useFollowers();
+  const { friends } = useFriends();
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
   const { isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
   const selectedChat = chats.find(c => c.id === selectedChatId);
@@ -362,59 +362,53 @@ const MessagesPage = () => {
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
-              <div className="p-2">
-                {/* Search in Following */}
-                {!selectedChatId && (
+            <ScrollArea className="flex-1 h-[calc(100vh-260px)] md:h-full">
+              <div className="p-2 pb-4">
+                {/* Friends & Previous Chats Section */}
+                {!selectedChatId && friends.length > 0 && (
                   <div className="mb-4">
                     <Input
-                      placeholder="Search friends to message..."
+                      placeholder="Search friends..."
                       value={newChatSearch}
                       onChange={(e) => setNewChatSearch(e.target.value)}
-                      className="mb-2"
+                      className="mb-3"
                     />
-                  </div>
-                )}
-
-                {/* Following Section */}
-                {!selectedChatId && following.length > 0 && (
-                  <div className="mb-4">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase px-3 mb-2">
-                      Following ({following.filter(f => 
+                      Friends ({friends.filter(f => 
                         !newChatSearch || 
-                        f.following?.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
-                        f.following?.username?.toLowerCase().includes(newChatSearch.toLowerCase())
+                        f.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
+                        f.username?.toLowerCase().includes(newChatSearch.toLowerCase())
                       ).length})
                     </h3>
                     <div className="space-y-1">
-                      {following
+                      {friends
                         .filter(f => 
                           !newChatSearch || 
-                          f.following?.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
-                          f.following?.username?.toLowerCase().includes(newChatSearch.toLowerCase())
+                          f.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
+                          f.username?.toLowerCase().includes(newChatSearch.toLowerCase())
                         )
-                        .slice(0, 10).map((follow) => (
+                        .slice(0, 10).map((friend) => (
                         <div
-                          key={follow.id}
-                          className="p-2 rounded-lg cursor-pointer hover:bg-primary/10 transition-all duration-200 group border border-transparent hover:border-primary/20"
-                          onClick={() => handleCreateNewChat(follow.following?.id || follow.following_id)}
+                          key={friend.id}
+                          className="p-3 rounded-lg cursor-pointer hover:bg-primary/10 transition-all duration-200 group border border-transparent hover:border-primary/20 active:scale-[0.98]"
+                          onClick={() => handleCreateNewChat(friend.id)}
                         >
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-10 w-10 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
-                              <AvatarImage src={follow.following?.avatar_url} />
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-11 w-11 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
+                              <AvatarImage src={friend.avatar_url} />
                               <AvatarFallback className="bg-gradient-primary text-white">
-                                {follow.following?.display_name?.[0] || 'U'}
+                                {friend.display_name?.[0] || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                                {follow.following?.display_name || 'User'}
+                              <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                                {friend.display_name || 'User'}
                               </p>
                               <p className="text-xs text-muted-foreground truncate">
-                                @{follow.following?.username || 'username'}
+                                @{friend.username || 'username'}
                               </p>
                             </div>
-                            <MessageCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <MessageCircle className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                           </div>
                         </div>
                       ))}
@@ -446,7 +440,7 @@ const MessagesPage = () => {
                   <div className="text-center py-12 px-4 text-muted-foreground">
                     <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="font-medium mb-2">No conversations yet</p>
-                    <p className="text-sm">Click on a friend above to start messaging</p>
+                    <p className="text-sm">Tap on a friend above to start chatting</p>
                   </div>
                 ) : (
                   filteredChats.map(chat => {
