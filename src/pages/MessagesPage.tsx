@@ -672,7 +672,7 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Input Section */}
-                <div className="bg-card/80 backdrop-blur-sm border-t border-border/50 pb-safe">
+                <div className="bg-card/80 backdrop-blur-sm border-t border-border/50 pb-[env(safe-area-inset-bottom)]">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
