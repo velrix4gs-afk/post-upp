@@ -496,12 +496,12 @@ const MessagesPage = () => {
           {/* NewChatDialog is rendered at bottom of component */}
 
           {/* Chat Area */}
-          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-gradient-to-br from-background to-primary/5`}>
+          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
             {selectedChat ? (
               <>
-                {/* WhatsApp-Style Chat Header - Tappable */}
+                {/* Chat Header */}
                 <div 
-                  className="p-2 border-b border-border/50 flex items-center justify-between bg-[#f0f2f5] dark:bg-[#202c33] sticky top-0 z-10 cursor-pointer hover:bg-[#e9edef] dark:hover:bg-[#2a3942] active:bg-[#d9dfe3] dark:active:bg-[#1f2b32] transition-colors"
+                  className="p-2 border-b border-border/50 flex items-center justify-between bg-card/80 backdrop-blur-sm sticky top-0 z-10 cursor-pointer hover:bg-card/90 transition-colors"
                   onClick={() => {
                     if (selectedChat?.is_group) {
                       setShowGroupInfo(true);
@@ -529,20 +529,20 @@ const MessagesPage = () => {
                       
                       return (
                         <>
-                          <Avatar className="h-10 w-10 flex-shrink-0">
-                            <AvatarImage src={chatAvatar} />
-                            <AvatarFallback className="bg-[#00a884] text-white">{chatName[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate text-[15px]">{chatName}</p>
-                            <div className="flex items-center gap-2 text-[13px]">
-                              {isOnline ? (
-                                <span className="text-[#00a884]">online</span>
-                              ) : (
-                                <span className="text-muted-foreground">{formatLastSeen()}</span>
-                              )}
+                            <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/20">
+                              <AvatarImage src={chatAvatar} />
+                              <AvatarFallback className="bg-gradient-primary text-white">{chatName[0]}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate text-[15px]">{chatName}</p>
+                              <div className="flex items-center gap-2 text-[13px]">
+                                {isOnline ? (
+                                  <span className="text-primary">online</span>
+                                ) : (
+                                  <span className="text-muted-foreground">{formatLastSeen()}</span>
+                                )}
+                              </div>
                             </div>
-                          </div>
                         </>
                       );
                     })()}
@@ -612,16 +612,14 @@ const MessagesPage = () => {
                   </div>
                 </div>
 
-                {/* Messages Area - WhatsApp Style */}
+                {/* Messages Area */}
                 <div 
-                  className="flex-1 overflow-y-auto px-4 py-3 bg-[#efeae2] dark:bg-[#0b141a]"
-                  style={{
-                    backgroundImage: chatSettings?.wallpaper_url 
-                      ? `url(${chatSettings.wallpaper_url})` 
-                      : 'url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0icGF0dGVybiIgeD0iMCIgeT0iMCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxLjUiIGZpbGw9IiMwMDAwMDAiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9InVybCgjcGF0dGVybikiLz48L3N2Zz4=)',
-                    backgroundSize: chatSettings?.wallpaper_url ? 'cover' : '40px 40px',
+                  className="flex-1 overflow-y-auto px-4 py-3 bg-gradient-to-br from-background to-muted/20"
+                  style={chatSettings?.wallpaper_url ? {
+                    backgroundImage: `url(${chatSettings.wallpaper_url})`,
+                    backgroundSize: 'cover',
                     backgroundPosition: 'center'
-                  }}
+                  } : {}}
                 >
                   <div className="space-y-1 max-w-4xl mx-auto">
                     {searchQuery.trim() && filteredMessages.length === 0 ? (
@@ -673,16 +671,16 @@ const MessagesPage = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Bottom Section - WhatsApp Style */}
-                <div className="bg-[#f0f2f5] dark:bg-[#202c33] border-t border-border/50">
+                {/* Input Section */}
+                <div className="bg-card/80 backdrop-blur-sm border-t border-border/50 pb-safe">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
                   {/* Reply Preview */}
                   {replyingTo && (
-                    <div className="px-4 py-2 flex items-center justify-between bg-white/80 dark:bg-[#1a2429]/80">
-                      <div className="flex-1 min-w-0 border-l-4 border-[#00a884] pl-3">
-                        <p className="text-xs font-medium text-[#00a884] mb-0.5">
+                    <div className="px-4 py-2 flex items-center justify-between bg-muted/50">
+                      <div className="flex-1 min-w-0 border-l-4 border-primary pl-3">
+                        <p className="text-xs font-medium text-primary mb-0.5">
                           {replyingTo.sender?.display_name}
                         </p>
                         <p className="text-sm truncate text-muted-foreground">
@@ -693,7 +691,7 @@ const MessagesPage = () => {
                         variant="ghost" 
                         size="icon" 
                         onClick={() => setReplyingTo(null)}
-                        className="h-8 w-8 hover:bg-black/5 dark:hover:bg-white/5"
+                        className="h-8 w-8"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -702,7 +700,7 @@ const MessagesPage = () => {
 
                   {/* Image Preview */}
                   {imagePreview && (
-                    <div className="px-4 py-2 flex items-center gap-3 bg-white/80 dark:bg-[#1a2429]/80">
+                    <div className="px-4 py-2 flex items-center gap-3 bg-muted/50">
                       <img src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-lg" />
                       <Button 
                         variant="ghost" 
@@ -711,7 +709,7 @@ const MessagesPage = () => {
                           setSelectedImage(null);
                           setImagePreview(null);
                         }}
-                        className="h-8 w-8 hover:bg-black/5 dark:hover:bg-white/5"
+                        className="h-8 w-8"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -744,32 +742,55 @@ const MessagesPage = () => {
                         </div>
                       )}
 
-                      {/* Message Input - WhatsApp Style */}
-                      <form onSubmit={handleSendMessage} className="p-2">
+                      {/* Message Input */}
+                      <form onSubmit={handleSendMessage} className="p-3">
                         <div className="flex items-end gap-2">
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="h-10 w-10 rounded-full hover:bg-black/5 dark:hover:bg-white/5 flex-shrink-0"
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            <Plus className="h-5 w-5" />
-                          </Button>
+                          {/* Attachments Menu */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-10 w-10 rounded-full hover:bg-primary/10 flex-shrink-0"
+                              >
+                                <Plus className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-48">
+                              <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                                <ImageIcon className="h-4 w-4 mr-2" />
+                                Photo & Video
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setShowLocationDialog(true)}>
+                                <MapPin className="h-4 w-4 mr-2" />
+                                Location
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setShowContactDialog(true)}>
+                                <UsersIcon className="h-4 w-4 mr-2" />
+                                Contact
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setShowScheduleDialog(true)}>
+                                <Star className="h-4 w-4 mr-2" />
+                                Schedule Message
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           <input
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
-                            accept="image/*"
+                            accept="image/*,video/*"
                             onChange={handleImageSelect}
                           />
                           
-                          <div className="flex-1 flex items-center gap-2 bg-white dark:bg-[#2a3942] rounded-[24px] px-3 py-2">
+                          {/* Input Container */}
+                          <div className="flex-1 flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-full px-4 py-2 border border-border/50 focus-within:border-primary/50 transition-all">
                             <Button
                               type="button"
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 hover:bg-black/5 dark:hover:bg-white/5 flex-shrink-0"
+                              className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
                             >
                               <Smile className="h-5 w-5" />
                             </Button>
@@ -781,8 +802,8 @@ const MessagesPage = () => {
                                 setMessageText(e.target.value);
                                 handleTyping();
                               }}
-                              placeholder={editingMessageId ? "Edit message..." : "Message"}
-                              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-0 text-[15px]"
+                              placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
+                              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-0"
                               disabled={isRecordingVoice}
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -791,24 +812,35 @@ const MessagesPage = () => {
                                 }
                               }}
                             />
+                            
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
+                              onClick={() => setShowScheduleDialog(true)}
+                            >
+                              <Paperclip className="h-5 w-5" />
+                            </Button>
                           </div>
                           
+                          {/* Send/Voice Button */}
                           {messageText.trim() || selectedImage ? (
                             <Button 
                               type="submit"
                               size="icon"
-                              className="h-11 w-11 rounded-full bg-[#00a884] hover:bg-[#008f6f] flex-shrink-0"
+                              className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all"
                             >
-                              <Send className="h-5 w-5 text-white" />
+                              <Send className="h-5 w-5" />
                             </Button>
                           ) : (
                             <Button
                               type="button"
                               size="icon"
-                              className="h-11 w-11 rounded-full bg-[#00a884] hover:bg-[#008f6f] flex-shrink-0"
+                              className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all"
                               onClick={() => setIsRecordingVoice(true)}
                             >
-                              <Mic className="h-5 w-5 text-white" />
+                              <Mic className="h-5 w-5" />
                             </Button>
                           )}
                         </div>
