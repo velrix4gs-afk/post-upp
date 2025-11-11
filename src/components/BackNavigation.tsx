@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Home } from 'lucide-react';
 
@@ -9,6 +9,17 @@ interface BackNavigationProps {
 
 export const BackNavigation = ({ title, showHome = true }: BackNavigationProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBack = () => {
+    // Check if we have history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // No history, go to feed
+      navigate('/feed');
+    }
+  };
 
   return (
     <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -16,7 +27,7 @@ export const BackNavigation = ({ title, showHome = true }: BackNavigationProps) 
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="h-8 w-8"
           aria-label="Go back"
         >

@@ -23,8 +23,6 @@ const Feed = lazy(() => import("./pages/Feed"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const MessagesPage = lazy(() => import("./pages/MessagesPage"));
 const FriendsPage = lazy(() => import("./pages/FriendsPage"));
-const GroupsPage = lazy(() => import("./pages/GroupsPage"));
-const EventsPage = lazy(() => import("./pages/EventsPage"));
 const ThreadView = lazy(() => import("./pages/ThreadView"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CreatorPage = lazy(() => import("./pages/creator/CreatorPage").then(m => ({ default: m.CreatorPage })));
@@ -172,23 +170,7 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/groups" 
-                element={
-                  <ProtectedRoute>
-                    <GroupsPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/events" 
-                element={
-                  <ProtectedRoute>
-                    <EventsPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
+              <Route
                 path="/profile/:userId" 
                 element={
                   <ProtectedRoute>

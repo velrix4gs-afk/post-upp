@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Home, Calendar, MessageCircle, Users, UsersRound, 
+  Home, MessageCircle, Users, 
   Compass, Bookmark, BarChart3, Settings, Star, 
   Crown, BadgeCheck, FileText, Receipt, HelpCircle, 
   LogOut, ChevronRight 
@@ -114,17 +114,7 @@ export const MenuPanel = ({ isOpen, onOpenChange, trigger }: MenuPanelProps) => 
             label="Friends" 
             onClick={() => handleNavigation('/friends')} 
           />
-          <MenuItem 
-            icon={UsersRound} 
-            label="Groups" 
-            onClick={() => handleNavigation('/groups')} 
-          />
-          <MenuItem 
-            icon={Calendar} 
-            label="Events" 
-            onClick={() => handleNavigation('/events')} 
-          />
-          <MenuItem 
+          <MenuItem
             icon={Compass} 
             label="Explore" 
             onClick={() => handleNavigation('/explore')} 

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
-import { Home, Calendar, User, Bell, Menu, Search, MessageCircle, Users, UsersRound, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText } from 'lucide-react';
+import { Home, User, Bell, Menu, Search, MessageCircle, Users, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -81,26 +81,6 @@ const Navigation = () => {
                   >
                     <Users className="h-4 w-4" />
                     Friends
-                  </Button>
-                </Link>
-                <Link to="/groups">
-                  <Button 
-                    variant={isActive('/groups') ? 'default' : 'ghost'} 
-                    size="sm" 
-                    className="gap-2"
-                  >
-                    <UsersRound className="h-4 w-4" />
-                    Groups
-                  </Button>
-                </Link>
-                <Link to="/events">
-                  <Button 
-                    variant={isActive('/events') ? 'default' : 'ghost'} 
-                    size="sm" 
-                    className="gap-2"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    Events
                   </Button>
                 </Link>
                 <Link to="/explore">
