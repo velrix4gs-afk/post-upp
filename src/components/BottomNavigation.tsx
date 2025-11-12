@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
-import { Home, MessageCircle, PlusCircle, Star, User } from 'lucide-react';
+import { Home, MessageCircle, PlusCircle, Star, User, Film } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -60,7 +60,7 @@ export const BottomNavigation = () => {
     },
     {
       label: 'Reels',
-      icon: Star,
+      icon: Film,
       path: '/reels',
       isActive: isActive('/reels'),
     },

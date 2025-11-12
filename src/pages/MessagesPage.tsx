@@ -86,6 +86,7 @@ const MessagesPage = () => {
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isVideo, setIsVideo] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [showGroupChatDialog, setShowGroupChatDialog] = useState(false);
   const [showStarredDialog, setShowStarredDialog] = useState(false);
@@ -167,7 +168,19 @@ const MessagesPage = () => {
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Check file size (max 100MB for videos, 10MB for images)
+      const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast({
+          title: 'File too large',
+          description: `${file.type.startsWith('video/') ? 'Videos' : 'Images'} must be less than ${maxSize / (1024 * 1024)}MB`,
+          variant: 'destructive'
+        });
+        return;
+      }
+
       setSelectedImage(file);
+      setIsVideo(file.type.startsWith('video/'));
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
@@ -220,6 +233,7 @@ const MessagesPage = () => {
       setMessageText('');
       setSelectedImage(null);
       setImagePreview(null);
+      setIsVideo(false);
       setReplyingTo(null);
     } catch (error) {
       toast({

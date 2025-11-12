@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { usePresenceSystem } from '@/hooks/usePresenceSystem';
 
 interface OnlineIndicatorProps {
@@ -8,7 +9,15 @@ interface OnlineIndicatorProps {
 
 const OnlineIndicator = ({ userId, showLabel = false, size = 'sm' }: OnlineIndicatorProps) => {
   const { isUserOnline } = usePresenceSystem();
-  const isOnline = isUserOnline(userId);
+  const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    const checkOnline = async () => {
+      const online = await isUserOnline(userId);
+      setIsOnline(online);
+    };
+    checkOnline();
+  }, [userId, isUserOnline]);
 
   const sizeClasses = {
     sm: 'w-2 h-2',

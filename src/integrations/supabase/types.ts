@@ -1351,6 +1351,77 @@ export type Database = {
           },
         ]
       }
+      message_bookmarks: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_bookmarks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "message_bookmarks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_bookmarks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_bookmarks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "message_bookmarks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           created_at: string | null
@@ -2664,6 +2735,217 @@ export type Database = {
           },
         ]
       }
+      reel_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          parent_id: string | null
+          reel_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          reel_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+          reel_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reel_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "reel_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_comments_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reel_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          reaction_type: string | null
+          reel_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reaction_type?: string | null
+          reel_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reaction_type?: string | null
+          reel_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reel_reactions_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reel_views: {
+        Row: {
+          completed: boolean | null
+          id: string
+          reel_id: string
+          user_id: string
+          viewed_at: string | null
+          watch_duration: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          reel_id: string
+          user_id: string
+          viewed_at?: string | null
+          watch_duration?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          reel_id?: string
+          user_id?: string
+          viewed_at?: string | null
+          watch_duration?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reel_views_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reels: {
+        Row: {
+          caption: string | null
+          comments_count: number | null
+          created_at: string | null
+          duration: number | null
+          id: string
+          likes_count: number | null
+          shares_count: number | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_id: string
+          video_url: string
+          views_count: number | null
+        }
+        Insert: {
+          caption?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          duration?: number | null
+          id?: string
+          likes_count?: number | null
+          shares_count?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id: string
+          video_url: string
+          views_count?: number | null
+        }
+        Update: {
+          caption?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          duration?: number | null
+          id?: string
+          likes_count?: number | null
+          shares_count?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+          video_url?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reported_users: {
         Row: {
           chat_id: string | null
@@ -3163,6 +3445,62 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "user_settings_view"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_reel_interests: {
+        Row: {
+          creator_id: string | null
+          hashtag: string | null
+          id: string
+          interest_score: number | null
+          last_interaction: string | null
+          user_id: string
+        }
+        Insert: {
+          creator_id?: string | null
+          hashtag?: string | null
+          id?: string
+          interest_score?: number | null
+          last_interaction?: string | null
+          user_id: string
+        }
+        Update: {
+          creator_id?: string | null
+          hashtag?: string | null
+          id?: string
+          interest_score?: number | null
+          last_interaction?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reel_interests_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reel_interests_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reel_interests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reel_interests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4348,6 +4686,29 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_recommended_reels: {
+        Args: {
+          p_page_offset?: number
+          p_page_size?: number
+          p_user_id: string
+        }
+        Returns: {
+          caption: string
+          comments_count: number
+          created_at: string
+          creator_avatar: string
+          creator_name: string
+          duration: number
+          id: string
+          is_verified: boolean
+          likes_count: number
+          shares_count: number
+          thumbnail_url: string
+          user_id: string
+          video_url: string
+          views_count: number
+        }[]
       }
       handle_post_visibility: { Args: never; Returns: undefined }
       has_role: {

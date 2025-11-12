@@ -91,15 +91,39 @@ export const useRealtimeChat = (chatId: string | undefined, callbacks: RealtimeC
   const broadcastReadReceipt = async (messageId: string) => {
     if (!channelRef.current || !user) return;
 
-    await channelRef.current.send({
-      type: 'broadcast',
-      event: 'read_receipt',
-      payload: {
+    // Check user's read receipt settings
+    try {
+      const { data: settings } = await supabase
+        .from('user_settings')
+        .select('show_read_receipts')
+        .eq('user_id', user.id)
+        .single();
+
+      // Don't broadcast if user has disabled read receipts
+      if (!settings?.show_read_receipts) return;
+
+      // Insert read receipt into database
+      await supabase.from('message_reads').upsert({
         message_id: messageId,
         user_id: user.id,
-        read_at: new Date().toISOString(),
-      },
-    });
+        read_at: new Date().toISOString()
+      }, {
+        onConflict: 'message_id,user_id'
+      });
+
+      // Broadcast to other participants
+      await channelRef.current.send({
+        type: 'broadcast',
+        event: 'read_receipt',
+        payload: {
+          message_id: messageId,
+          user_id: user.id,
+          read_at: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      console.error('Error broadcasting read receipt:', error);
+    }
   };
 
   return {
