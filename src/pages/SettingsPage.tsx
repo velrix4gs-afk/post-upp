@@ -39,6 +39,7 @@ const SettingsPage = () => {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showNotificationPreferences, setShowNotificationPreferences] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   
   const [newPassword, setNewPassword] = useState('');
   const [newUsername, setNewUsername] = useState('');
@@ -91,56 +92,56 @@ const SettingsPage = () => {
   }, []);
 
   // Load settings and apply them
-  useEffect(() => {
-    const loadSettings = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (data) {
-        const loadedFontSize = data.font_size || 'medium';
-        const loadedLayoutMode = data.layout_mode || 'spacious';
-        const loadedAccentColor = data.accent_color || 'blue';
-        
-        setFontSize(loadedFontSize);
-        setLayoutMode(loadedLayoutMode);
-        setAccentColor(loadedAccentColor);
-        
-        setPrivacySettings(prev => ({
-          ...prev,
-          profile_visibility: data.privacy_who_can_view_profile || 'public',
-          who_can_message: data.privacy_who_can_message || 'everyone',
-          who_can_tag: data.privacy_who_can_tag || 'everyone',
-          location_sharing: data.location_sharing || false
-        }));
-        setNotificationSettings(prev => ({
-          ...prev,
-          likes: data.notification_post_reactions ?? true,
-          comments: data.notification_post_comments ?? true,
-          messages: data.notification_messages ?? true,
-          follows: data.notification_friend_requests ?? true,
-          push_enabled: data.sms_notifications ?? true,
-          email_enabled: data.email_notifications ?? true,
-          sms_enabled: data.sms_notifications ?? false
-        }));
-        setMessagingSettings(prev => ({
-          ...prev,
-          read_receipts: data.show_read_receipts ?? true,
-          typing_indicators: data.show_typing_indicator ?? true,
-          message_preview: true
-        }));
-        setContentSettings(prev => ({
-          ...prev,
-          autoplay_videos: data.autoplay_videos ?? true,
-          show_sensitive: data.show_sensitive_content ?? false
-        }));
-      }
-    };
+  const loadSettings = async () => {
+    if (!user) return;
     
+    const { data } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (data) {
+      const loadedFontSize = data.font_size || 'medium';
+      const loadedLayoutMode = data.layout_mode || 'spacious';
+      const loadedAccentColor = data.accent_color || 'blue';
+      
+      setFontSize(loadedFontSize);
+      setLayoutMode(loadedLayoutMode);
+      setAccentColor(loadedAccentColor);
+      
+      setPrivacySettings(prev => ({
+        ...prev,
+        profile_visibility: data.privacy_who_can_view_profile || 'public',
+        who_can_message: data.privacy_who_can_message || 'everyone',
+        who_can_tag: data.privacy_who_can_tag || 'everyone',
+        location_sharing: data.location_sharing || false
+      }));
+      setNotificationSettings(prev => ({
+        ...prev,
+        likes: data.notification_post_reactions ?? true,
+        comments: data.notification_post_comments ?? true,
+        messages: data.notification_messages ?? true,
+        follows: data.notification_friend_requests ?? true,
+        push_enabled: data.sms_notifications ?? true,
+        email_enabled: data.email_notifications ?? true,
+        sms_enabled: data.sms_notifications ?? false
+      }));
+      setMessagingSettings(prev => ({
+        ...prev,
+        read_receipts: data.show_read_receipts ?? true,
+        typing_indicators: data.show_typing_indicator ?? true,
+        message_preview: true
+      }));
+      setContentSettings(prev => ({
+        ...prev,
+        autoplay_videos: data.autoplay_videos ?? true,
+        show_sensitive: data.show_sensitive_content ?? false
+      }));
+    }
+  };
+
+  useEffect(() => {
     loadSettings();
   }, [user]);
 
@@ -152,6 +153,7 @@ const SettingsPage = () => {
   }, [fontSize, layoutMode, accentColor]);
 
   const handleSettingUpdate = async (updates: any) => {
+    setSettingsSaving(true);
     try {
       const { error } = await supabase
         .from('user_settings')
@@ -164,8 +166,22 @@ const SettingsPage = () => {
         });
       
       if (error) throw error;
-    } catch (error) {
-      showCleanError(error, toast);
+      
+      toast({
+        title: 'Settings Saved',
+        description: 'Your preferences have been updated',
+      });
+    } catch (error: any) {
+      console.error('Settings update error:', error);
+      toast({
+        title: 'Failed to Save Settings',
+        description: error.message || 'Could not update your preferences',
+        variant: 'destructive'
+      });
+      // Reload settings to revert UI to actual saved state
+      await loadSettings();
+    } finally {
+      setSettingsSaving(false);
     }
   };
 

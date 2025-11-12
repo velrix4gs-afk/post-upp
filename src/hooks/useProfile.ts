@@ -63,30 +63,44 @@ export const useProfile = (userId?: string) => {
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'You must be logged in to update your profile',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     try {
+      // Remove is_verified from updates to prevent RLS policy conflicts
+      const { is_verified, ...safeUpdates } = updates as any;
+      
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(safeUpdates)
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
 
       // Update local state
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
+      setProfile(prev => prev ? { ...prev, ...safeUpdates } : null);
       
       // Refetch to ensure we have the latest data
       await fetchProfile();
       
       toast({
-        title: 'Success',
-        description: 'Profile updated successfully'
+        title: 'Profile Updated',
+        description: 'Your changes have been saved successfully'
       });
     } catch (err: any) {
+      console.error('Profile update failed:', err);
       toast({
-        title: 'Error',
-        description: err.message,
+        title: 'Update Failed',
+        description: err.message || 'Could not update your profile. Please try again.',
         variant: 'destructive'
       });
       throw err;
