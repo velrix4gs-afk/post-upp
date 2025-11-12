@@ -147,50 +147,59 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background gradient orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
       
-      <Card className="w-full max-w-md bg-card/80 backdrop-blur-xl border shadow-2xl relative z-10">
-        <div className="p-8">
-          <div className="text-center mb-8">
-            <div className="mb-6 mx-auto w-20 h-20 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow">
-              <h1 className="text-2xl font-bold text-primary-foreground">PU</h1>
+      <Card className="w-full max-w-md bg-card backdrop-blur-sm border-border/50 shadow-lg relative z-10">
+        <div className="p-8 space-y-6">
+          {/* Logo and Header */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl shadow-glow mb-2">
+              <span className="text-2xl font-bold text-white">PU</span>
             </div>
-            <h2 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
-            <p className="text-muted-foreground">Sign in to continue</p>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+              <p className="text-sm text-muted-foreground mt-1">Sign in to your account to continue</p>
+            </div>
           </div>
 
+          {/* Magic Link View */}
           {authMode === 'magic' ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => setAuthMode('email')}
-                className="w-full justify-start"
+                className="hover:bg-muted/50"
               >
                 ← Back to sign in
               </Button>
               
-              <div className="text-center space-y-2 mb-6">
-                <h3 className="text-xl font-semibold">Magic Link</h3>
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mb-2">
+                  <Sparkles className="h-5 w-5 text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold">Magic Link</h3>
                 <p className="text-sm text-muted-foreground">
-                  We'll send you a secure login link
+                  We'll email you a secure sign-in link
                 </p>
               </div>
               
               <form onSubmit={handleMagicLink} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="magic-email">Email Address</Label>
+                  <Label htmlFor="magic-email">Email address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="magic-email"
                       type="email"
-                      placeholder="Enter your email"
-                      className="pl-10"
+                      placeholder="you@example.com"
+                      className="pl-10 h-11"
                       value={magicLinkEmail}
                       onChange={(e) => setMagicLinkEmail(e.target.value)}
                       required
@@ -199,115 +208,142 @@ const SignIn = () => {
                   </div>
                 </div>
                 
-                <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300" disabled={loading}>
-                  {loading ? 'Sending...' : 'Send Magic Link'}
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:shadow-glow transition-all" 
+                  disabled={loading}
+                >
+                  {loading ? 'Sending...' : 'Send magic link'}
                 </Button>
               </form>
             </div>
           ) : (
-            <>
-              <form onSubmit={handleSignIn} className="space-y-4 mb-6">
+            /* Email Sign In View */
+            <div className="space-y-5">
+              <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signin-email"
                       type="email"
-                      placeholder="Enter your email"
-                      className="pl-10"
+                      placeholder="you@example.com"
+                      className="pl-10 h-11"
                       value={signInData.email}
                       onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Link 
+                      to="/forgot-password" 
+                      className="text-xs text-primary hover:underline"
+                      tabIndex={-1}
+                    >
+                      Forgot?
+                    </Link>
+                  </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signin-password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
-                      className="pl-10 pr-10"
+                      className="pl-10 pr-10 h-11"
                       value={signInData.password}
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                       required
+                      disabled={loading}
                     />
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex justify-end">
-                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot Password?
-                  </Link>
-                </div>
-
-                <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:shadow-glow transition-all" 
+                  disabled={loading}
+                >
+                  {loading ? 'Signing in...' : 'Sign in'}
                 </Button>
               </form>
 
-              <div className="relative mb-6">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                  OR
-                </span>
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              {/* Social & Alternative Sign In */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 gap-2 hover:bg-muted/50 transition-colors"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                  >
+                    <Chrome className="h-4 w-4" />
+                    <span className="hidden sm:inline">Google</span>
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 gap-2 hover:bg-muted/50 transition-colors"
+                    onClick={handleTwitterSignIn}
+                    disabled={loading}
+                  >
+                    <Twitter className="h-4 w-4" />
+                    <span className="hidden sm:inline">Twitter</span>
+                  </Button>
+                </div>
+
                 <Button
                   type="button"
                   variant="outline"
-                  className="gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
-                  onClick={handleGoogleSignIn}
+                  className="w-full h-11 gap-2 hover:bg-muted/50 transition-colors"
+                  onClick={() => setAuthMode('magic')}
+                  disabled={loading}
                 >
-                  <Chrome className="h-4 w-4" />
-                  Google
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="gap-2 hover:bg-primary/5 hover:scale-105 transition-all"
-                  onClick={handleTwitterSignIn}
-                >
-                  <Twitter className="h-4 w-4" />
-                  Twitter
+                  <Sparkles className="h-4 w-4" />
+                  Magic link
                 </Button>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full gap-2 hover:bg-accent/20 transition-all mb-6"
-                onClick={() => setAuthMode('magic')}
-              >
-                <Sparkles className="h-4 w-4" />
-                Sign in with Magic Link
-              </Button>
-
-              <div className="text-center">
+              {/* Sign Up Link */}
+              <div className="text-center pt-2">
                 <p className="text-sm text-muted-foreground">
                   Don't have an account?{' '}
-                  <Link to="/signup" className="text-primary font-medium hover:underline">
-                    Sign Up
+                  <Link 
+                    to="/signup" 
+                    className="font-medium text-primary hover:underline"
+                  >
+                    Create account
                   </Link>
                 </p>
               </div>
-            </>
+            </div>
           )}
         </div>
       </Card>

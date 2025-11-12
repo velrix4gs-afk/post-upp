@@ -152,50 +152,59 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-background flex items-center justify-center p-4">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background gradient orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/3 left-1/3 w-80 h-80 bg-accent/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2.5s' }} />
       </div>
 
-      <Card className="w-full max-w-md bg-card/80 backdrop-blur-xl border-border shadow-elegant relative z-10">
-        <div className="p-8">
-          <div className="text-center mb-8">
-            <div className="mb-4 bg-gradient-primary rounded-2xl p-6 shadow-glow">
-              <h1 className="text-4xl font-bold text-white">POST-UPP</h1>
+      <Card className="w-full max-w-md bg-card backdrop-blur-sm border-border/50 shadow-lg relative z-10">
+        <div className="p-8 space-y-6">
+          {/* Logo and Header */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl shadow-glow mb-2">
+              <span className="text-2xl font-bold text-white">PU</span>
             </div>
-            <h2 className="text-2xl font-bold text-foreground">Create Account</h2>
-            <p className="text-muted-foreground mt-2">Join the community today</p>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Create your account</h2>
+              <p className="text-sm text-muted-foreground mt-1">Join the community today</p>
+            </div>
           </div>
 
+          {/* Magic Link View */}
           {authMode === 'magic' ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => setAuthMode('email')}
-                className="w-full justify-start"
+                className="hover:bg-muted/50"
               >
                 ← Back to sign up
               </Button>
               
-              <div className="text-center space-y-2 mb-6">
-                <h3 className="text-xl font-semibold">Magic Link</h3>
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mb-2">
+                  <Sparkles className="h-5 w-5 text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold">Magic Link</h3>
                 <p className="text-sm text-muted-foreground">
-                  We'll send you a secure signup link
+                  We'll email you a secure signup link
                 </p>
               </div>
               
               <form onSubmit={handleMagicLink} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="magic-email">Email Address</Label>
+                  <Label htmlFor="magic-email">Email address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="magic-email"
                       type="email"
-                      placeholder="Enter your email"
-                      className="pl-10"
+                      placeholder="you@example.com"
+                      className="pl-10 h-11"
                       value={magicLinkEmail}
                       onChange={(e) => setMagicLinkEmail(e.target.value)}
                       required
@@ -204,42 +213,49 @@ const SignUp = () => {
                   </div>
                 </div>
                 
-                <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300" disabled={loading}>
-                  {loading ? 'Sending...' : 'Send Magic Link'}
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:shadow-glow transition-all" 
+                  disabled={loading}
+                >
+                  {loading ? 'Sending...' : 'Send magic link'}
                 </Button>
               </form>
             </div>
           ) : (
-            <>
-              <form onSubmit={handleSignUp} className="space-y-4 mb-6">
+            /* Email Sign Up View */
+            <div className="space-y-5">
+              <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-username">Username</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-username"
                       type="text"
                       placeholder="Choose a username"
-                      className="pl-10"
+                      className="pl-10 h-11"
                       value={signUpData.username}
                       onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-displayname">Display Name</Label>
+                  <Label htmlFor="signup-displayname">Display name</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-displayname"
                       type="text"
                       placeholder="Your display name"
-                      className="pl-10"
+                      className="pl-10 h-11"
                       value={signUpData.displayName}
                       onChange={(e) => setSignUpData({ ...signUpData, displayName: e.target.value })}
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -247,15 +263,16 @@ const SignUp = () => {
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="Enter your email"
-                      className="pl-10"
+                      placeholder="you@example.com"
+                      className="pl-10 h-11"
                       value={signUpData.email}
                       onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -263,82 +280,100 @@ const SignUp = () => {
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a password"
-                      className="pl-10 pr-10"
+                      placeholder="Create a password (min. 6 characters)"
+                      className="pl-10 pr-10 h-11"
                       value={signUpData.password}
                       onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                       required
+                      disabled={loading}
                     />
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
+                    </button>
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-gradient-primary hover:shadow-glow transition-all duration-300" disabled={loading}>
-                  {loading ? 'Creating account...' : 'Create Account'}
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:shadow-glow transition-all" 
+                  disabled={loading}
+                >
+                  {loading ? 'Creating account...' : 'Create account'}
                 </Button>
               </form>
 
-              <div className="relative mb-6">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                  OR
-                </span>
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              {/* Social & Alternative Sign Up */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 gap-2 hover:bg-muted/50 transition-colors"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                  >
+                    <Chrome className="h-4 w-4" />
+                    <span className="hidden sm:inline">Google</span>
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 gap-2 hover:bg-muted/50 transition-colors"
+                    onClick={handleTwitterSignIn}
+                    disabled={loading}
+                  >
+                    <Twitter className="h-4 w-4" />
+                    <span className="hidden sm:inline">Twitter</span>
+                  </Button>
+                </div>
+
                 <Button
                   type="button"
                   variant="outline"
-                  className="gap-2 hover:bg-primary/5 transition-all"
-                  onClick={handleGoogleSignIn}
+                  className="w-full h-11 gap-2 hover:bg-muted/50 transition-colors"
+                  onClick={() => setAuthMode('magic')}
+                  disabled={loading}
                 >
-                  <Chrome className="h-4 w-4" />
-                  Google
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="gap-2 hover:bg-primary/5 transition-all"
-                  onClick={handleTwitterSignIn}
-                >
-                  <Twitter className="h-4 w-4" />
-                  Twitter
+                  <Sparkles className="h-4 w-4" />
+                  Magic link
                 </Button>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full gap-2 hover:bg-accent/20 transition-all mb-6"
-                onClick={() => setAuthMode('magic')}
-              >
-                <Sparkles className="h-4 w-4" />
-                Sign up with Magic Link
-              </Button>
-
-              <div className="text-center">
+              {/* Sign In Link */}
+              <div className="text-center pt-2">
                 <p className="text-sm text-muted-foreground">
                   Already have an account?{' '}
-                  <Link to="/signin" className="text-primary font-medium hover:underline">
-                    Sign In
+                  <Link 
+                    to="/signin" 
+                    className="font-medium text-primary hover:underline"
+                  >
+                    Sign in
                   </Link>
                 </p>
               </div>
-            </>
+            </div>
           )}
         </div>
       </Card>
