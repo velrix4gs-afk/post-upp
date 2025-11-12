@@ -374,18 +374,9 @@ const MessagesPage = () => {
                 )}
 
                 {loading ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="p-3 rounded animate-pulse">
-                        <div className="flex gap-3">
-                          <div className="h-12 w-12 rounded-full bg-muted" />
-                          <div className="flex-1 space-y-2">
-                            <div className="h-4 bg-muted rounded w-3/4" />
-                            <div className="h-3 bg-muted rounded w-1/2" />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <MessageCircle className="h-16 w-16 mb-4 opacity-30 animate-pulse" />
+                    <p className="text-sm">Loading conversations...</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -429,11 +420,17 @@ const MessagesPage = () => {
                         <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
                         <p className="text-sm">No results found</p>
                       </div>
-                    ) : filteredChats.length === 0 && friends.length === 0 ? (
-                      <div className="text-center py-12 px-4 text-muted-foreground">
-                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p className="font-medium mb-2">No conversations yet</p>
-                        <p className="text-sm">Add friends to start chatting</p>
+                    ) : filteredChats.length === 0 && friends.length === 0 && !newChatSearch ? (
+                      <div className="text-center py-16 px-4 text-muted-foreground">
+                        <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                        <p className="font-semibold mb-2 text-base">No conversations yet</p>
+                        <p className="text-sm mb-4">Start chatting by adding friends first</p>
+                        <Button 
+                          onClick={() => navigate('/friends')}
+                          className="bg-gradient-primary hover:shadow-glow"
+                        >
+                          Find Friends
+                        </Button>
                       </div>
                     ) : (
                       filteredChats.map(chat => {

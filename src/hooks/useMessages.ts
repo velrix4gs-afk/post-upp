@@ -207,6 +207,7 @@ export const useMessages = (chatId?: string) => {
 
   const fetchChats = async () => {
     try {
+      setLoading(true);
       // Get chats where user is a participant
       const { data: participantChats, error } = await supabase
         .from('chat_participants')
@@ -219,6 +220,7 @@ export const useMessages = (chatId?: string) => {
       
       if (chatIds.length === 0) {
         setChats([]);
+        setLoading(false);
         return;
       }
 
@@ -277,6 +279,13 @@ export const useMessages = (chatId?: string) => {
       setChats(chatsWithParticipants);
     } catch (err: any) {
       console.error('[CHAT_001] Failed to load chats:', err);
+      toast({
+        title: 'Failed to load chats',
+        description: 'Could not load your conversations',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
