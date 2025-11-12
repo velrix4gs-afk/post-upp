@@ -19,7 +19,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { showCleanError } from '@/lib/errorHandler';
-import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark, ShieldCheck, Sparkles, Settings2 } from 'lucide-react';
+import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark, ShieldCheck, Sparkles, Settings2, Loader2 } from 'lucide-react';
 import { VerificationSettings } from './settings/VerificationSettings';
 import { CreatorStudio } from './settings/CreatorStudio';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
@@ -1455,6 +1455,14 @@ const SettingsPage = () => {
         isOpen={showNotificationPreferences}
         onOpenChange={setShowNotificationPreferences}
       />
+
+      {/* Saving Indicator */}
+      {settingsSaving && (
+        <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg flex items-center gap-2 z-50 animate-in fade-in slide-in-from-bottom-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Saving settings...</span>
+        </div>
+      )}
     </div>
   );
 };
