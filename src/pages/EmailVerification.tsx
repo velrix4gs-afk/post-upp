@@ -24,7 +24,7 @@ const EmailVerification = () => {
         description: 'No email found. Please sign up again.',
         variant: 'destructive'
       });
-      navigate('/auth');
+      navigate('/signup');
     }
   }, [email, navigate]);
 
@@ -62,7 +62,7 @@ const EmailVerification = () => {
         });
         
         if (errorMessage.includes('already registered')) {
-          navigate('/auth');
+          navigate('/signin');
         }
         return;
       }
@@ -79,7 +79,7 @@ const EmailVerification = () => {
           title: 'Account created!',
           description: 'Please sign in with your new account.'
         });
-        navigate('/auth');
+        navigate('/signin');
         return;
       }
 
@@ -136,7 +136,7 @@ const EmailVerification = () => {
         <div className="p-8">
           <Button
             variant="ghost"
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/signin')}
             className="mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

@@ -24,7 +24,7 @@ export const MenuPanel = ({ isOpen, onOpenChange, trigger }: MenuPanelProps) => 
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/auth');
+    navigate('/signin');
     onOpenChange(false);
   };
 

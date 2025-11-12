@@ -268,7 +268,7 @@ const SettingsPage = () => {
       
       // Sign out after deactivating
       await supabase.auth.signOut();
-      navigate('/auth');
+      navigate('/signin');
     } catch (error: any) {
       console.error('Deactivate account error:', error);
       toast({
@@ -320,7 +320,7 @@ const SettingsPage = () => {
       
       // Sign out
       await supabase.auth.signOut();
-      navigate('/auth');
+      navigate('/signin');
     } catch (error: any) {
       console.error('Delete account error:', error);
       toast({
@@ -342,7 +342,7 @@ const SettingsPage = () => {
         title: 'Logged Out',
         description: 'Successfully logged out from all devices' 
       });
-      navigate('/auth');
+      navigate('/signin');
     } catch (error: any) {
       console.error('Logout all sessions error:', error);
       toast({
