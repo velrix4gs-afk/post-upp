@@ -127,10 +127,10 @@ const ReelsPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 200 * 1024 * 1024) {
+    if (file.size > 500 * 1024 * 1024) {
       toast({
         title: 'Video too large',
-        description: 'Video must be less than 200MB',
+        description: 'Video must be less than 500MB',
         variant: 'destructive',
       });
       return;

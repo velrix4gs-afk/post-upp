@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Video, VideoOff, Mic, MicOff, PhoneOff, Monitor } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface VideoCallProps {
   chatId: string;
@@ -11,6 +13,7 @@ interface VideoCallProps {
 }
 
 export const VideoCall = ({ chatId, isInitiator, onEndCall }: VideoCallProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -21,6 +24,7 @@ export const VideoCall = ({ chatId, isInitiator, onEndCall }: VideoCallProps) =>
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     initializeCall();
@@ -67,19 +71,34 @@ export const VideoCall = ({ chatId, isInitiator, onEndCall }: VideoCallProps) =>
       };
 
       // Handle ICE candidates
-      peerConnection.onicecandidate = (event) => {
+      peerConnection.onicecandidate = async (event) => {
         if (event.candidate) {
-          // Send ICE candidate to other peer via signaling server
-          // This would connect to your Supabase realtime or edge function
-          console.log('ICE candidate:', event.candidate);
+          await sendSignal('ice-candidate', event.candidate);
         }
       };
+
+      // Subscribe to call signals
+      const channel = supabase
+        .channel(`call:${chatId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'call_signals',
+          filter: `call_id=eq.${chatId}`
+        }, async (payload) => {
+          const signal = payload.new;
+          if (signal.sender_id !== user?.id) {
+            await handleIncomingSignal(signal);
+          }
+        })
+        .subscribe();
+      
+      channelRef.current = channel;
 
       if (isInitiator) {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
-        // Send offer to other peer
-        console.log('Created offer:', offer);
+        await sendSignal('offer', offer);
       }
 
     } catch (error) {
@@ -146,10 +165,48 @@ export const VideoCall = ({ chatId, isInitiator, onEndCall }: VideoCallProps) =>
     }
   };
 
+  const sendSignal = async (type: string, data: any) => {
+    try {
+      await supabase
+        .from('call_signals')
+        .insert({
+          call_id: chatId,
+          sender_id: user?.id,
+          signal_type: type,
+          signal_data: data
+        });
+    } catch (error) {
+      console.error('Error sending signal:', error);
+    }
+  };
+
+  const handleIncomingSignal = async (signal: any) => {
+    const peerConnection = peerConnectionRef.current;
+    if (!peerConnection) return;
+
+    try {
+      if (signal.signal_type === 'offer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.signal_data));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        await sendSignal('answer', answer);
+      } else if (signal.signal_type === 'answer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.signal_data));
+      } else if (signal.signal_type === 'ice-candidate') {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(signal.signal_data));
+      }
+    } catch (error) {
+      console.error('Error handling signal:', error);
+    }
+  };
+
   const cleanup = () => {
     localStream?.getTracks().forEach(track => track.stop());
     remoteStream?.getTracks().forEach(track => track.stop());
     peerConnectionRef.current?.close();
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
   };
 
   const handleEndCall = () => {

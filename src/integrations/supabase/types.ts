@@ -110,6 +110,41 @@ export type Database = {
           },
         ]
       }
+      call_signals: {
+        Row: {
+          call_id: string
+          created_at: string | null
+          id: string
+          sender_id: string
+          signal_data: Json
+          signal_type: string
+        }
+        Insert: {
+          call_id: string
+          created_at?: string | null
+          id?: string
+          sender_id: string
+          signal_data: Json
+          signal_type: string
+        }
+        Update: {
+          call_id?: string
+          created_at?: string | null
+          id?: string
+          sender_id?: string
+          signal_data?: Json
+          signal_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_signals_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       chat_exports: {
         Row: {
           chat_id: string

@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface VoiceCallProps {
   chatId: string;
@@ -20,6 +22,7 @@ export const VoiceCall = ({
   participantName = 'User',
   participantAvatar 
 }: VoiceCallProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -31,6 +34,7 @@ export const VoiceCall = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     initializeCall();
@@ -103,16 +107,16 @@ export const VoiceCall = ({
         }
       };
 
-      peerConnection.onicecandidate = (event) => {
+      peerConnection.onicecandidate = async (event) => {
         if (event.candidate) {
-          console.log('ICE candidate:', event.candidate);
-          // TODO: Send candidate to peer via signaling server
+          await sendSignal('ice-candidate', event.candidate);
         }
       };
 
       peerConnection.onconnectionstatechange = () => {
-        console.log('Connection state:', peerConnection.connectionState);
-        if (peerConnection.connectionState === 'disconnected' || 
+        if (peerConnection.connectionState === 'connected') {
+          setIsConnected(true);
+        } else if (peerConnection.connectionState === 'disconnected' || 
             peerConnection.connectionState === 'failed') {
           toast({
             title: 'Connection Lost',
@@ -122,11 +126,28 @@ export const VoiceCall = ({
         }
       };
 
+      // Subscribe to call signals
+      const channel = supabase
+        .channel(`call:${chatId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'call_signals',
+          filter: `call_id=eq.${chatId}`
+        }, async (payload) => {
+          const signal = payload.new;
+          if (signal.sender_id !== user?.id) {
+            await handleIncomingSignal(signal);
+          }
+        })
+        .subscribe();
+      
+      channelRef.current = channel;
+
       if (isInitiator) {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
-        console.log('Created offer:', offer);
-        // TODO: Send offer to peer via signaling server
+        await sendSignal('offer', offer);
       }
 
     } catch (error) {
@@ -169,12 +190,50 @@ export const VoiceCall = ({
     }
   };
 
+  const sendSignal = async (type: string, data: any) => {
+    try {
+      await supabase
+        .from('call_signals')
+        .insert({
+          call_id: chatId,
+          sender_id: user?.id,
+          signal_type: type,
+          signal_data: data
+        });
+    } catch (error) {
+      console.error('Error sending signal:', error);
+    }
+  };
+
+  const handleIncomingSignal = async (signal: any) => {
+    const peerConnection = peerConnectionRef.current;
+    if (!peerConnection) return;
+
+    try {
+      if (signal.signal_type === 'offer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.signal_data));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        await sendSignal('answer', answer);
+      } else if (signal.signal_type === 'answer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.signal_data));
+      } else if (signal.signal_type === 'ice-candidate') {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(signal.signal_data));
+      }
+    } catch (error) {
+      console.error('Error handling signal:', error);
+    }
+  };
+
   const cleanup = () => {
     localStream?.getTracks().forEach(track => track.stop());
     remoteStream?.getTracks().forEach(track => track.stop());
     peerConnectionRef.current?.close();
     if (timerRef.current) {
       clearInterval(timerRef.current);
+    }
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
     }
   };
 

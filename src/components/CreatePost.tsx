@@ -80,8 +80,13 @@ const CreatePost = () => {
         showCleanError({ code: 'POST_002', message: `${file.name} is not an image or video` }, toast);
         return false;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        showCleanError({ code: 'POST_003', message: `${file.name} exceeds 10MB limit` }, toast);
+      // Allow 100MB for videos, 10MB for images
+      const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        showCleanError({ 
+          code: 'POST_003', 
+          message: `${file.name} exceeds ${file.type.startsWith('video/') ? '100MB' : '10MB'} limit` 
+        }, toast);
         return false;
       }
       return true;

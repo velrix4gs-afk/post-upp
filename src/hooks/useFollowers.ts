@@ -37,6 +37,7 @@ export const useFollowers = (userId?: string) => {
       fetchFollowers();
 
       // Set up real-time subscription for followers
+      // Subscribe to changes where user is the follower OR following
       const channel = supabase
         .channel('followers-changes')
         .on(
@@ -45,7 +46,19 @@ export const useFollowers = (userId?: string) => {
             event: '*',
             schema: 'public',
             table: 'followers',
-            filter: `follower_id=eq.${targetUserId},following_id=eq.${targetUserId}`
+            filter: `follower_id=eq.${targetUserId}`
+          },
+          () => {
+            fetchFollowers();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'followers',
+            filter: `following_id=eq.${targetUserId}`
           },
           () => {
             fetchFollowers();

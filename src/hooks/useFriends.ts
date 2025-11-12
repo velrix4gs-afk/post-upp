@@ -36,6 +36,7 @@ export const useFriends = () => {
       fetchFriendships();
 
       // Set up real-time subscription for friendships
+      // Subscribe to changes where user is requester OR addressee
       const channel = supabase
         .channel('friendships-changes')
         .on(
@@ -44,7 +45,19 @@ export const useFriends = () => {
             event: '*',
             schema: 'public',
             table: 'friendships',
-            filter: `requester_id=eq.${user.id},addressee_id=eq.${user.id}`
+            filter: `requester_id=eq.${user.id}`
+          },
+          () => {
+            fetchFriendships();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'friendships',
+            filter: `addressee_id=eq.${user.id}`
           },
           () => {
             fetchFriendships();
