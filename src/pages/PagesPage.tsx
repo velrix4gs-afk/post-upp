@@ -8,14 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Search, Users, FileText, Briefcase, Heart, Music, Dumbbell, BookOpen, Upload, X } from 'lucide-react';
 import { useCreatorPages } from '@/hooks/useCreatorPages';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const PAGE_CATEGORIES = [
   { id: 'business', name: 'Business', icon: Briefcase },
@@ -30,6 +33,7 @@ const PAGE_CATEGORIES = [
 const PagesPage = () => {
   const { user } = useAuth();
   const { pages, loading, createPage, updatePage, deletePage, checkSlugAvailability, refetch } = useCreatorPages();
+  const isMobile = useIsMobile();
   
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -296,14 +300,15 @@ const PagesPage = () => {
         </Tabs>
       </main>
 
-      {/* Create Page Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create a New Page</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
+      {/* Create Page Dialog/Drawer */}
+      {isMobile ? (
+        <Drawer open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DrawerContent className="max-h-[95vh]">
+            <DrawerHeader>
+              <DrawerTitle>Create a New Page</DrawerTitle>
+            </DrawerHeader>
+            <ScrollArea className="px-4 pb-8">
+              <div className="space-y-4">
             {/* Cover Image */}
             <div>
               <Label>Cover Image</Label>
@@ -455,17 +460,189 @@ const PagesPage = () => {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreatePage}>
-                Create Page
-              </Button>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreatePage}>
+                    Create Page
+                  </Button>
+                </div>
+              </div>
+            </ScrollArea>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create a New Page</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Cover Image */}
+              <div>
+                <Label>Cover Image</Label>
+                <div className="mt-2 relative h-32 bg-muted rounded-lg overflow-hidden">
+                  {coverPreview ? (
+                    <>
+                      <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setCoverFile(null);
+                          setCoverPreview('');
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <label className="flex items-center justify-center h-full cursor-pointer hover:bg-muted/80">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleCoverChange}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Avatar */}
+              <div>
+                <Label>Page Avatar</Label>
+                <div className="mt-2 flex items-center gap-4">
+                  <Avatar className="h-20 w-20">
+                    {avatarPreview ? (
+                      <AvatarImage src={avatarPreview} />
+                    ) : (
+                      <AvatarFallback>
+                        <Upload className="h-8 w-8" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex gap-2">
+                    <label>
+                      <Button variant="outline" size="sm" asChild>
+                        <span>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload
+                        </span>
+                      </Button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarChange}
+                      />
+                    </label>
+                    {avatarPreview && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setAvatarFile(null);
+                          setAvatarPreview('');
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="title">Page Name *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => {
+                    setFormData({ ...formData, title: e.target.value });
+                    if (!formData.slug) {
+                      setFormData({ ...formData, title: e.target.value, slug: generateSlug(e.target.value) });
+                    }
+                  }}
+                  placeholder="Enter page name"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="slug">Page URL *</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">post-upp.com/page/</span>
+                  <Input
+                    id="slug"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: generateSlug(e.target.value) })}
+                    placeholder="page-url"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <select
+                  id="category"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                >
+                  <option value="">Select a category</option>
+                  {PAGE_CATEGORIES.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Tell people about your page"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={formData.website_url}
+                  onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                  placeholder="https://example.com"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  placeholder="City, Country"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreatePage}>
+                  Create Page
+                </Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -55,7 +55,9 @@ export const useMessages = (chatId?: string) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [chatsLoading, setChatsLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const loading = chatsLoading || messagesLoading;
 
   useEffect(() => {
     if (user) {
@@ -207,7 +209,8 @@ export const useMessages = (chatId?: string) => {
 
   const fetchChats = async () => {
     try {
-      setLoading(true);
+      setChatsLoading(true);
+      console.log('[useMessages] Fetching chats for user:', user?.id);
       // Get chats where user is a participant
       const { data: participantChats, error } = await supabase
         .from('chat_participants')
@@ -220,7 +223,7 @@ export const useMessages = (chatId?: string) => {
       
       if (chatIds.length === 0) {
         setChats([]);
-        setLoading(false);
+        setChatsLoading(false);
         return;
       }
 
@@ -277,15 +280,16 @@ export const useMessages = (chatId?: string) => {
       );
 
       setChats(chatsWithParticipants);
+      console.log('[useMessages] Successfully loaded', chatsWithParticipants.length, 'chats');
     } catch (err: any) {
       console.error('[CHAT_001] Failed to load chats:', err);
       toast({
         title: 'Failed to load chats',
-        description: 'Could not load your conversations',
+        description: err.message || 'Could not load your conversations',
         variant: 'destructive'
       });
     } finally {
-      setLoading(false);
+      setChatsLoading(false);
     }
   };
 
@@ -293,7 +297,8 @@ export const useMessages = (chatId?: string) => {
     if (!chatId) return;
 
     try {
-      setLoading(true);
+      setMessagesLoading(true);
+      console.log('[useMessages] Fetching messages for chat:', chatId);
       
       // Fetch messages
       const { data: messagesData, error } = await supabase
@@ -352,10 +357,16 @@ export const useMessages = (chatId?: string) => {
       );
 
       setMessages(messagesWithProfiles);
+      console.log('[useMessages] Successfully loaded', messagesWithProfiles.length, 'messages');
     } catch (err: any) {
       console.error('[MSG_001] Failed to load messages:', err);
+      toast({
+        title: 'Failed to load messages',
+        description: err.message || 'Could not load chat messages',
+        variant: 'destructive'
+      });
     } finally {
-      setLoading(false);
+      setMessagesLoading(false);
     }
   };
 

@@ -56,13 +56,29 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
   };
 
   const handleCreateGroup = async () => {
+    console.log('[GroupChatDialog] Creating group with:', {
+      groupName,
+      selectedMembers: selectedMembers.length,
+      hasAvatar: !!avatarFile
+    });
+
     if (!groupName.trim()) {
       toast({ title: 'Group name required', variant: 'destructive' });
       return;
     }
 
     if (selectedMembers.length === 0) {
-      toast({ title: 'Add at least one member', variant: 'destructive' });
+      toast({ 
+        title: 'Add at least one member', 
+        description: 'You need to select friends to add to the group',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    if (!user?.id) {
+      console.error('[GroupChatDialog] No user ID found');
+      toast({ title: 'Authentication error', variant: 'destructive' });
       return;
     }
 
@@ -71,39 +87,50 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
       // Upload avatar if provided
       let avatarUrl = null;
       if (avatarFile) {
+        console.log('[GroupChatDialog] Uploading avatar...');
         const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${user?.id}/group-${Date.now()}.${fileExt}`;
+        const fileName = `${user.id}/group-${Date.now()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, avatarFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('[GroupChatDialog] Avatar upload error:', uploadError);
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
           .getPublicUrl(fileName);
 
         avatarUrl = publicUrl;
+        console.log('[GroupChatDialog] Avatar uploaded:', avatarUrl);
       }
 
       // Create group chat
+      console.log('[GroupChatDialog] Creating chat in database...');
       const { data: newChat, error: chatError } = await supabase
         .from('chats')
         .insert({
           name: groupName,
           type: 'group',
           avatar_url: avatarUrl,
-          created_by: user?.id,
+          created_by: user.id,
         })
         .select()
         .single();
 
-      if (chatError) throw chatError;
+      if (chatError) {
+        console.error('[GroupChatDialog] Chat creation error:', chatError);
+        throw chatError;
+      }
+      console.log('[GroupChatDialog] Chat created:', newChat.id);
 
       // Add participants (creator + selected members)
+      console.log('[GroupChatDialog] Adding participants...');
       const participants = [
-        { chat_id: newChat.id, user_id: user?.id, role: 'admin' },
+        { chat_id: newChat.id, user_id: user.id, role: 'admin' },
         ...selectedMembers.map(memberId => ({
           chat_id: newChat.id,
           user_id: memberId,
@@ -115,9 +142,16 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
         .from('chat_participants')
         .insert(participants);
 
-      if (participantsError) throw participantsError;
+      if (participantsError) {
+        console.error('[GroupChatDialog] Participants error:', participantsError);
+        throw participantsError;
+      }
 
-      toast({ title: 'Group created successfully!' });
+      console.log('[GroupChatDialog] Group created successfully!');
+      toast({ 
+        title: 'Group created successfully!',
+        description: `${groupName} was created with ${selectedMembers.length} members`
+      });
       onGroupCreated(newChat.id);
       onOpenChange(false);
       
@@ -127,11 +161,11 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
       setSelectedMembers([]);
       setAvatarFile(null);
       setAvatarPreview('');
-    } catch (error) {
-      console.error('Error creating group:', error);
+    } catch (error: any) {
+      console.error('[GroupChatDialog] Error creating group:', error);
       toast({
         title: 'Failed to create group',
-        description: 'Please try again',
+        description: error.message || 'Please check console for details and try again',
         variant: 'destructive',
       });
     } finally {
@@ -141,7 +175,7 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh]">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Group Chat</DialogTitle>
         </DialogHeader>
@@ -201,10 +235,16 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
               className="mb-2"
             />
             <ScrollArea className="h-[200px] border rounded-md p-2">
-              {filteredFriends.length === 0 ? (
+              {friends.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No friends found</p>
+                  <p className="text-sm font-medium">No friends yet</p>
+                  <p className="text-xs mt-1">Add friends to create group chats</p>
+                </div>
+              ) : filteredFriends.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No friends match your search</p>
                 </div>
               ) : (
                 <div className="space-y-1">

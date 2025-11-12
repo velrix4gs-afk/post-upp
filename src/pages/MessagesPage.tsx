@@ -9,6 +9,7 @@ import { useLastSeen } from '@/hooks/useLastSeen';
 import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
 import { useChatSettings } from '@/hooks/useChatSettings';
 import Navigation from '@/components/Navigation';
+import { BackNavigation } from '@/components/BackNavigation';
 import { VideoCall } from '@/components/VideoCall';
 import { VoiceCall } from '@/components/VoiceCall';
 import { ChatSettingsDialog } from '@/components/messaging/ChatSettingsDialog';
@@ -336,6 +337,15 @@ const MessagesPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
+      {selectedChatId && (
+        <div className="md:hidden">
+          <BackNavigation 
+            title={selectedChat?.name || selectedChat?.participants.find(p => p.user_id !== user?.id)?.profiles.display_name || 'Chat'}
+            showHome={false}
+          />
+        </div>
+      )}
       <main className="container mx-auto px-0 md:px-4 h-screen">
         <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}
