@@ -221,11 +221,11 @@ const MessagesPage = () => {
           .getPublicUrl(fileName);
 
         mediaUrl = publicUrl;
-        mediaType = `image/${fileExt}`;
+        mediaType = isVideo ? `video/${fileExt}` : `image/${fileExt}`;
       }
 
       await sendMessage(
-        messageText.trim() || '📷 Photo',
+        messageText.trim() || (isVideo ? '🎥 Video' : '📷 Photo'),
         replyingTo?.id,
         mediaUrl || undefined,
         mediaType || undefined
@@ -708,16 +708,34 @@ const MessagesPage = () => {
                     </div>
                   )}
 
-                  {/* Image Preview */}
+                  {/* Media Preview */}
                   {imagePreview && (
                     <div className="px-4 py-2 flex items-center gap-3 bg-muted/50">
-                      <img src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-lg" />
+                      {isVideo ? (
+                        <video 
+                          src={imagePreview} 
+                          className="h-20 w-32 object-cover rounded-lg"
+                          controls
+                        />
+                      ) : (
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="h-20 w-20 object-cover rounded-lg" 
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          {isVideo ? '🎥 Video' : '📷 Image'} ready to send
+                        </p>
+                      </div>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         onClick={() => {
                           setSelectedImage(null);
                           setImagePreview(null);
+                          setIsVideo(false);
                         }}
                         className="h-8 w-8"
                       >
