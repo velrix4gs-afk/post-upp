@@ -6,7 +6,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { Reply, Forward, Copy, Star, Edit, Trash2, Smile, Pin, Download, Info, Clock } from 'lucide-react';
+import { Reply, Forward, Copy, Star, Edit, Trash2, Smile, Pin, Download, Info } from 'lucide-react';
 
 interface LongPressMenuProps {
   children: ReactNode;
@@ -23,7 +23,6 @@ interface LongPressMenuProps {
   onPin?: () => void;
   onDownload?: () => void;
   onInfo?: () => void;
-  onSchedule?: () => void;
 }
 
 export const LongPressMenu = ({
@@ -41,7 +40,6 @@ export const LongPressMenu = ({
   onPin,
   onDownload,
   onInfo,
-  onSchedule,
 }: LongPressMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout>();
@@ -53,7 +51,6 @@ export const LongPressMenu = ({
     
     longPressTimer.current = setTimeout(() => {
       setIsOpen(true);
-      // Haptic feedback on mobile
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
@@ -73,7 +70,6 @@ export const LongPressMenu = ({
       Math.pow(touch.clientY - pressPosition.y, 2)
     );
     
-    // Cancel long press if finger moved too much
     if (moveDistance > 10 && longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
@@ -158,13 +154,6 @@ export const LongPressMenu = ({
               Edit Message
             </ContextMenuItem>
           </>
-        )}
-
-        {onSchedule && isOwn && (
-          <ContextMenuItem onClick={onSchedule}>
-            <Clock className="mr-2 h-4 w-4" />
-            Schedule Message
-          </ContextMenuItem>
         )}
         
         {isOwn && onDelete && (

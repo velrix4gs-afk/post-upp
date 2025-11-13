@@ -58,16 +58,6 @@ export const MessageActionsMenu = ({
           {isStarred ? 'Unstar Message' : 'Star Message'}
         </ContextMenuItem>
 
-        {onSchedule && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={onSchedule}>
-              <Clock className="mr-2 h-4 w-4" />
-              Schedule Message
-            </ContextMenuItem>
-          </>
-        )}
-
         {isOwn && onEdit && (
           <>
             <ContextMenuSeparator />

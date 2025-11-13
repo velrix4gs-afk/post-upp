@@ -657,6 +657,7 @@ export type Database = {
           id: string
           is_published: boolean | null
           monetization_enabled: boolean | null
+          page_metadata: Json | null
           profile_media_id: string | null
           profile_url: string | null
           slug: string
@@ -674,6 +675,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           monetization_enabled?: boolean | null
+          page_metadata?: Json | null
           profile_media_id?: string | null
           profile_url?: string | null
           slug: string
@@ -691,6 +693,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           monetization_enabled?: boolean | null
+          page_metadata?: Json | null
           profile_media_id?: string | null
           profile_url?: string | null
           slug?: string
@@ -1635,79 +1638,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_view"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      message_translations: {
-        Row: {
-          created_at: string | null
-          id: string
-          message_id: string
-          original_language: string | null
-          target_language: string
-          translated_text: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          message_id: string
-          original_language?: string | null
-          target_language: string
-          translated_text: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          message_id?: string
-          original_language?: string | null
-          target_language?: string
-          translated_text?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_translations_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "chat_list_view"
-            referencedColumns: ["last_message_id"]
-          },
-          {
-            foreignKeyName: "message_translations_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "message_feed_view"
-            referencedColumns: ["message_id"]
-          },
-          {
-            foreignKeyName: "message_translations_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_translations_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages_view"
-            referencedColumns: ["message_id"]
-          },
-          {
-            foreignKeyName: "message_translations_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages_with_users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_translations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_settings_view"
-            referencedColumns: ["user_id"]
           },
         ]
       }

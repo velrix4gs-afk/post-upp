@@ -40,6 +40,9 @@ const PagesDirectory = lazy(() => import("./pages/PagesDirectory"));
 const ReelsPage = lazy(() => import("./pages/ReelsPage"));
 const PagesPage = lazy(() => import("./pages/PagesPage"));
 const PurchaseHistoryPage = lazy(() => import("./pages/PurchaseHistoryPage"));
+const StarredMessagesPage = lazy(() => import("./pages/StarredMessagesPage"));
+const ChatMediaPage = lazy(() => import("./pages/ChatMediaPage"));
+const ChatSettingsPage = lazy(() => import("./pages/ChatSettingsPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -285,6 +288,30 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <PurchaseHistoryPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/starred-messages" 
+                element={
+                  <ProtectedRoute>
+                    <StarredMessagesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/chat-media" 
+                element={
+                  <ProtectedRoute>
+                    <ChatMediaPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/chat-settings" 
+                element={
+                  <ProtectedRoute>
+                    <ChatSettingsPage />
                   </ProtectedRoute>
                 } 
               />

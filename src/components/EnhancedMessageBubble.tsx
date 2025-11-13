@@ -321,18 +321,6 @@ export const EnhancedMessageBubble = ({
 
                   <DropdownMenuSeparator />
 
-                  {isOwn && (
-                    <DropdownMenuItem onClick={() => {
-                      toast({
-                        title: 'Schedule Message',
-                        description: 'Schedule feature coming soon',
-                      });
-                    }}>
-                      <Clock className="h-4 w-4 mr-2" />
-                      Schedule Message
-                    </DropdownMenuItem>
-                  )}
-
                   <DropdownMenuItem onClick={() => {
                     const date = new Date(timestamp);
                     toast({

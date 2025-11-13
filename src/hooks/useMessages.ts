@@ -57,7 +57,6 @@ export const useMessages = (chatId?: string) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatsLoading, setChatsLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
-  const loading = chatsLoading || messagesLoading;
 
   useEffect(() => {
     if (user) {
@@ -279,15 +278,28 @@ export const useMessages = (chatId?: string) => {
         })
       );
 
-      setChats(chatsWithParticipants);
-      console.log('[useMessages] Successfully loaded', chatsWithParticipants.length, 'chats');
+      // Filter out chats with 0 participants (orphaned/broken groups)
+      const validChats = chatsWithParticipants.filter(chat => chat.participants.length > 0);
+      
+      setChats(validChats);
+      console.log('[useMessages] Successfully loaded', validChats.length, 'chats');
     } catch (err: any) {
       console.error('[CHAT_001] Failed to load chats:', err);
-      toast({
-        title: 'Failed to load chats',
-        description: err.message || 'Could not load your conversations',
-        variant: 'destructive'
-      });
+      
+      // Use network error handler
+      if (!navigator.onLine || err?.message?.includes('fetch') || err?.message?.includes('network')) {
+        toast({
+          title: 'No internet connection',
+          description: 'Please check your network and try again',
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Failed to load chats',
+          description: 'Could not load your conversations',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setChatsLoading(false);
     }
@@ -734,7 +746,8 @@ export const useMessages = (chatId?: string) => {
   return {
     messages,
     chats,
-    loading,
+    chatsLoading,
+    messagesLoading,
     sendMessage,
     editMessage,
     deleteMessage,
