@@ -246,20 +246,24 @@ export const useMessages = (chatId?: string) => {
           // Fetch profiles for participants
           const participantsWithProfiles = await Promise.all(
             (participants || []).map(async (p) => {
-              const { data: profile } = await supabase
+              const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('username, display_name, avatar_url')
                 .eq('id', p.user_id)
-                .single();
+                .maybeSingle();
+
+              if (profileError) {
+                console.error(`[useMessages] Error fetching profile for ${p.user_id}:`, profileError);
+              }
 
               return {
                 user_id: p.user_id,
                 role: p.role,
                 joined_at: p.joined_at,
                 profiles: {
-                  username: profile?.username || '',
-                  display_name: profile?.display_name || '',
-                  avatar_url: profile?.avatar_url
+                  username: profile?.username || 'Unknown',
+                  display_name: profile?.display_name || 'Unknown User',
+                  avatar_url: profile?.avatar_url || undefined
                 }
               };
             })
@@ -324,11 +328,15 @@ export const useMessages = (chatId?: string) => {
       // Fetch sender profiles and reply_to messages
       const messagesWithProfiles: Message[] = await Promise.all(
         (messagesData || []).map(async (msg) => {
-          const { data: senderProfile } = await supabase
+          const { data: senderProfile, error: profileError } = await supabase
             .from('profiles')
             .select('username, display_name, avatar_url')
             .eq('id', msg.sender_id)
-            .single();
+            .maybeSingle();
+
+          if (profileError) {
+            console.error(`[useMessages] Error fetching sender profile for ${msg.sender_id}:`, profileError);
+          }
 
           let reply_to_message = undefined;
           if (msg.reply_to) {
@@ -336,14 +344,14 @@ export const useMessages = (chatId?: string) => {
               .from('messages')
               .select('id, content')
               .eq('id', msg.reply_to)
-              .single();
+              .maybeSingle();
 
             if (replyMsg) {
               const { data: replySenderProfile } = await supabase
                 .from('profiles')
                 .select('display_name')
                 .eq('id', msg.sender_id)
-                .single();
+                .maybeSingle();
 
               reply_to_message = {
                 id: replyMsg.id,
@@ -359,8 +367,8 @@ export const useMessages = (chatId?: string) => {
             ...msg,
             status: (msg.status || 'sent') as 'sending' | 'sent' | 'delivered' | 'read' | 'failed',
             sender: {
-              username: senderProfile?.username || 'user',
-              display_name: senderProfile?.display_name || 'User',
+              username: senderProfile?.username || 'Unknown',
+              display_name: senderProfile?.display_name || 'Unknown User',
               avatar_url: senderProfile?.avatar_url
             },
             reply_to_message
