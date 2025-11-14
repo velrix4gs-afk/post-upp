@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CategorySpecificFields } from '@/components/pages/CategorySpecificFields';
 
 const PAGE_CATEGORIES = [
   { id: 'business', name: 'Business', icon: Briefcase },
@@ -48,7 +49,8 @@ const PagesPage = () => {
     bio: '',
     contact_info: {} as any,
     website_url: '',
-    location: ''
+    location: '',
+    page_metadata: {} as any
   });
 
   const generateSlug = (name: string) => {
@@ -143,7 +145,8 @@ const PagesPage = () => {
         bio: '',
         contact_info: {},
         website_url: '',
-        location: ''
+        location: '',
+        page_metadata: {}
       });
       setAvatarFile(null);
       setAvatarPreview('');

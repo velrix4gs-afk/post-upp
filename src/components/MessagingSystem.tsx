@@ -68,7 +68,8 @@ const MessagingSystem = () => {
   const { 
     messages, 
     chats, 
-    loading, 
+    chatsLoading,
+    messagesLoading,
     sendMessage,
     editMessage,
     deleteMessage,
