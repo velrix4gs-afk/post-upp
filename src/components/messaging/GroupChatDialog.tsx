@@ -108,8 +108,8 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
         console.log('[GroupChatDialog] Avatar uploaded:', avatarUrl);
       }
 
-      // Create group chat
-      console.log('[GroupChatDialog] Creating chat in database...');
+      // Create group chat with transaction-like error handling
+      console.log('[GroupChatDialog] Creating chat...');
       const { data: newChat, error: chatError } = await supabase
         .from('chats')
         .insert({
@@ -121,30 +121,52 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
         .select()
         .single();
 
-      if (chatError) {
+      if (chatError || !newChat) {
         console.error('[GroupChatDialog] Chat creation error:', chatError);
-        throw chatError;
+        throw new Error(`Failed to create group chat: ${chatError?.message || 'No chat ID returned'}`);
       }
+
       console.log('[GroupChatDialog] Chat created:', newChat.id);
 
-      // Add participants (creator + selected members)
-      console.log('[GroupChatDialog] Adding participants...');
-      const participants = [
-        { chat_id: newChat.id, user_id: user.id, role: 'admin' },
-        ...selectedMembers.map(memberId => ({
+      // Add creator first as admin - this is critical!
+      const creatorParticipant = {
+        chat_id: newChat.id,
+        user_id: user.id,
+        role: 'admin'
+      };
+
+      const { error: creatorError } = await supabase
+        .from('chat_participants')
+        .insert([creatorParticipant]);
+
+      if (creatorError) {
+        console.error('[GroupChatDialog] Failed to add creator:', creatorError);
+        // Rollback: delete the chat
+        await supabase.from('chats').delete().eq('id', newChat.id);
+        throw new Error(`Failed to add you as admin: ${creatorError.message}`);
+      }
+
+      // Now add other members
+      if (selectedMembers.length > 0) {
+        const otherParticipants = selectedMembers.map(memberId => ({
           chat_id: newChat.id,
           user_id: memberId,
           role: 'member'
-        }))
-      ];
+        }));
 
-      const { error: participantsError } = await supabase
-        .from('chat_participants')
-        .insert(participants);
+        const { error: participantsError } = await supabase
+          .from('chat_participants')
+          .insert(otherParticipants);
 
-      if (participantsError) {
-        console.error('[GroupChatDialog] Participants error:', participantsError);
-        throw participantsError;
+        if (participantsError) {
+          console.error('[GroupChatDialog] Failed to add members:', participantsError);
+          // Don't rollback - creator is already added, just warn
+          toast({
+            title: 'Warning',
+            description: 'Group created but some members could not be added',
+            variant: 'destructive'
+          });
+        }
       }
 
       console.log('[GroupChatDialog] Group created successfully!');

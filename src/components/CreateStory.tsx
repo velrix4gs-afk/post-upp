@@ -31,6 +31,11 @@ const CreateStory = ({ onStoryCreated }: CreateStoryProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('none');
+  const [textOverlays, setTextOverlays] = useState<Array<{id: string; text: string; x: number; y: number; color: string}>>([]);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [currentText, setCurrentText] = useState('');
+  const [showStickers, setShowStickers] = useState(false);
+  const [isCloseFriends, setIsCloseFriends] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

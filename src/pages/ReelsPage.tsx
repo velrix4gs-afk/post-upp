@@ -1,24 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Plus, Heart, MessageCircle, Share2, MoreVertical, Pause, Play, Volume2, VolumeX, Film, Loader2 } from 'lucide-react';
 import { useReels } from '@/hooks/useReels';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { BackNavigation } from '@/components/BackNavigation';
 import { PremiumBadge } from '@/components/premium/PremiumBadge';
+import { InstagramReelCreator } from '@/components/InstagramReelCreator';
 
 const ReelsPage = () => {
-  const { reels, loading, hasMore, fetchReels, createReel, viewReel, likeReel, fetchComments, addComment } = useReels();
+  const { reels, loading, hasMore, fetchReels, viewReel, likeReel, fetchComments, addComment } = useReels();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [caption, setCaption] = useState('');
-  const [uploading, setUploading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -123,46 +119,9 @@ const ReelsPage = () => {
     setNewComment('');
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 500 * 1024 * 1024) {
-      toast({
-        title: 'Video too large',
-        description: 'Video must be less than 500MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!file.type.startsWith('video/')) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please select a video file',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setVideoFile(file);
-  };
-
-  const handleCreateReel = async () => {
-    if (!videoFile) return;
-
-    setUploading(true);
-    try {
-      const result = await createReel(videoFile, caption);
-      if (result) {
-        setCreateDialogOpen(false);
-        setVideoFile(null);
-        setCaption('');
-        fetchReels(true);
-      }
-    } finally {
-      setUploading(false);
-    }
+  const handleReelCreated = () => {
+    setCreateDialogOpen(false);
+    fetchReels(true);
   };
 
   if (loading && reels.length === 0) {
@@ -324,72 +283,12 @@ const ReelsPage = () => {
         )}
       </ScrollArea>
 
-      {/* Create Reel Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Reel</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="video-upload">Video *</Label>
-              <Input
-                id="video-upload"
-                type="file"
-                accept="video/*"
-                onChange={handleFileSelect}
-                className="mt-2"
-              />
-              {videoFile && (
-                <div className="mt-2">
-                  <video
-                    src={URL.createObjectURL(videoFile)}
-                    className="w-full h-48 object-cover rounded-lg"
-                    controls
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="caption">Caption</Label>
-              <Textarea
-                id="caption"
-                placeholder="Add a caption... Use #hashtags to reach more people!"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                maxLength={500}
-                rows={4}
-                className="mt-2"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                {caption.length}/500 characters
-              </p>
-            </div>
-
-            <Button
-              onClick={handleCreateReel}
-              disabled={!videoFile || uploading}
-              className="w-full"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Post Reel
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Create Reel with Instagram-Style Creator */}
+      <InstagramReelCreator
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onReelCreated={handleReelCreated}
+      />
 
       {/* Comments Dialog */}
       <Dialog open={commentsOpen} onOpenChange={setCommentsOpen}>
