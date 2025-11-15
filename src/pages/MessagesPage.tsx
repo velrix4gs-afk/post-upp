@@ -390,8 +390,8 @@ const MessagesPage = () => {
 
                 {chatsLoading ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <MessageCircle className="h-16 w-16 mb-4 opacity-30 animate-pulse" />
-                    <p className="text-sm">Loading conversations...</p>
+                    <MessageCircle className="h-16 w-16 mb-4 opacity-30" />
+                    <p className="text-sm">few seconds...</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
