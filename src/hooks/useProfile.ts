@@ -73,13 +73,14 @@ export const useProfile = (userId?: string) => {
     }
 
     try {
-      // Remove is_verified from updates to prevent RLS policy conflicts
-      const { is_verified, ...safeUpdates } = updates as any;
+      // Remove read-only fields
+      const { is_verified, created_at, updated_at, ...safeUpdates } = updates as any;
       
-      const { error } = await supabase
-        .from('profiles')
-        .update(safeUpdates)
-        .eq('id', user.id);
+      // Use the profiles edge function for updates
+      const { error } = await supabase.functions.invoke('profiles', {
+        method: 'PUT',
+        body: safeUpdates
+      });
 
       if (error) {
         console.error('Profile update error:', error);

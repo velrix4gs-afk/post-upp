@@ -729,24 +729,6 @@ const SettingsPage = () => {
                       </button>
 
                       <button
-                        onClick={() => setColorTheme('burnt-copper')}
-                        className={`p-6 rounded-lg border-2 transition-all ${
-                          colorTheme === 'burnt-copper' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-4 mb-3">
-                          <div className="flex gap-2">
-                            <div className="h-10 w-10 rounded-full bg-[#A0430A]" />
-                            <div className="h-10 w-10 rounded-full bg-[#DFE8E6] border border-border" />
-                          </div>
-                          <div className="text-left flex-1">
-                            <span className="font-semibold text-base block mb-1">Burnt Copper</span>
-                            <p className="text-xs text-muted-foreground">Copper bg (#A0430A) • Mist text (#DFE8E6)</p>
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
                         onClick={() => setColorTheme('seamist')}
                         className={`p-6 rounded-lg border-2 transition-all ${
                           colorTheme === 'seamist' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'

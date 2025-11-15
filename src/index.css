@@ -252,40 +252,7 @@ All colors MUST be HSL.
   --muted-foreground: 169 25% 24%;
 }
 
-/* Burnt Copper (#A0430A) background with Sea Mist (#DFE8E6) text */
-[data-color-theme="burnt-copper"] {
-  --background: 20 90% 33%;
-  --foreground: 166 15% 89%;
-  --card: 20 90% 36%;
-  --card-foreground: 166 15% 89%;
-  --popover: 20 90% 36%;
-  --popover-foreground: 166 15% 89%;
-  --primary: 166 15% 89%;
-  --primary-foreground: 20 90% 33%;
-  --primary-hover: 166 15% 82%;
-  --secondary: 20 85% 38%;
-  --secondary-foreground: 166 15% 89%;
-  --muted: 20 85% 36%;
-  --muted-foreground: 166 12% 78%;
-  --accent: 166 15% 89%;
-  --accent-foreground: 20 90% 33%;
-  --border: 20 80% 40%;
-  --input: 20 80% 40%;
-  --ring: 166 15% 89%;
-  --gradient-primary: linear-gradient(135deg, hsl(166 15% 89%) 0%, hsl(166 15% 82%) 100%);
-  --gradient-card: linear-gradient(to bottom, hsl(20 90% 36%), hsl(20 85% 36%));
-  --shadow-glow: 0 0 40px hsl(166 15% 89% / 0.3);
-}
-
-[data-color-theme="burnt-copper"].dark {
-  --background: 20 92% 30%;
-  --card: 20 90% 34%;
-  --primary: 166 15% 89%;
-  --border: 20 85% 38%;
-  --input: 20 85% 38%;
-}
-
-/* Sea Mist (#DFE8E6) background with Burnt Copper (#A0430A) text */
+/* Sea Mist (#DFE8E6) background with Teal text */
 [data-color-theme="seamist"] {
   --background: 166 15% 89%;
   --foreground: 20 90% 33%;
