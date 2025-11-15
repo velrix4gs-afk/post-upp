@@ -108,7 +108,31 @@ export const GroupChatDialog = ({ open, onOpenChange, onGroupCreated }: GroupCha
         console.log('[GroupChatDialog] Avatar uploaded:', avatarUrl);
       }
 
-      // Create group chat with transaction-like error handling
+      // Create group chat with database function
+      console.log('[GroupChatDialog] Creating group chat with participants:', {
+        creator: user.id,
+        members: selectedMembers,
+        name: groupName.trim()
+      });
+
+      const { data: chatId, error: createError } = await supabase.rpc(
+        'create_group_chat_with_participants',
+        {
+          chat_name: groupName.trim(),
+          participant_ids: [user.id, ...selectedMembers.filter(id => id !== user.id)]
+        }
+      );
+
+      if (createError) {
+        console.error('[GroupChatDialog] Group creation error:', createError);
+        throw createError;
+      }
+
+      if (!chatId) {
+        throw new Error('Failed to create group - no ID returned');
+      }
+
+      console.log('[GroupChatDialog] Group created successfully:', chatId);
       console.log('[GroupChatDialog] Creating chat...');
       const { data: newChat, error: chatError } = await supabase
         .from('chats')

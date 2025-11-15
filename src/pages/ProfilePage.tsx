@@ -79,60 +79,15 @@ const ProfilePage = () => {
     if (!profileUserId || !user) return;
     
     try {
-      // Create or get existing chat
-      const { data: existingChats } = await supabase
-        .from('chat_participants')
-        .select('chat_id, chats:chat_id(type)')
-        .eq('user_id', user.id);
+      // Use RPC to find or create chat
+      const { data: chatId, error: rpcError } = await supabase.rpc('create_private_chat', {
+        _user1: user.id,
+        _user2: profileUserId
+      });
 
-      if (existingChats) {
-        for (const ec of existingChats) {
-          if (ec.chats?.type === 'private') {
-            const { data: otherParticipant } = await supabase
-              .from('chat_participants')
-              .select('user_id')
-              .eq('chat_id', ec.chat_id)
-              .neq('user_id', user.id)
-              .single();
-
-            if (otherParticipant?.user_id === profileUserId) {
-              navigate(`/messages?chat=${ec.chat_id}`);
-              return;
-            }
-          }
-        }
-      }
-
-      // Create new chat
-      const { data: chat, error: chatError } = await supabase
-        .from('chats')
-        .insert({ 
-          type: 'private',
-          created_by: user.id
-        })
-        .select('id')
-        .maybeSingle();
-
-      if (chatError) {
-        throw new Error(`Failed to create chat: ${chatError.message}`);
-      }
+      if (rpcError) throw rpcError;
       
-      if (!chat?.id) {
-        throw new Error('Failed to create chat - no ID returned. Check RLS policies.');
-      }
-
-      const { error: participantsError } = await supabase
-        .from('chat_participants')
-        .insert([
-          { chat_id: chat.id, user_id: user.id, role: 'member' },
-          { chat_id: chat.id, user_id: profileUserId, role: 'member' }
-        ]);
-
-      if (participantsError) {
-        throw new Error(`Failed to add participants: ${participantsError.message}`);
-      }
-
-      navigate(`/messages?chat=${chat.id}`);
+      navigate(`/messages?chat=${chatId}`);
     } catch (error: any) {
       console.error('Message error:', error);
       toast({

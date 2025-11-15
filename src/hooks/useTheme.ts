@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
-type ColorTheme = 'deep-teal' | 'lemon-yellow' | 'burnt-copper' | 'seamist';
+type ColorTheme = 'deep-teal' | 'lemon-yellow' | 'seamist';
 
 export const useTheme = () => {
   const [theme, setTheme] = useState<Theme>(() => {

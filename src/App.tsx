@@ -283,38 +283,12 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/purchases" 
-                element={
-                  <ProtectedRoute>
-                    <PurchaseHistoryPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/starred-messages" 
-                element={
-                  <ProtectedRoute>
-                    <StarredMessagesPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/chat-media" 
-                element={
-                  <ProtectedRoute>
-                    <ChatMediaPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/chat-settings" 
-                element={
-                  <ProtectedRoute>
-                    <ChatSettingsPage />
-                  </ProtectedRoute>
-                } 
-              />
+            <Route path="/premium" element={<ProtectedRoute><PremiumPage /></ProtectedRoute>} />
+            <Route path="/purchases" element={<ProtectedRoute><PurchaseHistoryPage /></ProtectedRoute>} />
+            <Route path="/admin-setup" element={<ProtectedRoute><AdminSetup /></ProtectedRoute>} />
+            <Route path="/starred-messages" element={<ProtectedRoute><StarredMessagesPage /></ProtectedRoute>} />
+            <Route path="/chat-media" element={<ProtectedRoute><ChatMediaPage /></ProtectedRoute>} />
+            <Route path="/chat-settings" element={<ProtectedRoute><ChatSettingsPage /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

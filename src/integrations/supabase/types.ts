@@ -4603,6 +4603,10 @@ export type Database = {
         Args: { _creator: string; _receiver: string }
         Returns: string
       }
+      create_group_chat_with_participants: {
+        Args: { chat_name: string; participant_ids: string[] }
+        Returns: string
+      }
       create_message: {
         Args: {
           _chat_id: string
