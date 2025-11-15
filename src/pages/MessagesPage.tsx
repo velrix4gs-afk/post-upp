@@ -313,7 +313,7 @@ const MessagesPage = () => {
         setShowNewChatDialog(false);
         await refetchChats();
       } else {
-        throw new Error('CHAT_005: Failed to create chat - no ID returned');
+        throw new Error('CHAT_005: An Error occoured try Again');
       }
     } catch (error: any) {
       console.error('[MessagesPage] Create new chat error:', error);
@@ -387,17 +387,6 @@ const MessagesPage = () => {
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
-              <div className="p-2 pb-20">
-                {/* Unified Friends & Chats List */}
-                {!selectedChatId && (
-                  <Input
-                    placeholder="Search friends and chats..."
-                    value={newChatSearch}
-                    onChange={(e) => setNewChatSearch(e.target.value)}
-                    className="mb-3 mx-1"
-                  />
-                )}
 
                 {chatsLoading ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
