@@ -108,12 +108,21 @@ export const useHashtags = () => {
 
       if (hashtagError) throw hashtagError;
 
-      // Get posts with this hashtag
+      // Get posts with this hashtag including profiles
       const { data: postHashtags, error: postsError } = await supabase
         .from('post_hashtags')
         .select(`
           post_id,
-          posts (*)
+          posts (
+            *,
+            profiles (
+              id,
+              username,
+              display_name,
+              avatar_url,
+              is_verified
+            )
+          )
         `)
         .eq('hashtag_id', hashtag.id);
 

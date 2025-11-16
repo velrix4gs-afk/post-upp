@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
@@ -45,7 +45,7 @@ export const FollowersDialog = ({ open, onClose, users, title }: FollowersDialog
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <p className="font-medium truncate">{user.display_name}</p>
-                      {user.is_verified && <Badge variant="secondary" className="h-4 px-1">✓</Badge>}
+                      {user.is_verified && <VerificationBadge />}
                     </div>
                     <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
                   </div>

@@ -35,7 +35,6 @@ import { EncryptionBadge } from '@/components/messaging/EncryptionBadge';
 import { FileUpload } from '@/components/messaging/FileUpload';
 import { ChatMenu } from '@/components/ChatMenu';
 import { DisappearingMessagesDialog } from '@/components/messaging/DisappearingMessagesDialog';
-import { AISmartReplies } from '@/components/messaging/AISmartReplies';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -387,14 +386,14 @@ const MessagesPage = () => {
               </div>
             </div>
 
-
-                {chatsLoading ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <MessageCircle className="h-16 w-16 mb-4 opacity-30" />
-                    <p className="text-sm">few seconds...</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
+            <ScrollArea className="flex-1 overflow-y-auto">
+              {chatsLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <MessageCircle className="h-16 w-16 mb-4 opacity-30" />
+                  <p className="text-sm">few seconds...</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
                     {/* Friends who aren't in chats yet */}
                     {!selectedChatId && friends
                       .filter(f => 
@@ -490,7 +489,6 @@ const MessagesPage = () => {
                     )}
                   </div>
                 )}
-              </div>
             </ScrollArea>
           </div>
 
@@ -748,19 +746,6 @@ const MessagesPage = () => {
                     </div>
                   ) : (
                     <>
-                      {/* AI Smart Replies */}
-                      {lastReceivedMessage && !editingMessageId && (
-                        <div className="px-4 pt-2">
-                          <AISmartReplies
-                            lastMessage={lastReceivedMessage}
-                            onSelectReply={(reply) => {
-                              setMessageText(reply);
-                              messageInputRef.current?.focus();
-                            }}
-                          />
-                        </div>
-                      )}
-
                       {/* Message Input */}
                       <form onSubmit={handleSendMessage} className="p-3">
                         <div className="flex items-end gap-2">

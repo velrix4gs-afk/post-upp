@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Bell, 
   Heart, 
@@ -39,7 +40,35 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [expandedGroup, setExpandedGroup] = useState<NotificationGroup | null>(null);
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
   const navigate = useNavigate();
+
+  const clearNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+      
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error clearing notification:', err);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+      
+      if (error) throw error;
+      setShowClearAllDialog(false);
+    } catch (err) {
+      console.error('Error clearing all notifications:', err);
+    }
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {

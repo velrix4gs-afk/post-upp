@@ -7,7 +7,7 @@ import { Post } from '@/hooks/usePosts';
 import { usePosts } from '@/hooks/usePosts';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAuth } from '@/hooks/useAuth';
-import { Badge } from './ui/badge';
+import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -145,10 +145,10 @@ const PostCardModern = ({ post }: PostCardModernProps) => {
                 onClick={() => navigate(`/profile/${post.user_id}`)}
                 className="font-semibold hover:underline text-left"
               >
-                {post.profiles.display_name}
-              </button>
-              {post.profiles.is_verified && <Badge variant="secondary">✓</Badge>}
-              <span className="text-muted-foreground text-sm">
+              {post.profiles.display_name}
+            </button>
+            {post.profiles.is_verified && <VerificationBadge />}
+            <span className="text-muted-foreground text-sm">
                 @{post.profiles.username}
               </span>
               <span className="text-muted-foreground text-sm">
