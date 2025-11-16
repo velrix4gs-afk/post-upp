@@ -76,11 +76,11 @@ export const useProfile = (userId?: string) => {
       // Remove read-only fields
       const { is_verified, created_at, updated_at, ...safeUpdates } = updates as any;
       
-      // Use the profiles edge function for updates
-      const { error } = await supabase.functions.invoke('profiles', {
-        method: 'PUT',
-        body: safeUpdates
-      });
+      // Direct database update
+      const { error } = await supabase
+        .from('profiles')
+        .update(safeUpdates)
+        .eq('id', user.id);
 
       if (error) {
         console.error('Profile update error:', error);

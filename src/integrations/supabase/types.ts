@@ -653,6 +653,7 @@ export type Database = {
           cover_media_id: string | null
           cover_url: string | null
           created_at: string | null
+          created_by: string | null
           custom_css: string | null
           id: string
           is_published: boolean | null
@@ -671,6 +672,7 @@ export type Database = {
           cover_media_id?: string | null
           cover_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           custom_css?: string | null
           id?: string
           is_published?: boolean | null
@@ -689,6 +691,7 @@ export type Database = {
           cover_media_id?: string | null
           cover_url?: string | null
           created_at?: string | null
+          created_by?: string | null
           custom_css?: string | null
           id?: string
           is_published?: boolean | null

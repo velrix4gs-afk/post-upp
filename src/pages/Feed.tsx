@@ -48,9 +48,9 @@ const Feed = () => {
       />
       <Navigation />
       
-      <div className="container mx-auto flex gap-6 px-0 lg:px-8 -mt-2">
+        <div className="container mx-auto flex gap-6 px-0 lg:px-8 -mt-2">
         {/* Main Feed - Left/Center */}
-        <main className="flex-1 max-w-2xl mx-auto lg:mx-0 lg:border-x min-h-screen pb-20">
+        <main className="flex-1 max-w-2xl mx-auto lg:mx-0 lg:border-x min-h-screen pb-20 border-x-0 md:border-x">
         {/* Sticky Tab Navigation */}
         <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-30 border-b">
           <div className="flex">
