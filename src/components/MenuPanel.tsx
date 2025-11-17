@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
+import { useAdmin } from '@/hooks/useAdmin';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   Home, MessageCircle, Users, 
@@ -20,6 +22,7 @@ interface MenuPanelProps {
 export const MenuPanel = ({ isOpen, onOpenChange, trigger }: MenuPanelProps) => {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -92,9 +95,16 @@ export const MenuPanel = ({ isOpen, onOpenChange, trigger }: MenuPanelProps) => 
             <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-online rounded-full ring-2 ring-background" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-base truncate text-foreground group-hover:text-primary transition-colors duration-300">
-              {profile?.display_name || 'User'}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-base truncate text-foreground group-hover:text-primary transition-colors duration-300">
+                {profile?.display_name || 'User'}
+              </p>
+              {isAdmin && (
+                <Badge variant="destructive" className="gap-1 px-1.5 py-0 h-5">
+                  <span className="text-[10px] font-semibold">ADMIN</span>
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground truncate">@{profile?.username || 'username'}</p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />

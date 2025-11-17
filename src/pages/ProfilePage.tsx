@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { CoinsDisplay } from '@/components/CoinsDisplay';
 import { FollowersDialog } from '@/components/FollowersDialog';
+import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { 
   Edit, 
   MapPin, 
@@ -201,9 +202,7 @@ const ProfilePage = () => {
                 )}
               </Avatar>
               {profile?.is_verified && (
-                <Badge className="absolute -bottom-2 -right-2 bg-primary">
-                  ✓ Verified
-                </Badge>
+                <VerificationBadge className="absolute -bottom-2 -right-2" showLabel />
               )}
             </div>
 

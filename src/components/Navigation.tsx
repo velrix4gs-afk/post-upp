@@ -4,11 +4,12 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
-import { Home, User, Bell, Menu, Search, MessageCircle, Users, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText } from 'lucide-react';
+import { Home, User, Bell, Menu, Search, MessageCircle, Users, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/hooks/useProfile';
+import { useAdmin } from '@/hooks/useAdmin';
 import NotificationCenter from './NotificationCenter';
 import { MenuPanel } from './MenuPanel';
 
@@ -16,6 +17,7 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { unreadCount } = useNotifications();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -206,6 +208,11 @@ const Navigation = () => {
                         <AvatarImage src={profile?.avatar_url} />
                         <AvatarFallback>{profile?.display_name?.[0] || 'U'}</AvatarFallback>
                       </Avatar>
+                      {isAdmin && (
+                        <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center">
+                          <Shield className="h-3 w-3" />
+                        </Badge>
+                      )}
                     </Button>
                   }
                 />
