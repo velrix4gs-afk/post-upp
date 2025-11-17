@@ -12,7 +12,6 @@ import {
   MapPin, 
   Users,
   X,
-  BarChart3,
   Save,
   Clock,
   Heart
@@ -26,7 +25,6 @@ import { useHashtags } from "@/hooks/useHashtags";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { showCleanError } from "@/lib/errorHandler";
-import CreatePollDialog from "./CreatePollDialog";
 import DraftsDialog from "./DraftsDialog";
 import { UserTagSelector } from "./UserTagSelector";
 import { postContentSchema } from "@/lib/validationSchemas";
@@ -56,7 +54,6 @@ const CreatePost = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [createdPostId, setCreatedPostId] = useState<string | null>(null);
-  const [showPollDialog, setShowPollDialog] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date>();
   const [location, setLocation] = useState('');
   const [taggedUsers, setTaggedUsers] = useState<string[]>([]);
@@ -408,16 +405,6 @@ const CreatePost = () => {
                   </PopoverContent>
                 </Popover>
 
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-9 px-3"
-                  onClick={() => setShowPollDialog(true)}
-                >
-                  <BarChart3 className="h-4 w-4 mr-2 text-info" />
-                  <span className="text-xs">Poll</span>
-                </Button>
-
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-9 px-3">
@@ -471,22 +458,6 @@ const CreatePost = () => {
             </Button>
           </div>
         </div>
-
-        {showPollDialog && createdPostId && (
-          <CreatePollDialog 
-            postId={createdPostId}
-            onPollCreated={() => {
-              setShowPollDialog(false);
-              setPostContent("");
-              setSelectedImages([]);
-              setPreviewImages([]);
-              setLocation('');
-              setTaggedUsers([]);
-              setIsExpanded(false);
-              setCreatedPostId(null);
-            }}
-          />
-        )}
       </div>
     </Card>
   );

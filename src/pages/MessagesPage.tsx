@@ -387,14 +387,8 @@ const MessagesPage = () => {
             </div>
 
             <ScrollArea className="flex-1 overflow-y-auto">
-              {chatsLoading ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <MessageCircle className="h-16 w-16 mb-4 opacity-30" />
-                  <p className="text-sm">few seconds...</p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                    {/* Friends who aren't in chats yet */}
+              <div className="space-y-1">
+                  {/* Friends who aren't in chats yet */}
                     {!selectedChatId && friends
                       .filter(f => 
                         !chats.some(c => c.participants.some(p => p.user_id === f.id)) &&
@@ -488,7 +482,6 @@ const MessagesPage = () => {
                       })
                     )}
                   </div>
-                )}
             </ScrollArea>
           </div>
 

@@ -37,23 +37,44 @@ export const usePosts = () => {
     if (!session?.access_token) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('posts', {
-        method: 'GET',
-      });
+      // Use direct database query instead of edge function
+      const { data: postsData, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            display_name,
+            avatar_url,
+            is_verified
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (error) {
         console.error('Error fetching posts:', error);
-        // Silently fail on auth errors to not block UI
-        if (!error.message?.includes('token')) {
-          throw error;
-        }
         return;
       }
 
-      setPosts(data || []);
+      // Get reactions for each post
+      const postsWithReactions = await Promise.all(
+        (postsData || []).map(async (post) => {
+          const { data: reactions } = await supabase
+            .from('post_reactions')
+            .select('*')
+            .eq('post_id', post.id);
+
+          return {
+            ...post,
+            reactions: reactions || []
+          };
+        })
+      );
+
+      setPosts(postsWithReactions || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
-      // Silently fail for initial load to not block sign in
     } finally {
       setLoading(false);
     }
