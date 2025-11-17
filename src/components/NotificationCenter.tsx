@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import { 
   Bell, 
   Heart, 
@@ -56,7 +58,7 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
     }
   };
 
-  const clearAllNotifications = async () => {
+  const handleClearAll = async () => {
     try {
       const { error } = await supabase
         .from('notifications')
@@ -65,8 +67,17 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
       
       if (error) throw error;
       setShowClearAllDialog(false);
+      toast({
+        title: 'Notifications cleared',
+        description: 'All notifications have been removed'
+      });
     } catch (err) {
       console.error('Error clearing all notifications:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear notifications',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -189,6 +200,7 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
   };
 
   return (
+    <>
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="right" className="w-[400px] p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-l">
         <div className="flex flex-col h-full">
@@ -257,6 +269,17 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
                     className="w-full mt-3 rounded-xl transition-all duration-300 bg-primary hover:bg-primary/90"
                   >
                     <CheckCheck className="h-4 w-4 mr-2" />
+                    Mark All as Read
+                  </Button>
+                )}
+                
+                {notifications.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowClearAllDialog(true)}
+                    className="w-full mt-2 rounded-xl transition-all duration-300"
+                  >
                     Clear All Notifications
                   </Button>
                 )}
@@ -429,6 +452,24 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
         </div>
       </SheetContent>
     </Sheet>
+
+    <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
+      <AlertDialogContent className="rounded-2xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete all your notifications. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleClearAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Clear All
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 };
 

@@ -1215,18 +1215,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          last_used_at: string | null
           tag: string
           usage_count: number | null
         }
         Insert: {
           created_at?: string | null
           id?: string
+          last_used_at?: string | null
           tag: string
           usage_count?: number | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          last_used_at?: string | null
           tag?: string
           usage_count?: number | null
         }
@@ -1843,6 +1846,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      migration_audit: {
+        Row: {
+          applied_at: string | null
+          details: Json | null
+          id: string
+          name: string
+        }
+        Insert: {
+          applied_at?: string | null
+          details?: Json | null
+          id?: string
+          name: string
+        }
+        Update: {
+          applied_at?: string | null
+          details?: Json | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -4628,6 +4652,7 @@ export type Database = {
       }
       extract_hashtags: { Args: { post_content: string }; Returns: string[] }
       generate_verification_code: { Args: never; Returns: string }
+      get_auth_uid: { Args: never; Returns: string }
       get_random_feed: {
         Args: { user_uuid: string }
         Returns: {
