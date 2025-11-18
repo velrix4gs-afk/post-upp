@@ -115,21 +115,21 @@ export const MenuPanel = ({ isOpen, onOpenChange, trigger }: MenuPanelProps) => 
         {/* Shortcuts Section */}
         <div className="space-y-1.5 mb-6">{" "}
           <MenuItem 
-            icon={MessageCircle} 
-            label="Messages" 
-            onClick={() => handleNavigation('/messages')} 
+            icon={Home} 
+            label="Dashboard" 
+            onClick={() => handleNavigation('/dashboard')} 
           />
           <MenuItem 
-            icon={Users} 
-            label="Friends" 
-            onClick={() => handleNavigation('/friends')} 
-          />
-          <MenuItem
+            icon={BarChart3} 
+            label="Analytics" 
+            onClick={() => handleNavigation('/analytics')} 
+            />
+            <MenuItem
             icon={Compass} 
             label="Explore" 
             onClick={() => handleNavigation('/explore')} 
           />
-          <MenuItem 
+            <MenuItem 
             icon={Bookmark} 
             label="Saved" 
             onClick={() => handleNavigation('/bookmarks')} 
@@ -145,15 +145,17 @@ export const MenuPanel = ({ isOpen, onOpenChange, trigger }: MenuPanelProps) => 
             onClick={() => handleNavigation('/reels')} 
           />
           <MenuItem 
-            icon={Home} 
-            label="Dashboard" 
-            onClick={() => handleNavigation('/dashboard')} 
+            icon={MessageCircle} 
+            label="Messages" 
+            onClick={() => handleNavigation('/messages')} 
           />
           <MenuItem 
-            icon={BarChart3} 
-            label="Analytics" 
-            onClick={() => handleNavigation('/analytics')} 
+            icon={Users} 
+            label="Friends" 
+            onClick={() => handleNavigation('/friends')} 
           />
+          
+          
         </div>
 
         <Separator className="my-6 bg-border/50" />
