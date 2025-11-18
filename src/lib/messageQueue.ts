@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 import { logError } from './errorLogger';
 
 export interface QueuedMessage {
@@ -143,7 +142,21 @@ class MessageQueue {
       .in('status', ['pending', 'sending'])
       .order('created_at', { ascending: true });
 
-    return data || [];
+    if (!data) return [];
+
+    return data.map(msg => ({
+      id: msg.id,
+      tempId: msg.temp_id,
+      chatId: msg.chat_id,
+      content: msg.content || undefined,
+      mediaUrl: msg.media_url || undefined,
+      mediaType: msg.media_type || undefined,
+      replyTo: msg.reply_to || undefined,
+      status: msg.status as any,
+      retryCount: msg.retry_count,
+      errorMessage: msg.error_message || undefined,
+      createdAt: msg.created_at
+    }));
   }
 }
 
