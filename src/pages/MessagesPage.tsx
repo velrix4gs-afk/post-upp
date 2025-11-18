@@ -368,7 +368,14 @@ const MessagesPage = () => {
           <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
             <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
+                  {!isAppOnline && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground border">
+                      Offline
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1">
                   <Button 
                     size="icon"
