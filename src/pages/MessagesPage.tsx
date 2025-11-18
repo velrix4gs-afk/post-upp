@@ -55,7 +55,7 @@ const MessagesPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isAppOnline, setIsAppOnline] = useState(navigator.onLine);
   const { 
     chats, 
     messages, 
