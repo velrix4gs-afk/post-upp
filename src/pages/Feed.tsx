@@ -106,14 +106,7 @@ const Feed = () => {
                 )}
               </button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => navigate('/search')}
-              className="mr-2"
-            >
-              <Search className="h-5 w-5" />
-            </Button>
+            
           </div>
         </div>
 
@@ -148,10 +141,8 @@ const Feed = () => {
           <div className="p-12 text-center">
             <div className="max-w-md mx-auto">
               <Sparkles className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
-              <p className="text-muted-foreground mb-6">
-                Be the first to share something!
-              </p>
+              <h3 className="text-xl font-semibold mb-2">Loading Post's</h3>
+              
             </div>
           </div>
         ) : (
@@ -184,11 +175,6 @@ const Feed = () => {
           </div>
         )}
         </main>
-
-        {/* Right Sidebar - Desktop Only */}
-        <aside className="hidden lg:block w-80 sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto">
-          <TrendingFeed />
-        </aside>
       </div>
     </div>
   );
