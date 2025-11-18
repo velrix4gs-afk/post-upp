@@ -9,14 +9,15 @@ interface VerificationBadgeProps {
 
 export const VerificationBadge = ({ className, showLabel = false }: VerificationBadgeProps) => {
   return (
-    <Badge 
+    <div 
       className={cn(
-        'bg-blue-500 hover:bg-blue-600 text-white border-0 gap-0.5 px-1.5 py-0.5 text-xs font-medium',
+        'inline-flex items-center gap-0.5',
         className
       )}
+      title="Verified Account"
     >
-      <CheckCircle2 className="h-3 w-3 fill-current" />
-      {showLabel && <span>Verified</span>}
-    </Badge>
+      <CheckCircle2 className="h-4 w-4 fill-[#1d9bf0] text-white" />
+      {showLabel && <span className="text-xs font-medium text-muted-foreground">Verified</span>}
+    </div>
   );
 };
