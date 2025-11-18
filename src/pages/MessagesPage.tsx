@@ -163,6 +163,20 @@ const MessagesPage = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Network status monitoring
+  useEffect(() => {
+    const handleOnline = () => setIsAppOnline(true);
+    const handleOffline = () => setIsAppOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
