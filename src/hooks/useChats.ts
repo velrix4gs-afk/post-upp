@@ -75,7 +75,9 @@ export const useChats = () => {
             return {
               ...chat,
               is_group: false,
-              other_user: otherParticipant?.profiles
+              other_user: otherParticipant?.profiles,
+              is_online: false,
+              last_seen: null
             };
           }
 

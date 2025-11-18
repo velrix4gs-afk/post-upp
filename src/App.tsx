@@ -8,9 +8,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { RealtimeNotifications } from "@/components/RealtimeNotifications";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { lazy, Suspense, Component, ReactNode } from "react";
+import { lazy, Suspense, Component, ReactNode, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { initNetworkMonitor } from "@/lib/networkMonitor";
 
 // Lazy load pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -43,6 +44,9 @@ const PurchaseHistoryPage = lazy(() => import("./pages/PurchaseHistoryPage"));
 const StarredMessagesPage = lazy(() => import("./pages/StarredMessagesPage"));
 const ChatMediaPage = lazy(() => import("./pages/ChatMediaPage"));
 const ChatSettingsPage = lazy(() => import("./pages/ChatSettingsPage"));
+const CreateStoryPage = lazy(() => import("./components/CreateStoryPage"));
+const CreateReelPage = lazy(() => import("./pages/CreateReelPage"));
+const CreatePagePage = lazy(() => import("./pages/CreatePagePage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -55,6 +59,9 @@ const PageLoader = () => (
 );
 
 const queryClient = new QueryClient();
+
+// Initialize network monitoring
+initNetworkMonitor();
 
 // Error Boundary Component
 class ErrorBoundary extends Component<
@@ -290,7 +297,35 @@ const App = () => (
             <Route path="/chat-media" element={<ProtectedRoute><ChatMediaPage /></ProtectedRoute>} />
             <Route path="/chat-settings" element={<ProtectedRoute><ChatSettingsPage /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
+                <Route path="/reels" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <ReelsPage />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/create/story" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <CreateStoryPage />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/create/reel" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <CreateReelPage />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/create/page" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <CreatePagePage />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
