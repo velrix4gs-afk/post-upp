@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { cache, STORES } from '@/lib/cache';
 
 export interface CreatorPage {
   id: string;
@@ -32,6 +33,16 @@ export const useCreatorPages = (userId?: string) => {
       
       if (!targetUserId) return;
 
+      // Try cache first
+      const cacheKey = `pages_${targetUserId}`;
+      const cachedData = await cache.get(STORES.PAGES, cacheKey);
+      
+      if (cachedData) {
+        setPages(cachedData as CreatorPage[]);
+        setLoading(false);
+        // Still fetch in background
+      }
+
       const { data, error } = await supabase
         .from('creator_pages')
         .select('*')
@@ -39,7 +50,12 @@ export const useCreatorPages = (userId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPages(data || []);
+      
+      const pagesData = data || [];
+      setPages(pagesData);
+      
+      // Update cache
+      await cache.set(STORES.PAGES, cacheKey, pagesData);
     } catch (error) {
       console.error('Error fetching creator pages:', error);
     } finally {

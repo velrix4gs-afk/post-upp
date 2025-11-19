@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
+import { cache, STORES } from '@/lib/cache';
 
 export interface Reel {
   id: string;
@@ -48,6 +49,17 @@ export const useReels = () => {
       setLoading(true);
       const currentPage = reset ? 0 : page;
 
+      // Try cache first
+      const cacheKey = `reels_${currentPage}`;
+      const cachedData = await cache.get(STORES.REELS, cacheKey);
+      
+      if (cachedData && !reset) {
+        setReels([...reels, ...(cachedData as Reel[])]);
+        setPage(prev => prev + 1);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.rpc('get_recommended_reels', {
         p_user_id: user.id,
         p_page_offset: currentPage * 10,
@@ -71,6 +83,9 @@ export const useReels = () => {
           ...r,
           is_liked: likedSet.has(r.id)
         }));
+
+        // Cache the results
+        await cache.set(STORES.REELS, cacheKey, reelsWithLikes);
 
         if (reset) {
           setReels(reelsWithLikes);
