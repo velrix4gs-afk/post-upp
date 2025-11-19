@@ -73,25 +73,22 @@ export const useProfile = (userId?: string) => {
     }
 
     try {
-      // Remove read-only fields
-      const { is_verified, created_at, updated_at, ...safeUpdates } = updates as any;
+      // Remove read-only fields and ensure only valid fields
+      const { is_verified, created_at, updated_at, online_status, status_message, ...safeUpdates } = updates as any;
       
-      // Direct database update
-      const { error } = await supabase
-        .from('profiles')
-        .update(safeUpdates)
-        .eq('id', user.id);
+      // Call the profiles edge function
+      const { data, error } = await supabase.functions.invoke('profiles', {
+        method: 'PUT',
+        body: safeUpdates
+      });
 
       if (error) {
         console.error('Profile update error:', error);
         throw error;
       }
 
-      // Update local state
-      setProfile(prev => prev ? { ...prev, ...safeUpdates } : null);
-      
-      // Refetch to ensure we have the latest data
-      await fetchProfile();
+      // Update local state with the returned data
+      setProfile(prev => prev ? { ...prev, ...data } : null);
       
       toast({
         title: 'Profile Updated',

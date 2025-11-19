@@ -34,7 +34,12 @@ export const usePresence = (chatId?: string) => {
         
         Object.values(state).forEach((presences) => {
           presences.forEach((presence) => {
-            users[presence.user_id] = presence;
+            // Only consider users online if they've been active in the last 5 minutes
+            const onlineAt = new Date(presence.online_at).getTime();
+            const now = Date.now();
+            if (now - onlineAt < 5 * 60 * 1000) {
+              users[presence.user_id] = presence;
+            }
           });
         });
         
@@ -62,6 +67,19 @@ export const usePresence = (chatId?: string) => {
             online_at: new Date().toISOString(),
             viewing_chat: chatId,
           });
+
+          // Update presence every 2 minutes to stay online
+          const intervalId = setInterval(async () => {
+            await presenceChannel.track({
+              user_id: user.id,
+              display_name: profile?.display_name || 'User',
+              avatar_url: profile?.avatar_url,
+              online_at: new Date().toISOString(),
+              viewing_chat: chatId,
+            });
+          }, 2 * 60 * 1000);
+
+          return () => clearInterval(intervalId);
         }
       });
 
