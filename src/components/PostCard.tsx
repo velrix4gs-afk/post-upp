@@ -157,7 +157,8 @@ export const PostCard = ({ post }: PostCardProps) => {
     setLocalReactionCount(prev => newLikedState ? prev + 1 : Math.max(0, prev - 1));
     
     try {
-      await toggleReaction(post.id, 'like');
+      // Don't await - let it update in background
+      toggleReaction(post.id, 'like');
       // Force refetch to ensure count is in sync
       const { data } = await supabase
         .from('posts')

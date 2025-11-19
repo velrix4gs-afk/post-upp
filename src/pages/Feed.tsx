@@ -42,7 +42,7 @@ const Feed = () => {
   }, [inView, loading, hasMore, loadMore]);
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background touch-pan-y">
       <RealtimeFeed onNewPost={handleNewPost} />
       <PullToRefreshIndicator
         isPulling={isPulling}
@@ -53,10 +53,10 @@ const Feed = () => {
       
         <div className="container mx-auto flex gap-6 px-0 lg:px-8 -mt-2">
         {/* Main Feed - Left/Center */}
-        <main className="flex-1 max-w-2xl mx-auto lg:mx-0 lg:border-x min-h-screen pb-20 border-x-0 md:border-x">
+        <main className="flex-1 max-w-2xl mx-auto lg:mx-0 lg:border-x min-h-screen pb-20 border-x-0 md:border-x touch-pan-y">
         {/* Sticky Tab Navigation */}
         <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-30 border-b">
-          <div className="flex items-center">
+          <div className="flex items-center justify-between">
             <div className="flex-1 flex">
               <button
                 onClick={() => setActiveTab('for-you')}

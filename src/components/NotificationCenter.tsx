@@ -311,8 +311,8 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-semibold mb-1 group-hover:text-primary transition-colors duration-300">
                             {notification.title}
                           </h4>
@@ -326,11 +326,22 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
                           </p>
                         </div>
                         
-                        {!notification.is_read && (
-                          <div className="flex-shrink-0 ml-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {!notification.is_read && (
                             <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
-                          </div>
-                        )}
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearNotification(notification.id);
+                            }}
+                          >
+                            <span className="text-lg">×</span>
+                          </Button>
+                        </div>
                       </div>
 
                       {/* Action buttons for friend requests */}

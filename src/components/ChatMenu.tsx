@@ -164,9 +164,9 @@ export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onV
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          {otherUsername && (
+          {otherUserId && (
             <>
-              <DropdownMenuItem onClick={() => navigate(`/profile/${otherUsername}`)}>
+              <DropdownMenuItem onClick={() => navigate(`/profile/${otherUserId}`)}>
                 <UserCircle className="mr-2 h-4 w-4" />
                 View Profile
               </DropdownMenuItem>
