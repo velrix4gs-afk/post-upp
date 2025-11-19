@@ -60,13 +60,19 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
 
   const handleClearAll = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('user_id', user.id);
       
       if (error) throw error;
+      
       setShowClearAllDialog(false);
+      window.location.reload(); // Refresh to show cleared state
+      
       toast({
         title: 'Notifications cleared',
         description: 'All notifications have been removed'
