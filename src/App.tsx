@@ -45,7 +45,7 @@ const PurchaseHistoryPage = lazy(() => import("./pages/PurchaseHistoryPage"));
 const StarredMessagesPage = lazy(() => import("./pages/StarredMessagesPage"));
 const ChatMediaPage = lazy(() => import("./pages/ChatMediaPage"));
 const ChatSettingsPage = lazy(() => import("./pages/ChatSettingsPage"));
-const CreateStoryPage = lazy(() => import("./components/CreateStoryPage"));
+const CreateStoryPage = lazy(() => import("./pages/CreateStoryPage"));
 const CreateReelPage = lazy(() => import("./pages/CreateReelPage"));
 const CreatePagePage = lazy(() => import("./pages/CreatePagePage"));
 

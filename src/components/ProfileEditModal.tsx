@@ -62,9 +62,9 @@ export const ProfileEditModal = ({ open, onOpenChange }: ProfileEditModalProps) 
     setIsUploadingAvatar(true);
     try {
       await uploadAvatar(file);
-      toast({ title: 'Profile picture updated!' });
+      toast({ title: 'Avatar updated!', duration: 1500 });
     } catch (error) {
-      toast({ title: 'Failed to upload image', variant: 'destructive' });
+      toast({ title: 'ERR_03', description: 'Upload failed', variant: 'destructive', duration: 1500 });
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -90,13 +90,18 @@ export const ProfileEditModal = ({ open, onOpenChange }: ProfileEditModalProps) 
     setIsSaving(true);
     try {
       await updateProfile(changes);
-      toast({ title: 'Profile updated successfully!' });
+      toast({ 
+        title: 'Profile updated!',
+        duration: 1500
+      });
       onOpenChange(false);
     } catch (error: any) {
+      const errorCode = error.message?.includes('username') ? 'ERR_01' : 'ERR_02';
       toast({ 
-        title: 'Failed to update profile', 
-        description: error.message,
-        variant: 'destructive' 
+        title: errorCode,
+        description: error.message?.includes('username') ? 'Username taken' : 'Update failed',
+        variant: 'destructive',
+        duration: 1500
       });
     } finally {
       setIsSaving(false);

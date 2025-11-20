@@ -807,7 +807,7 @@ const MessagesPage = () => {
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
-                              onClick={() => setShowScheduleDialog(true)}
+                              onClick={() => document.getElementById('message-image-upload')?.click()}
                             >
                               <Paperclip className="h-5 w-5" />
                             </Button>
