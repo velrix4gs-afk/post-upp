@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useReels } from '@/hooks/useReels';
 import { toast } from '@/hooks/use-toast';
 import { BackNavigation } from '@/components/BackNavigation';
+import { ReelPostConfirmModal } from '@/components/ReelPostConfirmModal';
 
 const filters = [
   { id: 'none', name: 'Original', css: 'none' },
@@ -25,6 +26,7 @@ const CreateReelPage = () => {
   const [selectedFilter, setSelectedFilter] = useState('none');
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [uploading, setUploading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,17 +56,18 @@ const CreateReelPage = () => {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (data: { caption: string; tags: string[] }) => {
     if (!videoFile) return;
 
     setUploading(true);
     try {
-      await createReel(videoFile, caption);
+      await createReel(videoFile, data.caption);
       toast({ title: 'Reel posted! 🎉' });
       navigate('/reels');
     } catch (error) {
       console.error('Reel creation error:', error);
       toast({ title: 'Failed to post reel', variant: 'destructive' });
+      throw error;
     } finally {
       setUploading(false);
     }
@@ -78,10 +81,10 @@ const CreateReelPage = () => {
           <h1 className="text-xl font-bold">Create Reel</h1>
           <Button
             size="sm"
-            onClick={handlePublish}
+            onClick={() => setShowConfirmModal(true)}
             disabled={uploading || !videoFile}
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Next
           </Button>
         </div>
       </div>

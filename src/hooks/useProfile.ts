@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
+import { CacheHelper } from '@/lib/asyncStorage';
 
 export interface Profile {
   id: string;
@@ -33,8 +34,18 @@ export const useProfile = (userId?: string) => {
 
   const targetUserId = userId || user?.id;
 
+  const loadProfileFromCache = async () => {
+    if (!targetUserId) return;
+    const cached = await CacheHelper.getProfile(targetUserId);
+    if (cached) {
+      setProfile(cached);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (targetUserId) {
+      loadProfileFromCache();
       fetchProfile();
     }
   }, [targetUserId]);
@@ -50,6 +61,11 @@ export const useProfile = (userId?: string) => {
 
       if (error) throw error;
       setProfile(data);
+      
+      // Cache profile
+      if (targetUserId && data) {
+        await CacheHelper.saveProfile(targetUserId, data);
+      }
     } catch (err: any) {
       setError(err.message);
       toast({
