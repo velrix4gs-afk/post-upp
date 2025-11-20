@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
+import { AsyncStorage, CacheHelper } from '@/lib/asyncStorage';
 
 export interface Message {
   id: string;
@@ -58,8 +59,26 @@ export const useMessages = (chatId?: string) => {
   const [chatsLoading, setChatsLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
+  const loadChatsFromCache = async () => {
+    const cached = await CacheHelper.getChats();
+    if (cached) {
+      setChats(cached);
+      setChatsLoading(false);
+    }
+  };
+
+  const loadMessagesFromCache = async () => {
+    if (!chatId) return;
+    const cached = await CacheHelper.getMessages(chatId);
+    if (cached) {
+      setMessages(cached);
+    }
+  };
+
   useEffect(() => {
     if (user) {
+      // Load from cache first
+      loadChatsFromCache();
       fetchChats();
 
       // Set up real-time subscription for chats
@@ -98,6 +117,8 @@ export const useMessages = (chatId?: string) => {
 
   useEffect(() => {
     if (chatId) {
+      // Load from cache first
+      loadMessagesFromCache();
       fetchMessages();
       
       // Set up real-time subscription for messages
@@ -286,6 +307,10 @@ export const useMessages = (chatId?: string) => {
       const validChats = chatsWithParticipants.filter(chat => chat.participants.length > 0);
       
       setChats(validChats);
+      
+      // Cache chats
+      await CacheHelper.saveChats(validChats);
+      
       console.log('[useMessages] Successfully loaded', validChats.length, 'chats');
     } catch (err: any) {
       console.error('[CHAT_001] Failed to load chats:', err);
@@ -377,6 +402,12 @@ export const useMessages = (chatId?: string) => {
       );
 
       setMessages(messagesWithProfiles);
+      
+      // Cache messages
+      if (chatId) {
+        await CacheHelper.saveMessages(chatId, messagesWithProfiles);
+      }
+      
       console.log('[useMessages] Successfully loaded', messagesWithProfiles.length, 'messages');
     } catch (err: any) {
       console.error('[MSG_001] Failed to load messages:', err);
