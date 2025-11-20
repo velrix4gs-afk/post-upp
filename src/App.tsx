@@ -128,10 +128,10 @@ const App = () => (
     <AuthProvider>
       <TooltipProvider>
         <RealtimeNotifications />
-        <IncomingCallOverlay />
         <Toaster />
         <ToasterMobile />
         <BrowserRouter>
+          <IncomingCallOverlay />
           <BottomNavigation />
           <Suspense fallback={<PageLoader />}>
             <Routes>
