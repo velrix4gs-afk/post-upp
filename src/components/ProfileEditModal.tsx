@@ -89,7 +89,9 @@ export const ProfileEditModal = ({ open, onOpenChange }: ProfileEditModalProps) 
 
     setIsSaving(true);
     try {
-      await updateProfile(changes);
+      // Mark profile as complete when saving
+      const updatedChanges = { ...changes, is_profile_complete: true };
+      await updateProfile(updatedChanges);
       toast({ 
         title: 'Profile updated!',
         duration: 1500

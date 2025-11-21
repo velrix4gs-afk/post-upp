@@ -2796,6 +2796,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_private: boolean | null
+          is_profile_complete: boolean | null
           is_verified: boolean | null
           last_seen: string | null
           location: string | null
@@ -2818,6 +2819,7 @@ export type Database = {
           id: string
           is_active?: boolean | null
           is_private?: boolean | null
+          is_profile_complete?: boolean | null
           is_verified?: boolean | null
           last_seen?: string | null
           location?: string | null
@@ -2840,6 +2842,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_private?: boolean | null
+          is_profile_complete?: boolean | null
           is_verified?: boolean | null
           last_seen?: string | null
           location?: string | null
@@ -4973,6 +4976,10 @@ export type Database = {
       }
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_profile_discoverable: {
+        Args: { profile_user_id: string }
         Returns: boolean
       }
       is_user_blocked: {
