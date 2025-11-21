@@ -19,6 +19,7 @@ import { SharePostDialog } from "./SharePostDialog";
 import { TipDialog } from "./premium/TipDialog";
 import { ImageGalleryViewer } from "./ImageGalleryViewer";
 import { PostCardActions } from "./PostCard/PostCardActions";
+import { VideoViewer } from "./VideoViewer";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -367,21 +368,30 @@ export const PostCard = ({ post }: PostCardProps) => {
             <div className="mb-2">
               <PostContent content={post.content} />
               {post.media_url && !Array.isArray((post as any).media_urls) && (
-                <div 
-                  className="rounded-2xl overflow-hidden mt-3 border border-border cursor-pointer hover:opacity-90 transition"
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    setGalleryImages([post.media_url!]);
-                    setGalleryStartIndex(0);
-                    setShowImageGallery(true);
-                  }}
-                >
-                  <img 
-                    src={post.media_url} 
-                    alt="Post media"
-                    className="w-full h-auto object-cover max-h-96"
-                  />
-                </div>
+                <>
+                  {/* Check if media is video */}
+                  {(post.media_url.endsWith('.mp4') || post.media_url.endsWith('.webm') || post.media_url.endsWith('.mov') || post.media_url.includes('/video/')) ? (
+                    <div className="mt-3">
+                      <VideoViewer videoUrl={post.media_url} />
+                    </div>
+                  ) : (
+                    <div 
+                      className="rounded-2xl overflow-hidden mt-3 border border-border cursor-pointer hover:opacity-90 transition"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setGalleryImages([post.media_url!]);
+                        setGalleryStartIndex(0);
+                        setShowImageGallery(true);
+                      }}
+                    >
+                      <img 
+                        src={post.media_url} 
+                        alt="Post media"
+                        className="w-full h-auto object-cover max-h-96"
+                      />
+                    </div>
+                  )}
+                </>
               )}
               {(post as any).media_urls && Array.isArray((post as any).media_urls) && (
                 <div className={`grid gap-0.5 mt-3 rounded-2xl overflow-hidden border border-border ${

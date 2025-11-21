@@ -54,11 +54,12 @@ export const useFriendSuggestions = () => {
       const excludeIds = [...new Set([...myFriendIds, ...myFollowingIds, user.id])];
 
       if (myFriendIds.length === 0) {
-        // If no friends, suggest popular users not already followed
+        // If no friends, suggest popular users not already followed - only complete profiles
         const { data: popularUsers } = await supabase
           .from('profiles')
           .select('id, username, display_name, avatar_url')
           .not('id', 'in', `(${excludeIds.join(',')})`)
+          .eq('is_profile_complete', true)
           .limit(10);
 
         setSuggestions((popularUsers || []).map(u => ({
@@ -114,7 +115,8 @@ export const useFriendSuggestions = () => {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, username, display_name, avatar_url')
-        .in('id', suggestionIds);
+        .in('id', suggestionIds)
+        .eq('is_profile_complete', true);
 
       // Get mutual friends details
       const suggestionsWithMutuals = await Promise.all(
