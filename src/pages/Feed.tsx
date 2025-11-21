@@ -34,12 +34,15 @@ const Feed = () => {
     // Don't auto-refresh, let user manually refresh
   };
 
-  // Infinite scroll
+  // Infinite scroll with debounce to prevent excessive reloads
   useEffect(() => {
     if (inView && !loading && hasMore) {
-      loadMore();
+      const timer = setTimeout(() => {
+        loadMore();
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [inView, loading, hasMore, loadMore]);
+  }, [inView, loading, hasMore]);
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background touch-pan-y">

@@ -28,7 +28,7 @@ import { WallpaperDialog } from '@/components/messaging/WallpaperDialog';
 import { ClearChatDialog } from '@/components/messaging/ClearChatDialog';
 import { BlockUserDialog } from '@/components/messaging/BlockUserDialog';
 import { ReportUserDialog } from '@/components/messaging/ReportUserDialog';
-import { ScheduleMessageDialog } from '@/components/messaging/ScheduleMessageDialog';
+
 import { LocationShareDialog } from '@/components/messaging/LocationShareDialog';
 import { ContactShareDialog } from '@/components/messaging/ContactShareDialog';
 import { EncryptionBadge } from '@/components/messaging/EncryptionBadge';
@@ -99,7 +99,7 @@ const MessagesPage = () => {
   const [showClearChat, setShowClearChat] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
-  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -759,10 +759,6 @@ const MessagesPage = () => {
                                 <UsersIcon className="h-4 w-4 mr-2" />
                                 Contact
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setShowScheduleDialog(true)}>
-                                <Star className="h-4 w-4 mr-2" />
-                                Schedule Message
-                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <input
@@ -807,7 +803,8 @@ const MessagesPage = () => {
                               size="icon"
                               variant="ghost"
                               className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
-                              onClick={() => document.getElementById('message-image-upload')?.click()}
+                              onClick={() => fileInputRef.current?.click()}
+                              title="Attach image or video"
                             >
                               <Paperclip className="h-5 w-5" />
                             </Button>
@@ -975,20 +972,6 @@ const MessagesPage = () => {
           userName={otherParticipant.profiles.username || ''}
           open={showReportDialog}
           onOpenChange={setShowReportDialog}
-        />
-      )}
-
-      {showScheduleDialog && selectedChatId && (
-        <ScheduleMessageDialog
-          chatId={selectedChatId}
-          content={messageText}
-          open={showScheduleDialog}
-          onOpenChange={setShowScheduleDialog}
-          onScheduled={() => {
-            setMessageText('');
-            setShowScheduleDialog(false);
-            toast({ title: 'Message scheduled successfully' });
-          }}
         />
       )}
 

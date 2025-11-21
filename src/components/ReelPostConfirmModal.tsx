@@ -12,6 +12,7 @@ interface ReelPostConfirmModalProps {
   onOpenChange: (open: boolean) => void;
   videoPreview: string;
   onConfirm: (data: { caption: string; tags: string[] }) => Promise<void>;
+  isUploading?: boolean;
 }
 
 export const ReelPostConfirmModal = ({
@@ -19,6 +20,7 @@ export const ReelPostConfirmModal = ({
   onOpenChange,
   videoPreview,
   onConfirm,
+  isUploading = false,
 }: ReelPostConfirmModalProps) => {
   const [caption, setCaption] = useState('');
   const [tagInput, setTagInput] = useState('');
@@ -27,7 +29,7 @@ export const ReelPostConfirmModal = ({
 
   const addTag = () => {
     const tag = tagInput.trim().replace(/^#/, '');
-    if (tag && !tags.includes(tag)) {
+    if (tag && !tags.includes(tag) && tags.length < 10) {
       setTags([...tags, tag]);
       setTagInput('');
     }
@@ -54,37 +56,46 @@ export const ReelPostConfirmModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5 border-primary/20">
         <DialogHeader>
-          <DialogTitle>Post Reel</DialogTitle>
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+            Share Your Reel
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Video Preview */}
-          <div className="relative aspect-[9/16] bg-black rounded-lg overflow-hidden">
+          <div className="relative aspect-[9/16] max-h-[40vh] bg-black rounded-xl overflow-hidden shadow-2xl ring-2 ring-primary/20">
             <video
               src={videoPreview}
               className="w-full h-full object-cover"
-              controls
               loop
+              muted
+              autoPlay
+              playsInline
             />
           </div>
 
           {/* Caption */}
           <div className="space-y-2">
-            <Label htmlFor="caption">Caption</Label>
+            <Label htmlFor="caption" className="text-sm font-semibold">Caption</Label>
             <Textarea
               id="caption"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Write a caption..."
               rows={3}
+              maxLength={500}
+              className="resize-none focus-visible:ring-primary"
             />
+            <p className="text-xs text-muted-foreground text-right">
+              {caption.length}/500
+            </p>
           </div>
 
           {/* Tags */}
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
+          <div className="space-y-3">
+            <Label htmlFor="tags" className="text-sm font-semibold">Tags (optional)</Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -99,24 +110,36 @@ export const ReelPostConfirmModal = ({
                     }
                   }}
                   placeholder="Add tag"
-                  className="pl-9"
+                  maxLength={30}
+                  className="pl-9 focus-visible:ring-primary"
+                  disabled={tags.length >= 10}
                 />
               </div>
-              <Button type="button" onClick={addTag} variant="outline">
+              <Button 
+                type="button" 
+                onClick={addTag} 
+                variant="outline"
+                disabled={!tagInput.trim() || tags.length >= 10}
+                className="hover:bg-primary/10"
+              >
                 Add
               </Button>
             </div>
             
             {/* Tag List */}
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="gap-1">
+                  <Badge 
+                    key={tag} 
+                    variant="secondary" 
+                    className="gap-1 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 transition-colors"
+                  >
                     #{tag}
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="ml-1 hover:text-destructive"
+                      className="ml-1 hover:text-destructive transition-colors"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -124,15 +147,27 @@ export const ReelPostConfirmModal = ({
                 ))}
               </div>
             )}
+            {tags.length >= 10 && (
+              <p className="text-xs text-muted-foreground">Maximum 10 tags reached</p>
+            )}
           </div>
         </div>
 
-        <div className="flex gap-2 justify-end mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPosting}>
-            Cancel
+        <div className="flex gap-3 justify-end mt-6 pt-4 border-t">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)} 
+            disabled={isPosting || isUploading}
+            className="hover:bg-muted"
+          >
+            Back
           </Button>
-          <Button onClick={handlePost} disabled={isPosting}>
-            {isPosting ? (
+          <Button 
+            onClick={handlePost} 
+            disabled={isPosting || isUploading || !caption.trim()}
+            className="bg-gradient-to-r from-primary to-pink-500 hover:from-primary/90 hover:to-pink-500/90 min-w-[100px]"
+          >
+            {isPosting || isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Posting...
@@ -140,7 +175,7 @@ export const ReelPostConfirmModal = ({
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Post Reel
+                Post
               </>
             )}
           </Button>
