@@ -29,6 +29,8 @@ interface StoryViewerProps {
 
 const StoryViewer = ({ stories, currentIndex, onClose, onNext, onPrevious }: StoryViewerProps) => {
   const [message, setMessage] = useState('');
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
   const currentStory = stories[currentIndex];
 
   if (!currentStory) return null;
@@ -40,8 +42,40 @@ const StoryViewer = ({ stories, currentIndex, onClose, onNext, onPrevious }: Sto
     setMessage('');
   };
 
+  // Handle swipe gestures
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && currentIndex < stories.length - 1) {
+      onNext();
+    }
+    if (isRightSwipe && currentIndex > 0) {
+      onPrevious();
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
   return (
-    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+    <div 
+      className="fixed inset-0 bg-black z-50 flex items-center justify-center"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/60 to-transparent z-10">
         <div className="flex items-center justify-between max-w-2xl mx-auto">

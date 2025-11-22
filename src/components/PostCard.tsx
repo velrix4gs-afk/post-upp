@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle, Pin, PinOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
@@ -8,6 +8,7 @@ import { useBookmarks } from "@/hooks/useBookmarks";
 import { useFollowers } from "@/hooks/useFollowers";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useReposts } from "@/hooks/useReposts";
+import { usePinnedPosts } from "@/hooks/usePinnedPosts";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,8 @@ import { TipDialog } from "./premium/TipDialog";
 import { ImageGalleryViewer } from "./ImageGalleryViewer";
 import { PostCardActions } from "./PostCard/PostCardActions";
 import { VideoViewer } from "./VideoViewer";
+import { ReportDialog } from "./ReportDialog";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -67,10 +70,12 @@ export const PostCard = ({ post }: PostCardProps) => {
   const { followUser, unfollowUser, following } = useFollowers();
   const { blockUser } = useBlockedUsers();
   const { toggleRepost, isReposted } = useReposts();
+  const { pinPost, unpinPost, isPinned } = usePinnedPosts();
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const [editContent, setEditContent] = useState(post.content || "");
   const [localReactionCount, setLocalReactionCount] = useState(post.reactions_count);
   const [localRepostCount, setLocalRepostCount] = useState(post.shares_count || 0);
@@ -106,10 +111,15 @@ export const PostCard = ({ post }: PostCardProps) => {
   };
 
   const handleReportPost = () => {
-    toast({
-      title: 'Report Post',
-      description: 'Report feature coming soon',
-    });
+    setShowReportDialog(true);
+  };
+
+  const handlePinToggle = async () => {
+    if (isPinned(post.id)) {
+      await unpinPost(post.id);
+    } else {
+      await pinPost(post.id);
+    }
   };
 
   const handleBlockUser = async () => {
@@ -314,6 +324,20 @@ export const PostCard = ({ post }: PostCardProps) => {
                 <DropdownMenuContent align="end" className="w-56 bg-popover">
                   {isOwner ? (
                     <>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePinToggle(); }}>
+                        {isPinned(post.id) ? (
+                          <>
+                            <PinOff className="h-4 w-4 mr-2" />
+                            Unpin from Profile
+                          </>
+                        ) : (
+                          <>
+                            <Pin className="h-4 w-4 mr-2" />
+                            Pin to Profile
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }}>
                         <Pencil className="h-4 w-4 mr-2" />
                         Edit Post
@@ -393,31 +417,42 @@ export const PostCard = ({ post }: PostCardProps) => {
                   )}
                 </>
               )}
-              {(post as any).media_urls && Array.isArray((post as any).media_urls) && (
-                <div className={`grid gap-0.5 mt-3 rounded-2xl overflow-hidden border border-border ${
-                  (post as any).media_urls.length === 1 ? 'grid-cols-1' :
-                  (post as any).media_urls.length === 2 ? 'grid-cols-2' :
-                  (post as any).media_urls.length === 3 ? 'grid-cols-3' :
-                  'grid-cols-2'
-                } max-h-96`}>
-                  {(post as any).media_urls.map((url: string, index: number) => (
-                    <div 
-                      key={index} 
-                      className="aspect-video relative cursor-pointer hover:opacity-90 transition"
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        setGalleryImages((post as any).media_urls);
-                        setGalleryStartIndex(index);
-                        setShowImageGallery(true);
-                      }}
-                    >
-                      <img 
-                        src={url} 
-                        alt={`Media ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
+              {(post as any).media_urls && Array.isArray((post as any).media_urls) && (post as any).media_urls.length > 1 && (
+                <div className="mt-3 rounded-2xl overflow-hidden border border-border">
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {(post as any).media_urls.map((url: string, index: number) => (
+                        <CarouselItem key={index}>
+                          <div className="relative aspect-video w-full">
+                            <img 
+                              src={url} 
+                              alt={`Media ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                  </Carousel>
+                </div>
+              )}
+              {(post as any).media_urls && Array.isArray((post as any).media_urls) && (post as any).media_urls.length === 1 && (
+                <div 
+                  className="rounded-2xl overflow-hidden mt-3 border border-border cursor-pointer hover:opacity-90 transition"
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setGalleryImages((post as any).media_urls);
+                    setGalleryStartIndex(0);
+                    setShowImageGallery(true);
+                  }}
+                >
+                  <img 
+                    src={(post as any).media_urls[0]} 
+                    alt="Post media"
+                    className="w-full h-auto object-cover max-h-96"
+                  />
                 </div>
               )}
               
@@ -453,6 +488,13 @@ export const PostCard = ({ post }: PostCardProps) => {
         initialIndex={galleryStartIndex}
         open={showImageGallery}
         onOpenChange={setShowImageGallery}
+      />
+
+      <ReportDialog
+        open={showReportDialog}
+        onOpenChange={setShowReportDialog}
+        contentId={post.id}
+        contentType="post"
       />
     </>
   );

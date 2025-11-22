@@ -2028,6 +2028,36 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_filters: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          keyword: string
+          severity: string
+          updated_at: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          keyword: string
+          severity: string
+          updated_at?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          keyword?: string
+          severity?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           content: string | null
@@ -2261,6 +2291,102 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_settings_view"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      pinned_content: {
+        Row: {
+          content_id: string
+          content_type: string
+          id: string
+          pinned_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          id?: string
+          pinned_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          id?: string
+          pinned_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pinned_content_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pinned_content_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pinned_posts: {
+        Row: {
+          id: string
+          pinned_at: string | null
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          pinned_at?: string | null
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          pinned_at?: string | null
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pinned_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pinned_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts_view"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "pinned_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "trending_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pinned_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pinned_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2672,7 +2798,10 @@ export type Database = {
           is_deleted: boolean
           is_public: boolean | null
           is_published: boolean | null
+          latitude: number | null
           location: string | null
+          location_name: string | null
+          longitude: number | null
           media_ids: string[] | null
           media_type: string | null
           media_url: string | null
@@ -2694,7 +2823,10 @@ export type Database = {
           is_deleted?: boolean
           is_public?: boolean | null
           is_published?: boolean | null
+          latitude?: number | null
           location?: string | null
+          location_name?: string | null
+          longitude?: number | null
           media_ids?: string[] | null
           media_type?: string | null
           media_url?: string | null
@@ -2716,7 +2848,10 @@ export type Database = {
           is_deleted?: boolean
           is_public?: boolean | null
           is_published?: boolean | null
+          latitude?: number | null
           location?: string | null
+          location_name?: string | null
+          longitude?: number | null
           media_ids?: string[] | null
           media_type?: string | null
           media_url?: string | null
@@ -3422,6 +3557,71 @@ export type Database = {
           },
         ]
       }
+      spam_reports: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          reason: string | null
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spam_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spam_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spam_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spam_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       starred_messages: {
         Row: {
           created_at: string | null
@@ -3527,6 +3727,84 @@ export type Database = {
           },
           {
             foreignKeyName: "stories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_highlight_items: {
+        Row: {
+          added_at: string | null
+          highlight_id: string
+          id: string
+          story_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          highlight_id: string
+          id?: string
+          story_id: string
+        }
+        Update: {
+          added_at?: string | null
+          highlight_id?: string
+          id?: string
+          story_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_highlight_items_highlight_id_fkey"
+            columns: ["highlight_id"]
+            isOneToOne: false
+            referencedRelation: "story_highlights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_highlight_items_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_highlights: {
+        Row: {
+          cover_image: string | null
+          created_at: string | null
+          id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_highlights_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_highlights_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_view"
@@ -4913,7 +5191,10 @@ export type Database = {
           is_deleted: boolean
           is_public: boolean | null
           is_published: boolean | null
+          latitude: number | null
           location: string | null
+          location_name: string | null
+          longitude: number | null
           media_ids: string[] | null
           media_type: string | null
           media_url: string | null
