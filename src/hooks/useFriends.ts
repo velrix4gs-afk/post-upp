@@ -193,11 +193,28 @@ export const useFriends = () => {
     );
   };
 
+  const getMutualFriends = (targetUserId: string) => {
+    if (!user) return [];
+    
+    const myFriends = getFriends().map(f => f.id);
+    const targetFriendships = friendships.filter(f => 
+      f.status === 'accepted' && 
+      (f.requester_id === targetUserId || f.addressee_id === targetUserId)
+    );
+    
+    const targetFriends = targetFriendships.map(f => 
+      f.requester_id === targetUserId ? f.addressee_id : f.requester_id
+    );
+    
+    return myFriends.filter(id => targetFriends.includes(id));
+  };
+
   return {
     friendships,
     friends: getFriends(),
     pendingRequests: getPendingRequests(),
     sentRequests: getSentRequests(),
+    getMutualFriends,
     loading,
     sendFriendRequest,
     acceptFriendRequest,

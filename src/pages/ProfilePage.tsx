@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CoinsDisplay } from '@/components/CoinsDisplay';
 import { FollowersDialog } from '@/components/FollowersDialog';
 import { VerificationBadge } from '@/components/premium/VerificationBadge';
+import { StoryHighlights } from '@/components/StoryHighlights';
+import { usePinnedPosts } from '@/hooks/usePinnedPosts';
 import { 
   Edit, 
   MapPin, 
@@ -25,7 +27,8 @@ import {
   Settings,
   UserPlus,
   UserCheck,
-  MessageCircle
+  MessageCircle,
+  Pin
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -51,6 +54,7 @@ const ProfilePage = () => {
   const { posts, loading: postsLoading } = usePosts();
   const { friends } = useFriends();
   const { followers, following, followUser, unfollowUser } = useFollowers(profileUserId);
+  const { pinnedPostIds } = usePinnedPosts(profileUserId);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showFollowersDialog, setShowFollowersDialog] = useState(false);
   const [showFollowingDialog, setShowFollowingDialog] = useState(false);
@@ -62,6 +66,8 @@ const ProfilePage = () => {
   };
 
   const userPosts = posts.filter(post => post.user_id === profileUserId);
+  const pinnedPosts = userPosts.filter(post => pinnedPostIds.includes(post.id));
+  const regularPosts = userPosts.filter(post => !pinnedPostIds.includes(post.id));
   
   // Check if current user is following this profile
   const isFollowing = following.some(f => f.following_id === profileUserId);
@@ -283,6 +289,9 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {/* Story Highlights */}
+        <StoryHighlights userId={profileUserId!} isOwnProfile={isOwnProfile} />
+
         <Separator className="my-6" />
 
         {/* Posts Section */}
@@ -293,6 +302,33 @@ const ProfilePage = () => {
 
           {isOwnProfile && <CreatePost />}
 
+          {/* Pinned Posts */}
+          {pinnedPosts.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
+                <Pin className="h-4 w-4" />
+                Pinned Posts
+              </h3>
+              {pinnedPosts.map((post) => (
+                <PostCard 
+                  key={post.id} 
+                  post={{
+                    id: post.id,
+                    content: post.content || '',
+                    media_url: post.media_url,
+                    created_at: post.created_at,
+                    reactions_count: post.reactions_count,
+                    comments_count: post.comments_count,
+                    author_name: profile?.display_name || '',
+                    author_avatar: profile?.avatar_url,
+                    author_id: post.user_id
+                  }}
+                />
+              ))}
+              <Separator />
+            </div>
+          )}
+
           {userPosts.length === 0 ? (
             <Card className="p-8 text-center">
               <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
@@ -302,7 +338,7 @@ const ProfilePage = () => {
             </Card>
           ) : (
             <div className="space-y-6">
-              {userPosts.map((post) => (
+              {regularPosts.map((post) => (
                 <PostCard 
                   key={post.id} 
                   post={{
