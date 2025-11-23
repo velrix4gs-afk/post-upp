@@ -522,6 +522,8 @@ export type Database = {
           creator_id: string | null
           id: string
           is_pinned: boolean | null
+          last_message_at: string | null
+          last_message_id: string | null
           muted_until: string | null
           name: string | null
           theme_color: string | null
@@ -535,6 +537,8 @@ export type Database = {
           creator_id?: string | null
           id?: string
           is_pinned?: boolean | null
+          last_message_at?: string | null
+          last_message_id?: string | null
           muted_until?: string | null
           name?: string | null
           theme_color?: string | null
@@ -548,6 +552,8 @@ export type Database = {
           creator_id?: string | null
           id?: string
           is_pinned?: boolean | null
+          last_message_at?: string | null
+          last_message_id?: string | null
           muted_until?: string | null
           name?: string | null
           theme_color?: string | null
@@ -581,6 +587,41 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_list_view"
+            referencedColumns: ["last_message_id"]
+          },
+          {
+            foreignKeyName: "chats_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "message_feed_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "chats_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_view"
+            referencedColumns: ["message_id"]
+          },
+          {
+            foreignKeyName: "chats_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages_with_users"
             referencedColumns: ["id"]
           },
         ]

@@ -48,6 +48,7 @@ const ChatSettingsPage = lazy(() => import("./pages/ChatSettingsPage"));
 const CreateStoryPage = lazy(() => import("./pages/CreateStoryPage"));
 const CreateReelPage = lazy(() => import("./pages/CreateReelPage"));
 const CreatePagePage = lazy(() => import("./pages/CreatePagePage"));
+const EditPagePage = lazy(() => import("./pages/EditPagePage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -324,6 +325,13 @@ const App = () => (
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}>
                       <CreatePagePage />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/page/:pageId/edit" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <EditPagePage />
                     </Suspense>
                   </ProtectedRoute>
                 } />
