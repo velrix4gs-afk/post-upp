@@ -23,7 +23,6 @@ import { SharedLinksTab } from './messaging/SharedLinksTab';
 interface ChatMenuProps {
   chatId: string;
   otherUserId?: string;
-  otherUsername?: string;
   onExportChat?: () => void;
   onViewMedia?: () => void;
   onReport?: () => void;
@@ -36,7 +35,7 @@ interface ChatMenuProps {
   onDisappearingMessages?: () => void;
 }
 
-export const ChatMenu = ({ chatId, otherUserId, otherUsername, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred, onWallpaperChange, onViewSharedLinks, onDisappearingMessages }: ChatMenuProps) => {
+export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onReport, onClearChat, onBlock, onSearchInChat, onViewStarred, onWallpaperChange, onViewSharedLinks, onDisappearingMessages }: ChatMenuProps) => {
   const navigate = useNavigate();
   const { settings, setNickname, muteChat, unmuteChat, togglePin, setTheme } = useChatSettings(chatId);
   const { isBlocked, unblockUser } = useBlockedUsers();

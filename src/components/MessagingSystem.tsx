@@ -448,7 +448,6 @@ const MessagingSystem = () => {
                 <ChatMenu 
                   chatId={selectedChat.id}
                   otherUserId={getOtherParticipants(selectedChat)[0]?.user_id}
-                  otherUsername={getOtherParticipants(selectedChat)[0]?.profiles.username}
                   onBlock={() => setShowBlockDialog(true)}
                   onReport={() => setShowReportDialog(true)}
                   onClearChat={() => setShowClearDialog(true)}

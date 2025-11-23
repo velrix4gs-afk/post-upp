@@ -4,12 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { X, Upload, Loader2, Send, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Loader2, Send, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { BackNavigation } from '@/components/BackNavigation';
+import { logError } from '@/lib/errorLogger';
 
 const CreatePagePage = () => {
   const navigate = useNavigate();
@@ -47,12 +48,31 @@ const CreatePagePage = () => {
 
   const handleCreate = async () => {
     if (!user || !title.trim() || !slug.trim()) {
-      toast({ title: 'Please fill in required fields', variant: 'destructive' });
+      toast({ title: 'Please fill in required fields' });
+      return;
+    }
+
+    // Validate slug format
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      toast({ title: 'URL can only contain lowercase letters, numbers, and hyphens' });
       return;
     }
 
     setUploading(true);
     try {
+      // Check slug availability
+      const { data: existing } = await supabase
+        .from('creator_pages')
+        .select('id')
+        .eq('slug', slug)
+        .maybeSingle();
+
+      if (existing) {
+        toast({ title: 'This URL is already taken' });
+        setUploading(false);
+        return;
+      }
+
       let coverUrl = null;
       let profileUrl = null;
 
@@ -83,27 +103,34 @@ const CreatePagePage = () => {
       }
 
       // Create page
-      const { error } = await supabase.from('creator_pages').insert({
-        user_id: user.id,
-        title,
-        slug,
-        bio,
-        cover_url: coverUrl,
-        profile_url: profileUrl,
-        is_published: true
-      });
+      const { data: newPage, error } = await supabase
+        .from('creator_pages')
+        .insert({
+          user_id: user.id,
+          title,
+          slug,
+          bio,
+          cover_url: coverUrl,
+          profile_url: profileUrl,
+          is_published: true
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast({ title: 'Page created successfully! 🎉' });
-      navigate('/pages');
+      toast({ title: 'Page created! 🎉' });
+      // Navigate to edit page
+      navigate(`/page/${newPage.id}/edit`);
     } catch (error: any) {
-      console.error('Page creation error:', error);
-      toast({ 
-        title: 'Failed to create page',
-        description: error.message,
-        variant: 'destructive' 
+      await logError({
+        message: error.message,
+        type: 'page_creation_error',
+        context: { title, slug },
+        userId: user?.id,
+        componentName: 'CreatePagePage'
       });
+      toast({ title: 'Unable to create page' });
     } finally {
       setUploading(false);
     }
@@ -196,7 +223,23 @@ const CreatePagePage = () => {
               maxLength={300}
               rows={4}
             />
+            <p className="text-xs text-muted-foreground text-right mt-1">{bio.length}/300</p>
           </div>
+
+          {/* Helpful tips */}
+          <Card className="bg-primary/5 border-primary/20 p-4">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-1">Tips for a great page:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Choose a memorable URL</li>
+                  <li>Add high-quality cover and profile images</li>
+                  <li>Write a clear bio describing your page</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

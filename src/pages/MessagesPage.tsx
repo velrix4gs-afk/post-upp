@@ -489,8 +489,8 @@ const MessagesPage = () => {
                   onClick={() => {
                     if (selectedChat?.is_group) {
                       setShowGroupInfo(true);
-                    } else if (otherParticipant?.profiles.username) {
-                      navigate(`/profile/${otherParticipant.profiles.username}`);
+                    } else if (otherParticipant?.user_id) {
+                      navigate(`/profile/${otherParticipant.user_id}`);
                     }
                   }}
                 >
@@ -583,7 +583,6 @@ const MessagesPage = () => {
                     <ChatMenu
                       chatId={selectedChatId}
                       otherUserId={otherParticipant?.user_id}
-                      otherUsername={otherParticipant?.profiles.username}
                       onViewMedia={() => setShowMediaTab(true)}
                       onSearchInChat={() => setShowSearchDialog(true)}
                       onViewStarred={() => setShowStarredDialog(true)}
