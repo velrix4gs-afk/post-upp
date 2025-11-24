@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle, Pin, PinOff } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle, Pin, PinOff, MessageCircle, Repeat2, Share2, Bookmark } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
@@ -23,6 +23,10 @@ import { PostCardActions } from "./PostCard/PostCardActions";
 import { VideoViewer } from "./VideoViewer";
 import { ReportDialog } from "./ReportDialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { PostReactionPicker } from "./PostReactionPicker";
+import { useReactions } from "@/hooks/useReactions";
+import { ThreadedCommentsSection } from "./ThreadedCommentsSection";
+import { cn } from "@/lib/utils";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -65,14 +69,14 @@ export interface PostCardProps {
 
 export const PostCard = ({ post }: PostCardProps) => {
   const { user } = useAuth();
-  const { toggleReaction, updatePost, deletePost } = usePosts();
+  const { updatePost, deletePost } = usePosts();
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { followUser, unfollowUser, following } = useFollowers();
   const { blockUser } = useBlockedUsers();
   const { toggleRepost, isReposted } = useReposts();
   const { pinPost, unpinPost, isPinned } = usePinnedPosts();
+  const { userReaction, reactionCounts, toggleReaction: handleReactionToggle, getTotalReactions } = useReactions(post.id);
   const navigate = useNavigate();
-  const [isLiked, setIsLiked] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
@@ -83,6 +87,7 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [galleryStartIndex, setGalleryStartIndex] = useState(0);
+  const [showComments, setShowComments] = useState(false);
 
   const isOwner = user?.id === post.author_id;
   const isFollowingAuthor = following.some(f => f.following?.id === post.author_id);
@@ -130,66 +135,10 @@ export const PostCard = ({ post }: PostCardProps) => {
     });
   };
 
-  // Check if user has liked this post
-  useEffect(() => {
-    const checkLikeStatus = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('post_reactions')
-          .select('id')
-          .eq('post_id', post.id)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (!error && data) {
-          setIsLiked(true);
-        }
-      } catch (err) {
-        console.error('[REACT_001] Error checking like status:', err);
-      }
-    };
-
-    checkLikeStatus();
-  }, [post.id, user]);
-
   // Update local reaction count when post prop changes
   useEffect(() => {
-    setLocalReactionCount(post.reactions_count);
-  }, [post.reactions_count]);
-
-  const handleLike = async () => {
-    if (!user) return;
-    
-    // Optimistic update
-    const newLikedState = !isLiked;
-    setIsLiked(newLikedState);
-    setLocalReactionCount(prev => newLikedState ? prev + 1 : Math.max(0, prev - 1));
-    
-    try {
-      // Don't await - let it update in background
-      toggleReaction(post.id, 'like');
-      // Force refetch to ensure count is in sync
-      const { data } = await supabase
-        .from('posts')
-        .select('reactions_count')
-        .eq('id', post.id)
-        .single();
-      if (data) {
-        setLocalReactionCount(data.reactions_count);
-      }
-    } catch (err) {
-      // Revert on error
-      setIsLiked(!newLikedState);
-      setLocalReactionCount(post.reactions_count);
-      toast({
-        title: 'Something went wrong',
-        description: 'Failed to update like • REACT_002',
-        variant: 'destructive'
-      });
-    }
-  };
+    setLocalReactionCount(getTotalReactions());
+  }, [reactionCounts]);
 
   const handleEdit = async () => {
     if (!editContent.trim()) return;
@@ -458,20 +407,76 @@ export const PostCard = ({ post }: PostCardProps) => {
               
               <PollCard postId={post.id} />
 
-              <PostCardActions
-                isLiked={isLiked}
-                isReposted={isReposted(post.id)}
-                isBookmarked={isBookmarked(post.id)}
-                likesCount={localReactionCount}
-                commentsCount={post.comments_count}
-                repostsCount={localRepostCount}
-                sharesCount={post.shares_count || 0}
-                onLike={handleLike}
-                onRepost={handleRepost}
-                onComment={() => navigate(`/post/${post.id}`)}
-                onShare={handleShare}
-                onBookmark={() => toggleBookmark(post.id)}
-              />
+              <div className="flex items-center gap-1 mt-3">
+                <PostReactionPicker
+                  currentReaction={userReaction}
+                  onReactionSelect={handleReactionToggle}
+                  reactionCounts={reactionCounts}
+                />
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 hover:bg-blue-500/10 hover:text-blue-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowComments(!showComments);
+                  }}
+                >
+                  <MessageCircle className="h-[18px] w-[18px]" />
+                  <span className="text-sm">{post.comments_count || ''}</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "gap-2 hover:bg-green-500/10 hover:text-green-500",
+                    isReposted(post.id) && "text-green-500"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRepost();
+                  }}
+                >
+                  <Repeat2 className="h-[18px] w-[18px]" />
+                  <span className="text-sm">{localRepostCount || ''}</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 hover:bg-blue-500/10 hover:text-blue-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleShare();
+                  }}
+                >
+                  <Share2 className="h-[18px] w-[18px]" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "gap-2 hover:bg-yellow-500/10 hover:text-yellow-500",
+                    isBookmarked(post.id) && "text-yellow-500"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleBookmark(post.id);
+                  }}
+                >
+                  <Bookmark className={cn(
+                    "h-[18px] w-[18px]",
+                    isBookmarked(post.id) && "fill-current"
+                  )} />
+                </Button>
+              </div>
+
+              {showComments && (
+                <ThreadedCommentsSection postId={post.id} />
+              )}
             </div>
           </div>
         </div>
