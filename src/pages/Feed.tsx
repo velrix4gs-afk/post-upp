@@ -163,7 +163,10 @@ const Feed = () => {
                     shares_count: post.shares_count || 0,
                     author_name: post.profiles?.display_name || 'Unknown User',
                     author_avatar: post.profiles?.avatar_url,
-                    author_id: post.user_id
+                    author_id: post.user_id,
+                    is_verified: post.profiles?.is_verified,
+                    verification_type: post.profiles?.verification_type,
+                    verified_at: post.profiles?.verified_at
                   }}
                 />
               </div>

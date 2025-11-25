@@ -20,6 +20,8 @@ export interface Post {
     display_name: string;
     avatar_url?: string;
     is_verified: boolean;
+    verification_type?: string | null;
+    verified_at?: string | null;
   };
   reactions?: {
     id: string;
@@ -46,7 +48,9 @@ export const usePosts = () => {
             username,
             display_name,
             avatar_url,
-            is_verified
+            is_verified,
+            verification_type,
+            verified_at
           )
         `)
         .order('created_at', { ascending: false })

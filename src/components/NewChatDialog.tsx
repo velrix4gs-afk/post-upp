@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useFollowers } from '@/hooks/useFollowers';
+import { VerificationBadge } from './premium/VerificationBadge';
 
 interface NewChatDialogProps {
   open: boolean;
@@ -99,11 +100,13 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
                       <AvatarFallback>{friend.display_name[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <p className="font-medium truncate">{friend.display_name}</p>
-                        {friend.is_verified && (
-                          <span className="text-primary">✓</span>
-                        )}
+                        <VerificationBadge 
+                          isVerified={friend.is_verified}
+                          verificationType={friend.verification_type}
+                          verifiedAt={friend.verified_at}
+                        />
                       </div>
                       <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
                     </div>
