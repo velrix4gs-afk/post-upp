@@ -27,6 +27,7 @@ import { PostReactionPicker } from "./PostReactionPicker";
 import { useReactions } from "@/hooks/useReactions";
 import { ThreadedCommentsSection } from "./ThreadedCommentsSection";
 import { cn } from "@/lib/utils";
+import { VerificationBadge } from "./premium/VerificationBadge";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -64,6 +65,9 @@ export interface PostCardProps {
     author_name: string;
     author_avatar?: string;
     author_id: string;
+    is_verified?: boolean;
+    verification_type?: string | null;
+    verified_at?: string | null;
   };
 }
 
@@ -250,9 +254,14 @@ export const PostCard = ({ post }: PostCardProps) => {
                     e.stopPropagation();
                     navigate(`/profile/${post.author_id}`);
                   }}
-                  className="font-semibold hover:underline text-sm truncate"
+                  className="font-semibold hover:underline text-sm truncate flex items-center"
                 >
                   {post.author_name}
+                  <VerificationBadge 
+                    isVerified={post.is_verified}
+                    verificationType={post.verification_type}
+                    verifiedAt={post.verified_at}
+                  />
                 </button>
                 <span className="text-muted-foreground text-sm">·</span>
                 <span className="text-sm text-muted-foreground whitespace-nowrap">

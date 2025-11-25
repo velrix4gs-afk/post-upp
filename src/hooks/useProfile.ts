@@ -20,6 +20,8 @@ export interface Profile {
   theme_color?: string;
   is_private: boolean;
   is_verified: boolean;
+  verification_type?: string | null;
+  verified_at?: string | null;
   online_status?: boolean;
   status_message?: string;
   created_at: string;

@@ -153,6 +153,69 @@ All colors MUST be HSL.
   }
 }
 
+/* Verified Badge System - Twitter-style */
+:root {
+  --verify-color: 29 78% 56%;
+  --verify-gradient-from: 204 88% 53%;
+  --verify-gradient-to: 211 100% 50%;
+  --verify-size: 1.1em;
+  --verify-check-size: 60%;
+  --verify-border-width: 2px;
+  --verify-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.verified {
+  --size: var(--verify-size);
+  display: inline-block;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  vertical-align: -0.12em;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: var(--verify-check-size) var(--verify-check-size);
+  margin-left: 0.35em;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: 0.12s ease;
+  box-shadow: var(--verify-shadow);
+}
+
+.verified.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.verified--solid {
+  background-image: linear-gradient(135deg, var(--verify-gradient-from), var(--verify-gradient-to)),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M20.285 6.708a1 1 0 0 0-1.414-1.416l-8.486 8.486-3.172-3.172a1 1 0 0 0-1.414 1.414l3.879 3.879a1 1 0 0 0 1.414 0l9.393-9.191z'/></svg>");
+}
+
+.tooltip {
+  position: relative;
+}
+
+.tooltip .tooltiptext {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  padding: 6px 8px;
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 50;
+  box-shadow: var(--shadow-md);
+  border: 1px solid hsl(var(--border));
+}
+
+.tooltip:hover .tooltiptext {
+  display: block;
+}
+
 /* Accent color variants */
 :root[data-accent="default"],
 :root[data-accent="purple"] {

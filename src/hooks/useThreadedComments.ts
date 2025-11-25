@@ -15,6 +15,9 @@ export interface ThreadedComment {
   user: {
     display_name: string;
     avatar_url?: string;
+    is_verified?: boolean;
+    verification_type?: string | null;
+    verified_at?: string | null;
   };
   replies?: ThreadedComment[];
 }
@@ -40,7 +43,10 @@ export const useThreadedComments = (postId: string) => {
           *,
           profiles:user_id (
             display_name,
-            avatar_url
+            avatar_url,
+            is_verified,
+            verification_type,
+            verified_at
           )
         `)
         .eq('post_id', postId)

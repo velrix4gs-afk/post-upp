@@ -208,7 +208,12 @@ const ProfilePage = () => {
                 )}
               </Avatar>
               {profile?.is_verified && (
-                <VerificationBadge className="absolute -bottom-2 -right-2" showLabel />
+                <VerificationBadge 
+                  className="absolute -bottom-2 -right-2"
+                  isVerified={profile.is_verified}
+                  verificationType={profile.verification_type}
+                  verifiedAt={profile.verified_at}
+                />
               )}
             </div>
 

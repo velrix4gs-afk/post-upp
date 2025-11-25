@@ -119,21 +119,15 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
     fetchFeed(1, true);
   };
 
-  // Fix: Only refresh on initial mount and user change, not on feedType change
+  // Fix: Only load feed on mount or when feedType changes
   useEffect(() => {
     if (user) {
       setPage(1);
+      setPosts([]);
+      setHasMore(true);
       fetchFeed(1, true);
     }
-  }, [user]);
-
-  // Separate effect for feedType changes to avoid scroll reset
-  useEffect(() => {
-    if (user && feedType) {
-      setPage(1);
-      fetchFeed(1, true);
-    }
-  }, [feedType]);
+  }, [user, feedType]);
 
   return {
     posts,

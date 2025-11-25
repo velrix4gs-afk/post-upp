@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { ThreadedComment as ThreadedCommentType } from '@/hooks/useThreadedComments';
 import { cn } from '@/lib/utils';
+import { VerificationBadge } from './premium/VerificationBadge';
 
 interface ThreadedCommentProps {
   comment: ThreadedCommentType;
@@ -50,9 +51,16 @@ export const ThreadedComment = ({
       <div className="flex-1 min-w-0">
         <div className="bg-muted rounded-lg p-3">
           <div className="flex items-center justify-between">
-            <p className="font-semibold text-sm">
-              {comment.user?.display_name || 'Unknown'}
-            </p>
+            <div className="flex items-center gap-1">
+              <p className="font-semibold text-sm">
+                {comment.user?.display_name || 'Unknown'}
+              </p>
+              <VerificationBadge 
+                isVerified={comment.user?.is_verified}
+                verificationType={comment.user?.verification_type}
+                verifiedAt={comment.user?.verified_at}
+              />
+            </div>
             {user?.id === comment.user_id && (
               <Button
                 variant="ghost"

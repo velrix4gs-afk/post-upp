@@ -15,6 +15,8 @@ export interface Follower {
     display_name: string;
     avatar_url?: string;
     is_verified: boolean;
+    verification_type?: string | null;
+    verified_at?: string | null;
   };
   following?: {
     id: string;
@@ -22,6 +24,8 @@ export interface Follower {
     display_name: string;
     avatar_url?: string;
     is_verified: boolean;
+    verification_type?: string | null;
+    verified_at?: string | null;
   };
 }
 
@@ -86,7 +90,9 @@ export const useFollowers = (userId?: string) => {
             username,
             display_name,
             avatar_url,
-            is_verified
+            is_verified,
+            verification_type,
+            verified_at
           )
         `)
         .eq('following_id', targetUserId)
@@ -104,7 +110,9 @@ export const useFollowers = (userId?: string) => {
             username,
             display_name,
             avatar_url,
-            is_verified
+            is_verified,
+            verification_type,
+            verified_at
           )
         `)
         .eq('follower_id', targetUserId)

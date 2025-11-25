@@ -3031,6 +3031,9 @@ export type Database = {
           theme_color: string | null
           updated_at: string | null
           username: string
+          verification_note: string | null
+          verification_type: string | null
+          verified_at: string | null
           website: string | null
         }
         Insert: {
@@ -3054,6 +3057,9 @@ export type Database = {
           theme_color?: string | null
           updated_at?: string | null
           username: string
+          verification_note?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
           website?: string | null
         }
         Update: {
@@ -3077,6 +3083,9 @@ export type Database = {
           theme_color?: string | null
           updated_at?: string | null
           username?: string
+          verification_note?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
           website?: string | null
         }
         Relationships: [
@@ -5362,6 +5371,15 @@ export type Database = {
       send_message: {
         Args: { _chat_id: string; _content: string; _sender_id: string }
         Returns: string
+      }
+      update_user_verification: {
+        Args: {
+          target_user_id: string
+          v_note?: string
+          v_type?: string
+          verified: boolean
+        }
+        Returns: undefined
       }
     }
     Enums: {
