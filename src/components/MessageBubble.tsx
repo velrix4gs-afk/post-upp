@@ -14,6 +14,7 @@ import { MessageReactions } from "./messaging/MessageReactions";
 import { ReadReceiptIndicator } from "./messaging/ReadReceiptIndicator";
 import { ReactionPicker } from "./ReactionPicker";
 import { Badge } from "./ui/badge";
+import { VerificationBadge } from "./premium/VerificationBadge";
 
 interface MessageBubbleProps {
   id: string;
@@ -22,6 +23,7 @@ interface MessageBubbleProps {
     username: string;
     display_name: string;
     avatar_url?: string;
+    is_verified?: boolean;
   };
   timestamp: string;
   isOwn: boolean;
@@ -75,10 +77,16 @@ export const MessageBubble = ({
         isOwn ? "flex-row-reverse" : "flex-row"
       )}>
       {!isOwn && (
-        <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
-          <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
-          <AvatarFallback className="bg-[#00a884] text-white text-xs">{sender.display_name[0]}</AvatarFallback>
-        </Avatar>
+        <div className="flex items-center gap-1 mb-0.5">
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
+            <AvatarFallback className="bg-[#00a884] text-white text-xs">{sender.display_name[0]}</AvatarFallback>
+          </Avatar>
+          <span className="text-xs font-medium flex items-center gap-1">
+            {sender.display_name}
+            <VerificationBadge isVerified={sender.is_verified} />
+          </span>
+        </div>
       )}
       
       <div className={cn(

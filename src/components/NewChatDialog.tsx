@@ -102,11 +102,10 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
                         <p className="font-medium truncate">{friend.display_name}</p>
-                        <VerificationBadge 
-                          isVerified={friend.is_verified}
-                          verificationType={friend.verification_type}
-                          verifiedAt={friend.verified_at}
-                        />
+                  <VerificationBadge
+                    isVerified={friend.is_verified}
+                    verificationType={friend.verification_type}
+                  />
                       </div>
                       <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
                     </div>

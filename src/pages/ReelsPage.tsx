@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { BackNavigation } from '@/components/BackNavigation';
 import { PremiumBadge } from '@/components/premium/PremiumBadge';
 import { InstagramReelCreator } from '@/components/InstagramReelCreator';
+import { VerificationBadge } from '@/components/premium/VerificationBadge';
 
 const ReelsPage = () => {
   const { reels, loading, hasMore, fetchReels, viewReel, likeReel, fetchComments, addComment } = useReels();
@@ -263,8 +264,10 @@ const ReelsPage = () => {
             {/* Info - Bottom */}
             <div className="absolute left-4 right-20 bottom-20 z-20 text-white">
               <div className="flex items-center gap-2 mb-2">
-                <span className="font-semibold">{reel.creator_name}</span>
-                {reel.is_verified && <PremiumBadge />}
+                <span className="font-semibold flex items-center gap-1">
+                  {reel.creator_name}
+                  <VerificationBadge isVerified={reel.is_verified} />
+                </span>
               </div>
               {reel.caption && (
                 <p className="text-sm line-clamp-2">{reel.caption}</p>
