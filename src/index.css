@@ -153,117 +153,79 @@ All colors MUST be HSL.
   }
 }
 
-/* Verified Badge System - Twitter-style */
+/* Verified Badge System - Animated Pulse Design */
 :root {
-  --verify-color: 29 78% 56%;
-  --verify-gradient-from: 204 88% 53%;
-  --verify-gradient-to: 211 100% 50%;
-  --verify-size: 1.25em;
-  --verify-check-size: 65%;
-  --verify-border-width: 2px;
-  --verify-shadow: 0 2px 4px rgba(29, 161, 242, 0.3);
+  --verify-color: 206 81% 52%;
+  --verify-size: 1.5rem;
 }
 
-.verified {
-  --size: var(--verify-size);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--size);
-  height: var(--size);
-  border-radius: 50%;
-  vertical-align: -0.15em;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: var(--verify-check-size) var(--verify-check-size);
-  margin-left: 0.25em;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--verify-shadow);
+.verified-badge {
+  position: relative;
+  display: inline-block;
+  width: var(--verify-size);
+  height: var(--verify-size);
+  margin-left: 0.25rem;
+  vertical-align: middle;
   flex-shrink: 0;
 }
 
-.verified.show {
-  opacity: 1;
-  transform: scale(1);
-  animation: verifiedPop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-@keyframes verifiedPop {
-  0% {
-    opacity: 0;
-    transform: scale(0.5) rotate(-10deg);
-  }
-  50% {
-    transform: scale(1.1) rotate(5deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
-}
-
-.verified--solid {
-  background-image: linear-gradient(135deg, hsl(var(--verify-gradient-from)), hsl(var(--verify-gradient-to))),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M20.285 6.708a1 1 0 0 0-1.414-1.416l-8.486 8.486-3.172-3.172a1 1 0 0 0-1.414 1.414l3.879 3.879a1 1 0 0 0 1.414 0l9.393-9.191z'/></svg>");
-}
-
-.verified:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(29, 161, 242, 0.4);
-}
-
-.tooltip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.tooltip .tooltiptext {
-  display: none;
+.verified-badge-glow {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(100% + 10px);
-  padding: 8px 12px;
-  background: hsl(var(--popover));
-  color: hsl(var(--popover-foreground));
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  z-index: 50;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid hsl(var(--border));
-  pointer-events: none;
+  inset: 0;
+  border-radius: 50%;
+  background: #1d9bf0;
+  filter: blur(0.75rem);
+  transform: scale(1.1);
+  animation: verifiedPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.tooltip .tooltiptext::before {
+.verified-badge-circle {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #1d9bf0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(29, 155, 240, 0.4);
+  /* Ring effect */
+  outline: 2px solid rgba(29, 155, 240, 0.5);
+  outline-offset: 2px;
+}
+
+/* Glass reflection effect */
+.verified-badge-circle::before {
   content: '';
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: hsl(var(--popover));
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.2), transparent);
 }
 
-.tooltip:hover .tooltiptext {
-  display: block;
-  animation: tooltipFadeIn 0.2s ease-out;
+.verified-badge-icon {
+  width: 1rem;
+  height: 1rem;
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  position: relative;
+  z-index: 1;
 }
 
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-5px);
-  }
-  to {
+@keyframes verifiedPulse {
+  0%, 100% {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: scale(1.1);
   }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+/* Dark mode adjustments */
+.dark .verified-badge-circle {
+  outline-color: rgba(29, 155, 240, 0.3);
 }
 
 /* Accent color variants */

@@ -260,7 +260,6 @@ export const PostCard = ({ post }: PostCardProps) => {
                   <VerificationBadge 
                     isVerified={post.is_verified}
                     verificationType={post.verification_type}
-                    verifiedAt={post.verified_at}
                   />
                 </button>
                 <span className="text-muted-foreground text-sm">·</span>

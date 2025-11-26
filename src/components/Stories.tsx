@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { Plus, Camera, Video, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { VerificationBadge } from '@/components/premium/VerificationBadge';
 
 const Stories = () => {
   const { user } = useAuth();
@@ -200,8 +201,9 @@ const Stories = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-white text-sm font-medium">
+                    <p className="text-white text-sm font-medium flex items-center gap-1">
                       {selectedStory.profiles.display_name}
+                      <VerificationBadge isVerified={selectedStory.profiles.is_verified} />
                     </p>
                     <p className="text-white/70 text-xs">
                       {formatDistanceToNow(new Date(selectedStory.created_at), { addSuffix: true })}

@@ -58,7 +58,6 @@ export const ThreadedComment = ({
               <VerificationBadge 
                 isVerified={comment.user?.is_verified}
                 verificationType={comment.user?.verification_type}
-                verifiedAt={comment.user?.verified_at}
               />
             </div>
             {user?.id === comment.user_id && (
