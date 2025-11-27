@@ -67,6 +67,14 @@ interface MessageReaction {
   reaction_type: string;
 }
 
+interface ReplyToMessage {
+  id: string;
+  content: string;
+  sender_name: string;
+  media_url?: string;
+  media_type?: string;
+}
+
 interface EnhancedMessageBubbleProps {
   id: string;
   content: string;
@@ -85,6 +93,7 @@ interface EnhancedMessageBubbleProps {
   status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   reactions?: MessageReaction[];
   bubbleColor?: string;
+  replyTo?: ReplyToMessage;
   onEdit?: (id: string, content: string) => void;
   onDelete?: (id: string, deleteFor: 'me' | 'everyone') => void;
   onReply?: () => void;
@@ -94,6 +103,7 @@ interface EnhancedMessageBubbleProps {
   onUnstar?: (messageId: string) => void;
   onForward?: (messageId: string) => void;
   onSchedule?: () => void;
+  onScrollToMessage?: (messageId: string) => void;
 }
 
 export const EnhancedMessageBubble = ({
@@ -110,6 +120,7 @@ export const EnhancedMessageBubble = ({
   status = 'sent',
   reactions: _reactions = [],
   bubbleColor,
+  replyTo,
   onEdit,
   onDelete,
   onReply,
@@ -119,6 +130,7 @@ export const EnhancedMessageBubble = ({
   onUnstar,
   onForward,
   onSchedule,
+  onScrollToMessage,
 }: EnhancedMessageBubbleProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteFor, setDeleteFor] = useState<'me' | 'everyone'>('me');
@@ -132,10 +144,13 @@ export const EnhancedMessageBubble = ({
 
   return (
     <>
-      <div className={cn(
-        "flex gap-2 group mb-2 relative",
-        isOwn ? "flex-row-reverse justify-start" : "flex-row justify-start"
-      )}>
+      <div 
+        id={`message-${id}`}
+        className={cn(
+          "flex gap-2 group mb-2 relative scroll-mt-20",
+          isOwn ? "flex-row-reverse justify-start" : "flex-row justify-start"
+        )}
+      >
         <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
           <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
           <AvatarFallback className="text-xs">{sender.display_name[0]}</AvatarFallback>
@@ -176,6 +191,39 @@ export const EnhancedMessageBubble = ({
                   <div className="text-xs opacity-70 mb-1 flex items-center gap-1">
                     <Forward className="h-3 w-3" />
                     Forwarded
+                  </div>
+                )}
+
+                {/* Reply-to preview */}
+                {replyTo && (
+                  <div 
+                    className={cn(
+                      "mb-2 p-2 rounded-lg border-l-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors",
+                      isOwn 
+                        ? "bg-black/10 dark:bg-white/10 border-black/30 dark:border-white/30"
+                        : "bg-muted/50 border-primary/50"
+                    )}
+                    onClick={() => onScrollToMessage?.(replyTo.id)}
+                  >
+                    <div className="text-xs font-semibold mb-0.5 opacity-80">
+                      {replyTo.sender_name}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {replyTo.media_url && (
+                        <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0">
+                          {replyTo.media_type?.startsWith('image') ? (
+                            <img src={replyTo.media_url} alt="" className="w-full h-full object-cover" />
+                          ) : replyTo.media_type?.startsWith('video') ? (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <span className="text-xs">🎥</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+                      <div className="text-xs opacity-70 truncate flex-1">
+                        {replyTo.content || (replyTo.media_type?.startsWith('image') ? '📷 Photo' : replyTo.media_type?.startsWith('video') ? '🎥 Video' : '📎 Media')}
+                      </div>
+                    </div>
                   </div>
                 )}
                 

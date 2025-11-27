@@ -616,6 +616,24 @@ const MessagesPage = () => {
                         const isOwn = message.sender_id === user?.id;
                         const senderProfile = selectedChat?.participants.find(p => p.user_id === message.sender_id)?.profiles;
                         
+                        // Find replied-to message if this is a reply
+                        const replyToData = message.reply_to 
+                          ? (() => {
+                              const replyMsg = messages.find(m => m.id === message.reply_to);
+                              if (replyMsg) {
+                                const replySenderProfile = selectedChat?.participants.find(p => p.user_id === replyMsg.sender_id)?.profiles;
+                                return {
+                                  id: replyMsg.id,
+                                  content: replyMsg.content || '',
+                                  sender_name: replySenderProfile?.display_name || 'Unknown',
+                                  media_url: replyMsg.media_url,
+                                  media_type: replyMsg.media_type
+                                };
+                              }
+                              return undefined;
+                            })()
+                          : undefined;
+                        
                         return (
                           <EnhancedMessageBubble
                             key={message.id}
@@ -634,9 +652,13 @@ const MessagesPage = () => {
                             status={message.status}
                             isForwarded={message.is_forwarded}
                             bubbleColor={chatSettings?.theme_color}
+                            replyTo={replyToData}
                             onEdit={isOwn ? handleEditMessage : undefined}
                             onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
-                            onReply={() => setReplyingTo(message)}
+                            onReply={() => setReplyingTo({
+                              ...message,
+                              sender: senderProfile
+                            })}
                             onReact={reactToMessage}
                             onUnreact={unreactToMessage}
                             onStar={starMessage}
@@ -644,6 +666,10 @@ const MessagesPage = () => {
                             onForward={(id) => {
                               setForwardingMessageId(id);
                               setShowForwardDialog(true);
+                            }}
+                            onScrollToMessage={(msgId) => {
+                              const element = document.getElementById(`message-${msgId}`);
+                              element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }}
                           />
                         );
