@@ -28,6 +28,7 @@ import { useReactions } from "@/hooks/useReactions";
 import { ThreadedCommentsSection } from "./ThreadedCommentsSection";
 import { cn } from "@/lib/utils";
 import { VerificationBadge } from "./premium/VerificationBadge";
+import { ProfileHoverCard } from "./ProfileHoverCard";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -249,19 +250,21 @@ export const PostCard = ({ post }: PostCardProps) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-1 flex-wrap min-w-0">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/profile/${post.author_id}`);
-                  }}
-                  className="font-semibold hover:underline text-sm truncate flex items-center"
-                >
-                  {post.author_name}
-                  <VerificationBadge 
-                    isVerified={post.is_verified}
-                    verificationType={post.verification_type}
-                  />
-                </button>
+                <ProfileHoverCard userId={post.author_id}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/profile/${post.author_id}`);
+                    }}
+                    className="font-semibold hover:underline text-sm truncate flex items-center"
+                  >
+                    {post.author_name}
+                    <VerificationBadge 
+                      isVerified={post.is_verified}
+                      verificationType={post.verification_type}
+                    />
+                  </button>
+                </ProfileHoverCard>
                 <span className="text-muted-foreground text-sm">·</span>
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
