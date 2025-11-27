@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CoinsDisplay } from '@/components/CoinsDisplay';
 import { FollowersDialog } from '@/components/FollowersDialog';
@@ -198,7 +199,7 @@ const ProfilePage = () => {
           <div className="flex flex-col md:flex-row md:items-end md:space-x-6">
             {/* Avatar */}
             <div className="relative -mt-16 md:-mt-20 mb-4 md:mb-0">
-              <Avatar className="h-32 w-32 md:h-40 md:w-40 ring-4 ring-background">
+              <Avatar className="h-32 w-32 md:h-40 md:w-40 ring-4 ring-background shadow-elegant">
                 {profile?.avatar_url ? (
                   <AvatarImage src={profile.avatar_url} alt={`${profile.display_name}'s profile picture`} />
                 ) : (
@@ -208,41 +209,48 @@ const ProfilePage = () => {
                 )}
               </Avatar>
               {profile?.is_verified && (
-                <VerificationBadge 
-                  className="absolute -bottom-2 -right-2"
-                  isVerified={profile.is_verified}
-                  verificationType={profile.verification_type}
-                />
+                <div className="absolute -bottom-2 -right-2">
+                  <VerificationBadge 
+                    isVerified={profile.is_verified}
+                    verificationType={profile.verification_type}
+                  />
+                </div>
               )}
             </div>
 
             {/* Basic Info */}
             <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold">{profile?.display_name}</h1>
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold flex items-center gap-2">
+                    {profile?.display_name}
+                  </h1>
                   <p className="text-lg text-muted-foreground">@{profile?.username}</p>
+                  
+                  {/* Bio */}
+                  {profile?.bio && (
+                    <p className="mt-3 text-muted-foreground">{profile.bio}</p>
+                  )}
                 </div>
-                <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{userPosts.length}</div>
-                    <div className="text-sm text-muted-foreground">Posts</div>
-                  </div>
-                  <div className="text-center cursor-pointer hover:opacity-80" onClick={() => setShowFollowersDialog(true)}>
-                    <div className="text-2xl font-bold">{followers.length}</div>
-                    <div className="text-sm text-muted-foreground">Followers</div>
-                  </div>
-                  <div className="text-center cursor-pointer hover:opacity-80" onClick={() => setShowFollowingDialog(true)}>
-                    <div className="text-2xl font-bold">{following.length}</div>
-                    <div className="text-sm text-muted-foreground">Following</div>
+                
+                {/* Stats Bar - Moved next to name */}
+                <div className="flex md:flex-col gap-4 md:gap-2 md:items-end">
+                  <div className="flex gap-4">
+                    <div className="text-center">
+                      <div className="text-xl md:text-2xl font-bold">{userPosts.length}</div>
+                      <div className="text-xs text-muted-foreground">Posts</div>
+                    </div>
+                    <div className="text-center cursor-pointer hover:opacity-80" onClick={() => setShowFollowersDialog(true)}>
+                      <div className="text-xl md:text-2xl font-bold">{followers.length}</div>
+                      <div className="text-xs text-muted-foreground">Followers</div>
+                    </div>
+                    <div className="text-center cursor-pointer hover:opacity-80" onClick={() => setShowFollowingDialog(true)}>
+                      <div className="text-xl md:text-2xl font-bold">{following.length}</div>
+                      <div className="text-xs text-muted-foreground">Following</div>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Bio */}
-              {profile?.bio && (
-                <p className="mt-4 text-muted-foreground">{profile.bio}</p>
-              )}
 
               {/* Details */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
@@ -298,69 +306,143 @@ const ProfilePage = () => {
 
         <Separator className="my-6" />
 
-        {/* Posts Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Posts</h2>
-          </div>
+        {/* Tabs Section */}
+        <Tabs defaultValue="posts" className="space-y-6">
+          <TabsList className="w-full justify-start border-b rounded-none bg-transparent h-auto p-0">
+            <TabsTrigger 
+              value="posts" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Posts
+            </TabsTrigger>
+            <TabsTrigger 
+              value="replies" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Replies
+            </TabsTrigger>
+            <TabsTrigger 
+              value="media" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Media
+            </TabsTrigger>
+            <TabsTrigger 
+              value="likes" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              Likes
+            </TabsTrigger>
+          </TabsList>
 
-          {isOwnProfile && <CreatePost />}
+          {/* Posts Tab */}
+          <TabsContent value="posts" className="space-y-6 mt-6">
+            {isOwnProfile && <CreatePost />}
 
-          {/* Pinned Posts */}
-          {pinnedPosts.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
-                <Pin className="h-4 w-4" />
-                Pinned Posts
-              </h3>
-              {pinnedPosts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={{
-                    id: post.id,
-                    content: post.content || '',
-                    media_url: post.media_url,
-                    created_at: post.created_at,
-                    reactions_count: post.reactions_count,
-                    comments_count: post.comments_count,
-                    author_name: profile?.display_name || '',
-                    author_avatar: profile?.avatar_url,
-                    author_id: post.user_id
-                  }}
-                />
-              ))}
-              <Separator />
-            </div>
-          )}
+            {/* Pinned Posts */}
+            {pinnedPosts.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
+                  <Pin className="h-4 w-4" />
+                  Pinned Posts
+                </h3>
+                {pinnedPosts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    post={{
+                      id: post.id,
+                      content: post.content || '',
+                      media_url: post.media_url,
+                      created_at: post.created_at,
+                      reactions_count: post.reactions_count,
+                      comments_count: post.comments_count,
+                      author_name: profile?.display_name || '',
+                      author_avatar: profile?.avatar_url,
+                      author_id: post.user_id
+                    }}
+                  />
+                ))}
+                <Separator />
+              </div>
+            )}
 
-          {userPosts.length === 0 ? (
+            {userPosts.length === 0 ? (
+              <Card className="p-8 text-center">
+                <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
+                <p className="text-muted-foreground">
+                  {isOwnProfile ? 'Share your first post to get started!' : 'This user hasn\'t posted anything yet.'}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {regularPosts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    post={{
+                      id: post.id,
+                      content: post.content || '',
+                      media_url: post.media_url,
+                      created_at: post.created_at,
+                      reactions_count: post.reactions_count,
+                      comments_count: post.comments_count,
+                      author_name: profile?.display_name || '',
+                      author_avatar: profile?.avatar_url,
+                      author_id: post.user_id
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Replies Tab */}
+          <TabsContent value="replies" className="space-y-6 mt-6">
             <Card className="p-8 text-center">
-              <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
+              <h3 className="text-lg font-semibold mb-2">Replies</h3>
               <p className="text-muted-foreground">
-                {isOwnProfile ? 'Share your first post to get started!' : 'This user hasn\'t posted anything yet.'}
+                Replies to other posts will appear here
               </p>
             </Card>
-          ) : (
-            <div className="space-y-6">
-              {regularPosts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={{
-                    id: post.id,
-                    content: post.content || '',
-                    media_url: post.media_url,
-                    created_at: post.created_at,
-                    reactions_count: post.reactions_count,
-                    comments_count: post.comments_count,
-                    author_name: profile?.display_name || '',
-                    author_avatar: profile?.avatar_url,
-                    author_id: post.user_id
-                  }}
-                />
-              ))}
+          </TabsContent>
+
+          {/* Media Tab */}
+          <TabsContent value="media" className="space-y-6 mt-6">
+            <div className="grid grid-cols-3 gap-2">
+              {userPosts
+                .filter(post => post.media_url)
+                .map((post) => (
+                  <div 
+                    key={post.id} 
+                    className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                  >
+                    <img 
+                      src={post.media_url} 
+                      alt="" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
             </div>
-          )}
-        </div>
+            {!userPosts.some(p => p.media_url) && (
+              <Card className="p-8 text-center">
+                <h3 className="text-lg font-semibold mb-2">No media yet</h3>
+                <p className="text-muted-foreground">
+                  Photos and videos will appear here
+                </p>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Likes Tab */}
+          <TabsContent value="likes" className="space-y-6 mt-6">
+            <Card className="p-8 text-center">
+              <h3 className="text-lg font-semibold mb-2">Liked Posts</h3>
+              <p className="text-muted-foreground">
+                Posts liked by this user will appear here
+              </p>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Profile Edit Modal */}
