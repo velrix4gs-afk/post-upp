@@ -17,6 +17,8 @@ import { FollowersDialog } from '@/components/FollowersDialog';
 import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { StoryHighlights } from '@/components/StoryHighlights';
 import { usePinnedPosts } from '@/hooks/usePinnedPosts';
+import { useUserReplies } from '@/hooks/useUserReplies';
+import { useUserLikes } from '@/hooks/useUserLikes';
 import { 
   Edit, 
   MapPin, 
@@ -29,7 +31,8 @@ import {
   UserPlus,
   UserCheck,
   MessageCircle,
-  Pin
+  Pin,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -56,6 +59,8 @@ const ProfilePage = () => {
   const { friends } = useFriends();
   const { followers, following, followUser, unfollowUser } = useFollowers(profileUserId);
   const { pinnedPostIds } = usePinnedPosts(profileUserId);
+  const { replies: userReplies, loading: repliesLoading } = useUserReplies(profileUserId);
+  const { likedPosts, loading: likesLoading } = useUserLikes(profileUserId);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showFollowersDialog, setShowFollowersDialog] = useState(false);
   const [showFollowingDialog, setShowFollowingDialog] = useState(false);
@@ -396,13 +401,47 @@ const ProfilePage = () => {
           </TabsContent>
 
           {/* Replies Tab */}
-          <TabsContent value="replies" className="space-y-6 mt-6">
-            <Card className="p-8 text-center">
-              <h3 className="text-lg font-semibold mb-2">Replies</h3>
-              <p className="text-muted-foreground">
-                Replies to other posts will appear here
-              </p>
-            </Card>
+          <TabsContent value="replies" className="space-y-4 mt-6">
+            {repliesLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="p-4">
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </Card>
+                ))}
+              </div>
+            ) : userReplies.length === 0 ? (
+              <Card className="p-8 text-center">
+                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg font-semibold mb-2">No replies yet</h3>
+                <p className="text-muted-foreground">
+                  {isOwnProfile ? "When you reply to posts, they'll appear here." : "This user hasn't replied to any posts yet."}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {userReplies.map((reply) => (
+                  <Card key={reply.id} className="p-4 hover:bg-muted/30 transition-colors">
+                    {/* Original post reference */}
+                    {reply.post && (
+                      <div 
+                        className="text-xs text-muted-foreground mb-2 flex items-center gap-1 cursor-pointer hover:text-foreground"
+                        onClick={() => navigate(`/post/${reply.post_id}`)}
+                      >
+                        <span>Replying to</span>
+                        <span className="font-medium">@{reply.post.profiles?.username || 'user'}</span>
+                      </div>
+                    )}
+                    {/* Reply content */}
+                    <p className="text-sm">{reply.content}</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
+                    </p>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Media Tab */}
@@ -435,12 +474,49 @@ const ProfilePage = () => {
 
           {/* Likes Tab */}
           <TabsContent value="likes" className="space-y-6 mt-6">
-            <Card className="p-8 text-center">
-              <h3 className="text-lg font-semibold mb-2">Liked Posts</h3>
-              <p className="text-muted-foreground">
-                Posts liked by this user will appear here
-              </p>
-            </Card>
+            {likesLoading ? (
+              <div className="space-y-6">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="p-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-16 w-full" />
+                  </Card>
+                ))}
+              </div>
+            ) : likedPosts.length === 0 ? (
+              <Card className="p-8 text-center">
+                <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg font-semibold mb-2">No liked posts</h3>
+                <p className="text-muted-foreground">
+                  {isOwnProfile ? "Posts you like will appear here." : "This user hasn't liked any posts yet."}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {likedPosts.map((post) => (
+                  <PostCard 
+                    key={post.id} 
+                    post={{
+                      id: post.id,
+                      content: post.content || '',
+                      media_url: post.media_url,
+                      created_at: post.created_at,
+                      reactions_count: post.reactions_count,
+                      comments_count: post.comments_count,
+                      author_name: post.profiles?.display_name || 'Unknown',
+                      author_avatar: post.profiles?.avatar_url,
+                      author_id: post.user_id
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
