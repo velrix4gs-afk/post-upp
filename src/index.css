@@ -481,6 +481,38 @@ All colors MUST be HSL.
   .animate-bounce-gentle {
     animation: bounceGentle 2s infinite;
   }
+
+  /* Profile Preview Card Styling */
+  .profile-preview-card {
+    backdrop-filter: blur(20px);
+    background: hsl(var(--card) / 0.95);
+    box-shadow: 
+      0 25px 50px -12px hsl(var(--foreground) / 0.15),
+      0 0 0 1px hsl(var(--border) / 0.5),
+      0 0 40px hsl(var(--primary) / 0.1);
+  }
+
+  .profile-preview-card:hover {
+    box-shadow: 
+      0 25px 50px -12px hsl(var(--foreground) / 0.2),
+      0 0 0 1px hsl(var(--primary) / 0.3),
+      0 0 60px hsl(var(--primary) / 0.15);
+  }
+
+  .dark .profile-preview-card {
+    background: hsl(var(--card) / 0.9);
+    box-shadow: 
+      0 25px 50px -12px hsl(0 0% 0% / 0.5),
+      0 0 0 1px hsl(var(--border) / 0.3),
+      0 0 40px hsl(var(--primary) / 0.15);
+  }
+
+  .dark .profile-preview-card:hover {
+    box-shadow: 
+      0 25px 50px -12px hsl(0 0% 0% / 0.6),
+      0 0 0 1px hsl(var(--primary) / 0.4),
+      0 0 60px hsl(var(--primary) / 0.2);
+  }
 }
 
 @keyframes fadeIn {

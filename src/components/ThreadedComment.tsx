@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ThreadedComment as ThreadedCommentType } from '@/hooks/useThreadedComments';
 import { cn } from '@/lib/utils';
 import { VerificationBadge } from './premium/VerificationBadge';
+import { ProfileHoverCard } from './ProfileHoverCard';
 
 interface ThreadedCommentProps {
   comment: ThreadedCommentType;
@@ -42,24 +43,28 @@ export const ThreadedComment = ({
 
   return (
     <div className={cn("flex gap-2", depth > 0 && "ml-8")}>
-      <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarImage src={comment.user?.avatar_url} />
-        <AvatarFallback>
-          {comment.user?.display_name?.[0] || 'U'}
-        </AvatarFallback>
-      </Avatar>
+      <ProfileHoverCard userId={comment.user_id} disabled={!comment.user_id}>
+        <Avatar className="h-8 w-8 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
+          <AvatarImage src={comment.user?.avatar_url} />
+          <AvatarFallback>
+            {comment.user?.display_name?.[0] || 'U'}
+          </AvatarFallback>
+        </Avatar>
+      </ProfileHoverCard>
       <div className="flex-1 min-w-0">
         <div className="bg-muted rounded-lg p-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <p className="font-semibold text-sm">
-                {comment.user?.display_name || 'Unknown'}
-              </p>
-              <VerificationBadge 
-                isVerified={comment.user?.is_verified}
-                verificationType={comment.user?.verification_type}
-              />
-            </div>
+            <ProfileHoverCard userId={comment.user_id} disabled={!comment.user_id}>
+              <div className="flex items-center gap-1 cursor-pointer hover:underline">
+                <p className="font-semibold text-sm">
+                  {comment.user?.display_name || 'Unknown'}
+                </p>
+                <VerificationBadge 
+                  isVerified={comment.user?.is_verified}
+                  verificationType={comment.user?.verification_type}
+                />
+              </div>
+            </ProfileHoverCard>
             {user?.id === comment.user_id && (
               <Button
                 variant="ghost"

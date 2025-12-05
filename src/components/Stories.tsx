@@ -11,6 +11,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { Plus, Camera, Video, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { VerificationBadge } from '@/components/premium/VerificationBadge';
+import { ProfileHoverCard } from '@/components/ProfileHoverCard';
 
 const Stories = () => {
   const { user } = useAuth();
@@ -161,24 +162,26 @@ const Stories = () => {
               className="flex-shrink-0 w-16 text-center cursor-pointer snap-start relative group"
               onClick={() => handleStoryClick(story)}
             >
-              <div className="w-16 h-16 relative">
-                <Avatar className="w-16 h-16 ring-4 ring-primary">
-                  <AvatarImage src={story.profiles.avatar_url} className="object-cover" />
-                  <AvatarFallback className="bg-gradient-primary text-white">
-                    {story.profiles.display_name[0]}
-                  </AvatarFallback>
-                </Avatar>
-                {story.user_id === user?.id && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    onClick={(e) => handleDeleteStory(story.id, e)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
+              <ProfileHoverCard userId={story.user_id}>
+                <div className="w-16 h-16 relative">
+                  <Avatar className="w-16 h-16 ring-4 ring-primary hover:ring-primary/80 transition-all">
+                    <AvatarImage src={story.profiles.avatar_url} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-primary text-white">
+                      {story.profiles.display_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  {story.user_id === user?.id && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onClick={(e) => handleDeleteStory(story.id, e)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              </ProfileHoverCard>
               <p className="text-xs mt-2 w-16 truncate">
                 {story.profiles.display_name}
               </p>
