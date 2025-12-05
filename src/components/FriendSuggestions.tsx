@@ -6,6 +6,7 @@ import { useFriendSuggestions } from '@/hooks/useFriendSuggestions';
 import { useFollowers } from '@/hooks/useFollowers';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProfileHoverCard } from '@/components/ProfileHoverCard';
 
 const FriendSuggestions = () => {
   const navigate = useNavigate();
@@ -66,14 +67,18 @@ const FriendSuggestions = () => {
             onClick={() => navigate(`/profile/${suggestion.id}`)}
           >
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={suggestion.avatar_url} />
-                <AvatarFallback className="bg-gradient-primary text-white">
-                  {suggestion.display_name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
+              <ProfileHoverCard userId={suggestion.id}>
+                <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity">
+                  <AvatarImage src={suggestion.avatar_url} />
+                  <AvatarFallback className="bg-gradient-primary text-white">
+                    {suggestion.display_name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+              </ProfileHoverCard>
               <div>
-                <p className="font-medium text-sm">{suggestion.display_name}</p>
+                <ProfileHoverCard userId={suggestion.id}>
+                  <p className="font-medium text-sm cursor-pointer hover:underline">{suggestion.display_name}</p>
+                </ProfileHoverCard>
                 <p className="text-xs text-muted-foreground">
                   {suggestion.mutual_friends_count > 0 
                     ? `${suggestion.mutual_friends_count} mutual friend${suggestion.mutual_friends_count > 1 ? 's' : ''}`
