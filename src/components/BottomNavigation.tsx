@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
-import { Home, MessageCircle, PlusCircle, Star, User, Film } from 'lucide-react';
+import { Home, Search, Bell, MessageCircle, User, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CreatePost from './CreatePost';
+import { cn } from '@/lib/utils';
 
 export const BottomNavigation = () => {
   const location = useLocation();
@@ -15,7 +16,6 @@ export const BottomNavigation = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Track scroll for dynamic sizing (must be before early return)
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
@@ -29,10 +29,7 @@ export const BottomNavigation = () => {
   const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
   const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
   
-  // Only show on feed page
-  const isFeedPage = location.pathname === '/feed' || location.pathname === '/';
-  
-  if (!user || isAuthPage || !isFeedPage) {
+  if (!user || isAuthPage) {
     return null;
   }
 
@@ -40,10 +37,28 @@ export const BottomNavigation = () => {
 
   const navItems = [
     {
-      label: 'Feed',
+      label: 'Home',
       icon: Home,
       path: '/feed',
       isActive: isActive('/feed') || location.pathname === '/',
+    },
+    {
+      label: 'Search',
+      icon: Search,
+      path: '/search',
+      isActive: isActive('/search'),
+    },
+    {
+      label: 'Create',
+      icon: Plus,
+      action: () => setShowCreatePost(true),
+      isCenter: true,
+    },
+    {
+      label: 'Notifications',
+      icon: Bell,
+      path: '/notifications',
+      isActive: isActive('/notifications'),
     },
     {
       label: 'Messages',
@@ -52,32 +67,15 @@ export const BottomNavigation = () => {
       isActive: isActive('/messages'),
       badge: unreadCount,
     },
-    {
-      label: 'Create',
-      icon: PlusCircle,
-      action: () => setShowCreatePost(true),
-      isCenter: true,
-    },
-    {
-      label: 'Reels',
-      icon: Film,
-      path: '/reels',
-      isActive: isActive('/reels'),
-    },
-    {
-      label: 'Profile',
-      icon: User,
-      path: `/profile/${user.id}`,
-      isActive: location.pathname.startsWith('/profile'),
-    },
   ];
 
   return (
     <>
-      <nav className={`md:hidden fixed left-4 right-4 z-50 bg-background/95 backdrop-blur-xl border shadow-2xl transition-all duration-300 ${
-        isScrolled ? 'bottom-2 rounded-2xl py-0.5' : 'bottom-4 rounded-3xl py-1'
-      }`}>
-        <div className="flex items-center justify-around px-1 safe-area-bottom">
+      <nav className={cn(
+        "md:hidden fixed left-0 right-0 z-50 bg-background/98 backdrop-blur-xl border-t border-border/50 transition-all duration-300",
+        isScrolled ? "bottom-0" : "bottom-0"
+      )}>
+        <div className="flex items-center justify-around px-2 py-1 safe-area-bottom max-w-md mx-auto">
           {navItems.map((item, index) => {
             const Icon = item.icon;
             const isActiveTab = item.isActive;
@@ -87,16 +85,10 @@ export const BottomNavigation = () => {
                 <button
                   key={index}
                   onClick={item.action}
-                  className={`flex flex-col items-center justify-center relative transition-all duration-300 ${
-                    isScrolled ? '-mt-2' : '-mt-3'
-                  }`}
+                  className="flex items-center justify-center relative -mt-4"
                 >
-                  <div className={`rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-300 ${
-                    isScrolled ? 'h-11 w-11' : 'h-14 w-14'
-                  }`}>
-                    <Icon className={`text-primary-foreground transition-all duration-300 ${
-                      isScrolled ? 'h-5 w-5' : 'h-6 w-6'
-                    }`} />
+                  <div className="h-12 w-12 rounded-full bg-primary shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200">
+                    <Icon className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
                   </div>
                 </button>
               );
@@ -112,42 +104,31 @@ export const BottomNavigation = () => {
                     navigate(item.path);
                   }
                 }}
-                className={`flex flex-col items-center justify-center flex-1 relative transition-all duration-300 ${
-                  isScrolled ? 'py-1.5 px-0.5' : 'py-2 px-1'
-                } ${
+                className={cn(
+                  "flex flex-col items-center justify-center py-2 px-3 relative transition-all duration-200",
                   isActiveTab 
-                    ? 'text-primary' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
               >
                 <div className="relative">
-                  <Icon className={`transition-all duration-300 ${
-                    isScrolled ? 'h-4 w-4' : 'h-5 w-5'
-                  } ${
-                    isActiveTab ? 'scale-110' : 'scale-100'
-                  }`} />
+                  <Icon 
+                    className={cn(
+                      "h-6 w-6 transition-all duration-200",
+                      isActiveTab ? "stroke-[2.5px]" : "stroke-[1.5px]"
+                    )} 
+                  />
                   {item.badge && item.badge > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className={`absolute -top-1.5 -right-1.5 flex items-center justify-center animate-pulse transition-all duration-300 ${
-                        isScrolled ? 'h-3.5 min-w-3.5 px-0.5 text-[8px]' : 'h-4 min-w-4 px-1 text-[10px]'
-                      }`}
+                      className="absolute -top-1.5 -right-2 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
                     >
                       {item.badge > 99 ? '99+' : item.badge}
                     </Badge>
                   )}
-                  {isActiveTab && (
-                    <div className={`absolute left-1/2 -translate-x-1/2 rounded-full bg-primary animate-pulse transition-all duration-300 ${
-                      isScrolled ? '-bottom-1 w-0.5 h-0.5' : '-bottom-1.5 w-1 h-1'
-                    }`} />
-                  )}
                 </div>
-                {!isScrolled && (
-                  <span className={`text-[10px] mt-1 font-medium transition-all duration-300 ${
-                    isActiveTab ? 'opacity-100' : 'opacity-70'
-                  }`}>
-                    {item.label}
-                  </span>
+                {isActiveTab && (
+                  <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
                 )}
               </button>
             );

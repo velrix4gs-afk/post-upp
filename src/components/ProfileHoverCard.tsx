@@ -1,6 +1,6 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { ProfilePreviewCard } from "./ProfilePreviewCard";
+import { MiniProfilePopup } from "./MiniProfilePopup";
 import { useState, useCallback, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -22,7 +22,7 @@ export const ProfileHoverCard = ({ userId, children, disabled }: ProfileHoverCar
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
       setDrawerOpen(true);
-    }, 500); // 500ms long press
+    }, 500);
   }, []);
 
   const handleTouchEnd = useCallback(() => {
@@ -57,7 +57,7 @@ export const ProfileHoverCard = ({ userId, children, disabled }: ProfileHoverCar
         </DrawerTrigger>
         <DrawerContent className="px-4 pb-8">
           <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted my-4" />
-          <ProfilePreviewCard userId={userId} onClose={() => setDrawerOpen(false)} />
+          <MiniProfilePopup userId={userId} onClose={() => setDrawerOpen(false)} />
         </DrawerContent>
       </Drawer>
     );
@@ -75,7 +75,7 @@ export const ProfileHoverCard = ({ userId, children, disabled }: ProfileHoverCar
         className="p-0 w-auto border-none shadow-2xl bg-transparent"
         sideOffset={8}
       >
-        <ProfilePreviewCard userId={userId} onClose={() => setOpen(false)} />
+        <MiniProfilePopup userId={userId} onClose={() => setOpen(false)} />
       </HoverCardContent>
     </HoverCard>
   );
