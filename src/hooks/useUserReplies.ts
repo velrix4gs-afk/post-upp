@@ -22,60 +22,83 @@ export const useUserReplies = (userId?: string) => {
   const [replies, setReplies] = useState<UserReply[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchReplies = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
+  const fetchReplies = async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
-      try {
-        const { data, error } = await supabase
-          .from('comments')
-          .select(`
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          post_id,
+          posts!inner (
             id,
             content,
-            created_at,
-            post_id,
-            posts!inner (
-              id,
-              content,
-              user_id,
-              profiles (
-                display_name,
-                username,
-                avatar_url
-              )
+            user_id,
+            profiles (
+              display_name,
+              username,
+              avatar_url
             )
-          `)
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(50);
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const formattedReplies = (data || []).map((item: any) => ({
-          id: item.id,
-          content: item.content,
-          created_at: item.created_at,
-          post_id: item.post_id,
-          post: item.posts ? {
-            id: item.posts.id,
-            content: item.posts.content,
-            user_id: item.posts.user_id,
-            profiles: item.posts.profiles
-          } : undefined
-        }));
+      const formattedReplies = (data || []).map((item: any) => ({
+        id: item.id,
+        content: item.content,
+        created_at: item.created_at,
+        post_id: item.post_id,
+        post: item.posts ? {
+          id: item.posts.id,
+          content: item.posts.content,
+          user_id: item.posts.user_id,
+          profiles: item.posts.profiles
+        } : undefined
+      }));
 
-        setReplies(formattedReplies);
-      } catch (error) {
-        console.error('Error fetching user replies:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setReplies(formattedReplies);
+    } catch (error) {
+      console.error('Error fetching user replies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) return;
 
     fetchReplies();
+
+    // Real-time subscription for user's comments/replies
+    const channel = supabase
+      .channel(`user-replies-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          fetchReplies();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   return { replies, loading };

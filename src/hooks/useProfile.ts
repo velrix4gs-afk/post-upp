@@ -49,6 +49,32 @@ export const useProfile = (userId?: string) => {
     if (targetUserId) {
       loadProfileFromCache();
       fetchProfile();
+
+      // Set up real-time subscription for profile updates
+      const channel = supabase
+        .channel(`profile-${targetUserId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${targetUserId}`
+          },
+          (payload) => {
+            console.log('[PROFILE] Real-time update:', payload);
+            if (payload.new) {
+              setProfile(payload.new as Profile);
+              // Update cache
+              CacheHelper.saveProfile(targetUserId, payload.new as Profile);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [targetUserId]);
 

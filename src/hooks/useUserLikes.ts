@@ -21,69 +21,92 @@ export const useUserLikes = (userId?: string) => {
   const [likedPosts, setLikedPosts] = useState<LikedPost[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchLikedPosts = async () => {
-      if (!userId) {
+  const fetchLikedPosts = async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Get post IDs that the user has reacted to
+      const { data: reactions, error: reactionsError } = await supabase
+        .from('post_reactions')
+        .select('post_id')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (reactionsError) throw reactionsError;
+
+      if (!reactions || reactions.length === 0) {
+        setLikedPosts([]);
         setLoading(false);
         return;
       }
 
-      try {
-        // Get post IDs that the user has reacted to
-        const { data: reactions, error: reactionsError } = await supabase
-          .from('post_reactions')
-          .select('post_id')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(50);
+      const postIds = reactions.map(r => r.post_id);
 
-        if (reactionsError) throw reactionsError;
+      // Fetch the actual posts
+      const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          content,
+          media_url,
+          created_at,
+          user_id,
+          reactions_count,
+          comments_count,
+          profiles (
+            display_name,
+            username,
+            avatar_url,
+            is_verified
+          )
+        `)
+        .in('id', postIds);
 
-        if (!reactions || reactions.length === 0) {
-          setLikedPosts([]);
-          setLoading(false);
-          return;
-        }
+      if (postsError) throw postsError;
 
-        const postIds = reactions.map(r => r.post_id);
+      // Sort by the order of reactions (most recent liked first)
+      const postsMap = new Map((posts || []).map(p => [p.id, p]));
+      const orderedPosts = postIds
+        .map(id => postsMap.get(id))
+        .filter(Boolean) as LikedPost[];
 
-        // Fetch the actual posts
-        const { data: posts, error: postsError } = await supabase
-          .from('posts')
-          .select(`
-            id,
-            content,
-            media_url,
-            created_at,
-            user_id,
-            reactions_count,
-            comments_count,
-            profiles (
-              display_name,
-              username,
-              avatar_url,
-              is_verified
-            )
-          `)
-          .in('id', postIds);
+      setLikedPosts(orderedPosts);
+    } catch (error) {
+      console.error('Error fetching liked posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (postsError) throw postsError;
-
-        // Sort by the order of reactions (most recent liked first)
-        const postsMap = new Map((posts || []).map(p => [p.id, p]));
-        const orderedPosts = postIds
-          .map(id => postsMap.get(id))
-          .filter(Boolean) as LikedPost[];
-
-        setLikedPosts(orderedPosts);
-      } catch (error) {
-        console.error('Error fetching liked posts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => {
+    if (!userId) return;
 
     fetchLikedPosts();
+
+    // Real-time subscription for user's reactions
+    const channel = supabase
+      .channel(`user-likes-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'post_reactions',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          fetchLikedPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   return { likedPosts, loading };
