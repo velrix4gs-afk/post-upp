@@ -503,7 +503,6 @@ const CreatePostCard = () => {
                     <SelectContent>
                       <SelectItem value="public">
                         <div className="flex items-center gap-2">
-                          
                           <span>Public</span>
                         </div>
                       </SelectItem>
