@@ -437,6 +437,22 @@ const MessagesPage = () => {
                         const otherParticipant = chat.participants.find(p => p.user_id !== user?.id);
                         const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
                         const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
+                        const lastMessageTime = chat.updated_at 
+                          ? formatDistanceToNow(new Date(chat.updated_at), { addSuffix: false })
+                              .replace('about ', '')
+                              .replace(' minutes', 'm')
+                              .replace(' minute', 'm')
+                              .replace(' hours', 'h')
+                              .replace(' hour', 'h')
+                              .replace(' days', 'd')
+                              .replace(' day', 'd')
+                              .replace(' weeks', 'w')
+                              .replace(' week', 'w')
+                              .replace(' months', 'mo')
+                              .replace(' month', 'mo')
+                              .replace('less than a', '<1')
+                          : '';
+                        const isOnlineUser = otherParticipant ? isUserOnline(otherParticipant.user_id) : false;
 
                         return (
                           <div
@@ -456,16 +472,25 @@ const MessagesPage = () => {
                                   <AvatarImage src={avatar} />
                                   <AvatarFallback className={selectedChatId === chat.id ? "bg-gradient-primary text-white" : "bg-muted"}>{chatName[0]}</AvatarFallback>
                                 </Avatar>
-                                <div className="absolute bottom-0 right-0 h-3 w-3 bg-success rounded-full border-2 border-background" />
+                                {isOnlineUser && (
+                                  <div className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-success rounded-full border-2 border-background" />
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center justify-between gap-2 mb-0.5">
                                   <p className={`font-medium truncate text-sm md:text-base transition-colors ${
                                     selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
-                                  }`}>{chatName}</p>
+                                  }`}>
+                                    {chatName}
+                                  </p>
+                                  {lastMessageTime && (
+                                    <span className="text-xs flex-shrink-0 text-muted-foreground">
+                                      {lastMessageTime}
+                                    </span>
+                                  )}
                                 </div>
                                 <p className="text-xs md:text-sm text-muted-foreground truncate">
-                                  {chat.is_group ? `${chat.participants.length} members` : 'Direct message'}
+                                  {chat.is_group ? `${chat.participants.length} members` : 'Tap to chat'}
                                 </p>
                               </div>
                             </div>
