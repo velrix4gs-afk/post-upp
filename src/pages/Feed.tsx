@@ -15,22 +15,34 @@ import { FeedTabs } from '@/components/feed/FeedTabs';
 import { FeedSidebar } from '@/components/feed/FeedSidebar';
 import CreatePostCard from '@/components/feed/CreatePostCard';
 import { PostCardModern } from '@/components/PostCard/PostCardModern';
-
 const Feed = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'for-you' | 'following' | 'trending'>('for-you');
-  const { posts, loading, hasMore, loadMore, refresh } = useFeed(activeTab === 'trending' ? 'for-you' : activeTab);
-  const { ref: loadMoreRef, inView } = useInView();
-  
-  const { containerRef, isPulling, isRefreshing, pullDistance } = usePullToRefresh({
+  const {
+    posts,
+    loading,
+    hasMore,
+    loadMore,
+    refresh
+  } = useFeed(activeTab === 'trending' ? 'for-you' : activeTab);
+  const {
+    ref: loadMoreRef,
+    inView
+  } = useInView();
+  const {
+    containerRef,
+    isPulling,
+    isRefreshing,
+    pullDistance
+  } = usePullToRefresh({
     onRefresh: async () => {
       await refresh();
-    },
+    }
   });
-
   const handleNewPost = () => {};
-
   useEffect(() => {
     if (inView && !loading && hasMore) {
       const timer = setTimeout(() => {
@@ -39,18 +51,12 @@ const Feed = () => {
       return () => clearTimeout(timer);
     }
   }, [inView, loading, hasMore]);
-
-  return (
-    <div ref={containerRef} className="min-h-screen bg-background touch-pan-y">
+  return <div ref={containerRef} className="min-h-screen bg-background touch-pan-y">
       <RealtimeFeed onNewPost={handleNewPost} />
-      <PullToRefreshIndicator
-        isPulling={isPulling}
-        isRefreshing={isRefreshing}
-        pullDistance={pullDistance}
-      />
+      <PullToRefreshIndicator isPulling={isPulling} isRefreshing={isRefreshing} pullDistance={pullDistance} />
       <Navigation />
       
-      <div className="container mx-auto flex gap-6 px-0 lg:px-4">
+      <div className="container mx-auto px-0 lg:px-4 flex-row flex items-start justify-center gap-[130px]">
         {/* Left Sidebar */}
         <FeedSidebar />
 
@@ -69,12 +75,8 @@ const Feed = () => {
           </div>
 
           {/* Feed Content */}
-          {activeTab === 'trending' ? (
-            <TrendingFeed />
-          ) : loading ? (
-            <div className="space-y-4 p-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="bg-card rounded-xl p-4 border border-border">
+          {activeTab === 'trending' ? <TrendingFeed /> : loading ? <div className="space-y-4 p-4">
+              {[1, 2, 3].map(i => <div key={i} className="bg-card rounded-xl p-4 border border-border">
                   <div className="flex gap-3">
                     <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
                     <div className="flex-1 space-y-2">
@@ -82,50 +84,35 @@ const Feed = () => {
                       <Skeleton className="h-20 w-full" />
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="p-12 text-center">
+                </div>)}
+            </div> : posts.length === 0 ? <div className="p-12 text-center">
               <Sparkles className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
               <p className="text-muted-foreground">Be the first to share something!</p>
-            </div>
-          ) : (
-            <div className="space-y-4 p-4">
-              {posts.map(post => (
-                <PostCardModern
-                  key={post.id}
-                  post={{
-                    id: post.id,
-                    content: post.content || '',
-                    media_url: post.media_url,
-                    created_at: post.created_at,
-                    reactions_count: post.reactions_count,
-                    comments_count: post.comments_count,
-                    shares_count: post.shares_count || 0,
-                    author_name: post.profiles?.display_name || 'Unknown User',
-                    author_username: post.profiles?.username,
-                    author_avatar: post.profiles?.avatar_url,
-                    author_id: post.user_id,
-                    is_verified: post.profiles?.is_verified,
-                    verification_type: post.profiles?.verification_type,
-                    verified_at: post.profiles?.verified_at
-                  }}
-                />
-              ))}
+            </div> : <div className="space-y-4 p-4">
+              {posts.map(post => <PostCardModern key={post.id} post={{
+            id: post.id,
+            content: post.content || '',
+            media_url: post.media_url,
+            created_at: post.created_at,
+            reactions_count: post.reactions_count,
+            comments_count: post.comments_count,
+            shares_count: post.shares_count || 0,
+            author_name: post.profiles?.display_name || 'Unknown User',
+            author_username: post.profiles?.username,
+            author_avatar: post.profiles?.avatar_url,
+            author_id: post.user_id,
+            is_verified: post.profiles?.is_verified,
+            verification_type: post.profiles?.verification_type,
+            verified_at: post.profiles?.verified_at
+          }} />)}
               
-              {hasMore && (
-                <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
+              {hasMore && <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
                   {loading && <Skeleton className="h-10 w-10 rounded-full" />}
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
         </main>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Feed;
