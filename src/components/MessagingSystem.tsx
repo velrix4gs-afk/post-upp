@@ -348,32 +348,45 @@ const MessagingSystem = () => {
                 const otherParticipants = getOtherParticipants(chat);
                 const chatName = chat.name || otherParticipants.map(p => p.profiles.display_name).join(', ');
                 const chatAvatar = chat.avatar_url || otherParticipants[0]?.profiles.avatar_url;
+                const isOnlineUser = otherParticipants[0] ? isUserOnline(otherParticipants[0].user_id) : false;
 
                 return (
-                  <Button
+                  <div
                     key={chat.id}
-                    variant={selectedChatId === chat.id ? "secondary" : "ghost"}
-                    className="w-full justify-start p-3 h-auto"
+                    className={`w-full p-3 rounded-lg cursor-pointer transition-all ${
+                      selectedChatId === chat.id 
+                        ? 'bg-primary/10 border border-primary/20' 
+                        : 'hover:bg-muted/50 border border-transparent'
+                    }`}
                     onClick={() => setSelectedChatId(chat.id)}
                   >
-                    <div className="flex items-center space-x-3 w-full">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={chatAvatar} />
-                        <AvatarFallback>
-                          {chatName.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="relative flex-shrink-0">
+                        <Avatar className="h-11 w-11">
+                          <AvatarImage src={chatAvatar} />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {chatName.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {isOnlineUser && (
+                          <div className="absolute bottom-0 right-0 h-3 w-3 bg-success rounded-full border-2 border-background" />
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <p className="font-medium truncate">{chatName}</p>
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <p className="font-medium truncate text-sm">{chatName}</p>
+                          {lastMessage && (
+                            <span className="text-xs text-muted-foreground flex-shrink-0">
+                              {formatMessageTime(lastMessage.created_at)}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground truncate">
-                          {lastMessage?.content || 'No messages yet'}
+                          {lastMessage?.content || (chat.is_group ? `${chat.participants.length} members` : 'Tap to chat')}
                         </p>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {lastMessage && formatMessageTime(lastMessage.created_at)}
-                      </div>
                     </div>
-                  </Button>
+                  </div>
                 );
               })}
             </div>
