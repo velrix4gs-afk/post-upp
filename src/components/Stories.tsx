@@ -12,41 +12,43 @@ import { Plus, Camera, Video, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { ProfileHoverCard } from '@/components/ProfileHoverCard';
-
 const Stories = () => {
-  const { user } = useAuth();
-  const { profile } = useProfile();
-  const { stories, createStory, viewStory, deleteStory } = useStories();
+  const {
+    user
+  } = useAuth();
+  const {
+    profile
+  } = useProfile();
+  const {
+    stories,
+    createStory,
+    viewStory,
+    deleteStory
+  } = useStories();
   const [selectedStory, setSelectedStory] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [content, setContent] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setMediaFile(file);
     const preview = URL.createObjectURL(file);
     setMediaPreview(preview);
   };
-
   const handleCreateStory = async () => {
     if (!content.trim() && !mediaFile) return;
-    
     await createStory(content, mediaFile || undefined);
     setCreateDialogOpen(false);
     setContent('');
     setMediaFile(null);
     setMediaPreview(null);
   };
-
   const handleStoryClick = async (story: any) => {
     await viewStory(story.id);
     setSelectedStory(story);
   };
-
   const handleDeleteStory = async (storyId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteStory(storyId);
@@ -54,10 +56,8 @@ const Stories = () => {
       setSelectedStory(null);
     }
   };
-
-  return (
-    <>
-      <Card className="bg-gradient-card border-0 p-4">
+  return <>
+      <Card className="bg-gradient-card p-4 border-0 shadow-sm">
         <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
           <style>{`
             .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -85,34 +85,18 @@ const Stories = () => {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="content">What's on your mind?</Label>
-                  <Input
-                    id="content"
-                    placeholder="Share something..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                  />
+                  <Input id="content" placeholder="Share something..." value={content} onChange={e => setContent(e.target.value)} />
                 </div>
                 
-                {mediaPreview && (
-                  <div className="relative">
-                    {mediaFile?.type.startsWith('video/') ? (
-                      <video src={mediaPreview} className="w-full h-48 object-cover rounded" controls />
-                    ) : (
-                      <img src={mediaPreview} alt="Preview" className="w-full h-48 object-cover rounded" />
-                    )}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        setMediaFile(null);
-                        setMediaPreview(null);
-                      }}
-                    >
+                {mediaPreview && <div className="relative">
+                    {mediaFile?.type.startsWith('video/') ? <video src={mediaPreview} className="w-full h-48 object-cover rounded" controls /> : <img src={mediaPreview} alt="Preview" className="w-full h-48 object-cover rounded" />}
+                    <Button size="sm" variant="destructive" className="absolute top-2 right-2" onClick={() => {
+                  setMediaFile(null);
+                  setMediaPreview(null);
+                }}>
                       <X className="h-4 w-4" />
                     </Button>
-                  </div>
-                )}
+                  </div>}
                 
                 <div className="flex space-x-2">
                   <Label htmlFor="photo-upload" className="cursor-pointer">
@@ -123,13 +107,7 @@ const Stories = () => {
                       </span>
                     </Button>
                   </Label>
-                  <input
-                    id="photo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
+                  <input id="photo-upload" type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                   
                   <Label htmlFor="video-upload" className="cursor-pointer">
                     <Button type="button" variant="outline" size="sm" asChild>
@@ -139,13 +117,7 @@ const Stories = () => {
                       </span>
                     </Button>
                   </Label>
-                  <input
-                    id="video-upload"
-                    type="file"
-                    accept="video/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
+                  <input id="video-upload" type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
                 </div>
                 
                 <Button onClick={handleCreateStory} className="w-full">
@@ -156,12 +128,7 @@ const Stories = () => {
           </Dialog>
 
           {/* Story Items */}
-          {stories.map((story) => (
-            <div 
-              key={story.id} 
-              className="flex-shrink-0 w-16 text-center cursor-pointer snap-start relative group"
-              onClick={() => handleStoryClick(story)}
-            >
+          {stories.map(story => <div key={story.id} className="flex-shrink-0 w-16 text-center cursor-pointer snap-start relative group" onClick={() => handleStoryClick(story)}>
               <ProfileHoverCard userId={story.user_id}>
                 <div className="w-16 h-16 relative">
                   <Avatar className="w-16 h-16 ring-4 ring-primary hover:ring-primary/80 transition-all">
@@ -170,29 +137,20 @@ const Stories = () => {
                       {story.profiles.display_name[0]}
                     </AvatarFallback>
                   </Avatar>
-                  {story.user_id === user?.id && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                      onClick={(e) => handleDeleteStory(story.id, e)}
-                    >
+                  {story.user_id === user?.id && <Button size="sm" variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={e => handleDeleteStory(story.id, e)}>
                       <X className="h-3 w-3" />
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
               </ProfileHoverCard>
               <p className="text-xs mt-2 w-16 truncate">
                 {story.profiles.display_name}
               </p>
-            </div>
-          ))}
+            </div>)}
         </div>
       </Card>
 
       {/* Story Viewer */}
-      {selectedStory && (
-        <Dialog open={!!selectedStory} onOpenChange={() => setSelectedStory(null)}>
+      {selectedStory && <Dialog open={!!selectedStory} onOpenChange={() => setSelectedStory(null)}>
           <DialogContent className="max-w-md p-0">
             <div className="relative bg-black rounded-lg overflow-hidden">
               <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
@@ -209,60 +167,30 @@ const Stories = () => {
                       <VerificationBadge isVerified={selectedStory.profiles.is_verified} />
                     </p>
                     <p className="text-white/70 text-xs">
-                      {formatDistanceToNow(new Date(selectedStory.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(selectedStory.created_at), {
+                    addSuffix: true
+                  })}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {selectedStory.user_id === user?.id && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="hover:bg-destructive/90"
-                      onClick={(e) => handleDeleteStory(selectedStory.id, e)}
-                    >
+                  {selectedStory.user_id === user?.id && <Button size="sm" variant="destructive" className="hover:bg-destructive/90" onClick={e => handleDeleteStory(selectedStory.id, e)}>
                       Delete
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-white hover:bg-white/20"
-                    onClick={() => setSelectedStory(null)}
-                  >
+                    </Button>}
+                  <Button size="sm" variant="ghost" className="text-white hover:bg-white/20" onClick={() => setSelectedStory(null)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               
               <div className="aspect-[9/16] flex items-center justify-center bg-black">
-                {selectedStory.media_url ? (
-                  selectedStory.media_type === 'video' ? (
-                    <video 
-                      src={selectedStory.media_url} 
-                      className="w-full h-full object-cover" 
-                      controls 
-                      autoPlay 
-                    />
-                  ) : (
-                    <img 
-                      src={selectedStory.media_url} 
-                      alt="Story" 
-                      className="w-full h-full object-cover" 
-                    />
-                  )
-                ) : (
-                  <div className="p-6 text-center">
+                {selectedStory.media_url ? selectedStory.media_type === 'video' ? <video src={selectedStory.media_url} className="w-full h-full object-cover" controls autoPlay /> : <img src={selectedStory.media_url} alt="Story" className="w-full h-full object-cover" /> : <div className="p-6 text-center">
                     <p className="text-white text-lg">{selectedStory.content}</p>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
           </DialogContent>
-        </Dialog>
-      )}
-    </>
-  );
+        </Dialog>}
+    </>;
 };
-
 export default Stories;
