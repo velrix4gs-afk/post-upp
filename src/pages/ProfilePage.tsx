@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { ProfileHeader } from '@/components/ProfileHeader';
-import { PostCard } from '@/components/PostCard';
+import { PostCardModern } from '@/components/PostCard/PostCardModern';
 import ProfileEdit from '@/components/ProfileEdit';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -142,10 +142,10 @@ const ProfilePage = () => {
   };
 
   const tabs = [
-    { id: 'posts', label: 'Posts' },
-    { id: 'replies', label: 'Replies' },
-    { id: 'media', label: 'Media' },
-    { id: 'likes', label: 'Likes' },
+    { id: 'posts', label: 'Posts', count: userPosts.length },
+    { id: 'replies', label: 'Replies', count: userReplies.length },
+    { id: 'media', label: 'Media', count: userPosts.filter(p => p.media_url).length },
+    { id: 'likes', label: 'Likes', count: likedPosts.length },
   ];
 
   if (profileLoading) {
@@ -401,7 +401,7 @@ const ProfilePage = () => {
                     Pinned
                   </h3>
                   {pinnedPosts.map((post) => (
-                    <PostCard 
+                    <PostCardModern 
                       key={post.id} 
                       post={{
                         id: post.id,
@@ -410,9 +410,13 @@ const ProfilePage = () => {
                         created_at: post.created_at,
                         reactions_count: post.reactions_count,
                         comments_count: post.comments_count,
+                        shares_count: post.shares_count || 0,
                         author_name: profile?.display_name || '',
+                        author_username: profile?.username || '',
                         author_avatar: profile?.avatar_url,
-                        author_id: post.user_id
+                        author_id: post.user_id,
+                        is_verified: profile?.is_verified,
+                        is_pinned: true
                       }}
                     />
                   ))}
@@ -429,7 +433,7 @@ const ProfilePage = () => {
               ) : (
                 <div className="space-y-4">
                   {regularPosts.map((post) => (
-                    <PostCard 
+                    <PostCardModern 
                       key={post.id} 
                       post={{
                         id: post.id,
@@ -438,9 +442,12 @@ const ProfilePage = () => {
                         created_at: post.created_at,
                         reactions_count: post.reactions_count,
                         comments_count: post.comments_count,
+                        shares_count: post.shares_count || 0,
                         author_name: profile?.display_name || '',
+                        author_username: profile?.username || '',
                         author_avatar: profile?.avatar_url,
-                        author_id: post.user_id
+                        author_id: post.user_id,
+                        is_verified: profile?.is_verified
                       }}
                     />
                   ))}
@@ -554,7 +561,7 @@ const ProfilePage = () => {
               ) : (
                 <div className="space-y-4">
                   {likedPosts.map((post) => (
-                    <PostCard 
+                    <PostCardModern 
                       key={post.id} 
                       post={{
                         id: post.id,
@@ -563,9 +570,12 @@ const ProfilePage = () => {
                         created_at: post.created_at,
                         reactions_count: post.reactions_count,
                         comments_count: post.comments_count,
+                        shares_count: 0,
                         author_name: post.profiles?.display_name || 'Unknown',
+                        author_username: post.profiles?.username || '',
                         author_avatar: post.profiles?.avatar_url,
-                        author_id: post.user_id
+                        author_id: post.user_id,
+                        is_verified: post.profiles?.is_verified
                       }}
                     />
                   ))}
