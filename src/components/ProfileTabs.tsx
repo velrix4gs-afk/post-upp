@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { FileText, MessageSquare, Image, Heart } from 'lucide-react';
 
 interface Tab {
   id: string;
   label: string;
   count?: number;
+  icon?: React.ReactNode;
 }
 
 interface ProfileTabsProps {
@@ -13,6 +15,13 @@ interface ProfileTabsProps {
   onTabChange: (tabId: string) => void;
   sticky?: boolean;
 }
+
+const TAB_ICONS: Record<string, React.ReactNode> = {
+  posts: <FileText className="h-4 w-4" />,
+  replies: <MessageSquare className="h-4 w-4" />,
+  media: <Image className="h-4 w-4" />,
+  likes: <Heart className="h-4 w-4" />,
+};
 
 export const ProfileTabs = ({ tabs, activeTab, onTabChange, sticky = true }: ProfileTabsProps) => {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
@@ -74,35 +83,48 @@ export const ProfileTabs = ({ tabs, activeTab, onTabChange, sticky = true }: Pro
       onTouchStart={handleTouchStart}
     >
       <div className="flex relative min-w-max">
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.id}
-            ref={(el) => (tabRefs.current[index] = el)}
-            onClick={() => onTabChange(tab.id)}
-            className={cn(
-              "flex-1 min-w-[80px] px-4 py-3 text-sm font-medium transition-colors relative",
-              activeTab === tab.id
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground/80"
-            )}
-          >
-            <span className="flex items-center justify-center gap-1">
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className={cn(
-                  "text-xs",
-                  activeTab === tab.id ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {tab.count}
-                </span>
+        {tabs.map((tab, index) => {
+          const icon = tab.icon || TAB_ICONS[tab.id];
+          return (
+            <button
+              key={tab.id}
+              ref={(el) => (tabRefs.current[index] = el)}
+              onClick={() => onTabChange(tab.id)}
+              className={cn(
+                "flex-1 min-w-[90px] px-4 py-3.5 text-sm font-medium transition-all relative",
+                activeTab === tab.id
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground/80 hover:bg-muted/30"
               )}
-            </span>
-          </button>
-        ))}
+            >
+              <span className="flex items-center justify-center gap-2">
+                {icon && (
+                  <span className={cn(
+                    "transition-colors",
+                    activeTab === tab.id ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {icon}
+                  </span>
+                )}
+                <span className="hidden sm:inline">{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center",
+                    activeTab === tab.id 
+                      ? "bg-primary/10 text-primary" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {tab.count > 99 ? '99+' : tab.count}
+                  </span>
+                )}
+              </span>
+            </button>
+          );
+        })}
         
         {/* Animated underline indicator */}
         <div 
-          className="absolute bottom-0 h-0.5 bg-primary rounded-full transition-all duration-300 ease-out"
+          className="absolute bottom-0 h-[3px] bg-primary rounded-full transition-all duration-300 ease-out"
           style={{
             left: indicatorStyle.left,
             width: indicatorStyle.width,
