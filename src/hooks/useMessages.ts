@@ -169,15 +169,29 @@ export const useMessages = (chatId?: string) => {
           }
           
           setMessages(prev => {
-            // Remove any existing message with same ID (avoid true duplicates)
-            const withoutDuplicate = prev.filter(m => m.id !== messageWithProfile.id);
-            // Remove optimistic messages with same content from same sender
-            const withoutOptimistic = withoutDuplicate.filter(m => 
-              !(m.is_optimistic && 
-                m.content === messageWithProfile.content && 
-                m.sender_id === messageWithProfile.sender_id &&
-                Math.abs(new Date(m.created_at).getTime() - new Date(messageWithProfile.created_at).getTime()) < 5000)
-            );
+            // Check if this exact message ID already exists
+            if (prev.some(m => m.id === messageWithProfile.id)) {
+              return prev;
+            }
+            
+            // Remove optimistic messages that match this real message
+            // Match by: same sender, similar content, within 30 seconds
+            const withoutOptimistic = prev.filter(m => {
+              if (!m.is_optimistic) return true;
+              if (m.sender_id !== messageWithProfile.sender_id) return true;
+              
+              // Check if content matches (or both are media messages)
+              const contentMatches = m.content === messageWithProfile.content || 
+                (!m.content && !messageWithProfile.content);
+              const mediaMatches = m.media_url === messageWithProfile.media_url;
+              const timeClose = Math.abs(
+                new Date(m.created_at).getTime() - new Date(messageWithProfile.created_at).getTime()
+              ) < 30000;
+              
+              // Remove if it's the same message
+              return !(contentMatches && mediaMatches && timeClose);
+            });
+            
             return [...withoutOptimistic, messageWithProfile];
           });
         })

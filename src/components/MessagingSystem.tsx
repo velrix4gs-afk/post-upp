@@ -61,9 +61,11 @@ const MessagingSystem = () => {
   const [replyToMessage, setReplyToMessage] = useState<any>(null);
   const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(null);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const { 
     messages, 
@@ -175,16 +177,30 @@ const MessagingSystem = () => {
   });
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedChatId) return;
+    if (!newMessage.trim() || !selectedChatId || isSending) return;
     
-    if (editingMessage) {
-      await editMessage(editingMessage.id, newMessage);
-      setEditingMessage(null);
-    } else {
-      await sendMessage(newMessage, replyToMessage?.id);
-      setReplyToMessage(null);
-    }
+    const messageToSend = newMessage.trim();
+    
+    // Clear input immediately to prevent double sending
     setNewMessage('');
+    setIsSending(true);
+    
+    try {
+      if (editingMessage) {
+        await editMessage(editingMessage.id, messageToSend);
+        setEditingMessage(null);
+      } else {
+        await sendMessage(messageToSend, replyToMessage?.id);
+        setReplyToMessage(null);
+      }
+    } catch (error) {
+      // Restore message if send failed
+      setNewMessage(messageToSend);
+    } finally {
+      setIsSending(false);
+      // Refocus input after sending
+      inputRef.current?.focus();
+    }
   };
 
   const handleEditMessage = (id: string, content: string) => {
@@ -578,6 +594,7 @@ const MessagingSystem = () => {
                   <Smile className="h-4 w-4" />
                 </Button>
                 <Input
+                  ref={inputRef}
                   placeholder={editingMessage ? "Edit message..." : "Type a message..."}
                   value={newMessage}
                   onChange={(e) => {
@@ -586,12 +603,14 @@ const MessagingSystem = () => {
                   }}
                   onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                   className="flex-1 min-w-0"
+                  disabled={isSending}
                 />
                 <Button 
                   variant="ghost" 
                   size="sm"
                   className="flex-shrink-0"
                   onClick={() => setShowVoiceRecorder(true)}
+                  disabled={isSending}
                 >
                   <Mic className="h-4 w-4" />
                 </Button>
@@ -599,9 +618,13 @@ const MessagingSystem = () => {
                   size="sm" 
                   className="flex-shrink-0"
                   onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
+                  disabled={!newMessage.trim() || isSending}
                 >
-                  <Send className="h-4 w-4" />
+                  {isSending ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             )}
