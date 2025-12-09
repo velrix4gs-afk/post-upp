@@ -297,7 +297,7 @@ const CreatePostCard = () => {
             </AvatarFallback>
           </Avatar>
           
-          <div className="flex-1">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <Textarea
               placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`}
               value={postContent}
@@ -307,7 +307,7 @@ const CreatePostCard = () => {
                 }
               }}
               onFocus={() => setIsExpanded(true)}
-              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary min-h-[44px] max-h-[120px] overflow-y-auto rounded-xl text-[15px] placeholder:text-muted-foreground"
+              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary min-h-[44px] max-h-[120px] overflow-y-auto rounded-xl text-[15px] placeholder:text-muted-foreground w-full"
               rows={isExpanded ? 3 : 1}
             />
             
