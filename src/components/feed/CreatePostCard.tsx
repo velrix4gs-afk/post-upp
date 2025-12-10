@@ -286,10 +286,10 @@ const CreatePostCard = () => {
   };
 
   return (
-    <Card className="bg-card rounded-xl border border-border shadow-sm">
-      <div className="p-4">
+    <Card className="bg-card rounded-xl border border-border shadow-sm w-full max-w-full overflow-hidden">
+      <div className="p-4 w-full max-w-full overflow-hidden">
         {/* Header with Avatar */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3 w-full max-w-full">
           <Avatar className="h-10 w-10 ring-2 ring-border flex-shrink-0">
             <AvatarImage src={profile?.avatar_url} />
             <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
@@ -297,7 +297,7 @@ const CreatePostCard = () => {
             </AvatarFallback>
           </Avatar>
           
-          <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex-1 min-w-0 max-w-full overflow-hidden">
             <Textarea
               placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`}
               value={postContent}
@@ -307,7 +307,7 @@ const CreatePostCard = () => {
                 }
               }}
               onFocus={() => setIsExpanded(true)}
-              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary min-h-[44px] max-h-[120px] overflow-y-auto rounded-xl text-[15px] placeholder:text-muted-foreground w-full"
+              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary min-h-[44px] max-h-[120px] overflow-y-auto rounded-xl text-[15px] placeholder:text-muted-foreground w-full max-w-full box-border"
               rows={isExpanded ? 3 : 1}
             />
             
