@@ -339,27 +339,25 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
               </ProfileHoverCard>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1 flex-wrap">
-                  <ProfileHoverCard userId={post.author_id}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/profile/${post.author_id}`);
-                      }}
-                      className="font-semibold text-foreground hover:underline text-[15px] flex items-center gap-1"
-                    >
-                      {post.author_name}
-                      <VerificationBadge 
-                        isVerified={post.is_verified}
-                        verificationType={post.verification_type}
-                      />
-                    </button>
-                  </ProfileHoverCard>
-                  
-                  {post.author_username && (
-                    <span className="text-muted-foreground text-sm">@{post.author_username}</span>
-                  )}
-                </div>
+                <ProfileHoverCard userId={post.author_id}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/profile/${post.author_id}`);
+                    }}
+                    className="font-semibold text-foreground hover:underline text-[15px] flex items-center gap-1"
+                  >
+                    {post.author_name}
+                    <VerificationBadge 
+                      isVerified={post.is_verified}
+                      verificationType={post.verification_type}
+                    />
+                  </button>
+                </ProfileHoverCard>
+                
+                {post.author_username && (
+                  <div className="text-muted-foreground text-sm">@{post.author_username}</div>
+                )}
                 
                 <div className="flex items-center gap-1.5 text-muted-foreground text-xs mt-0.5">
                   <Tooltip>
@@ -375,21 +373,18 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
                 </div>
               </div>
 
-              {/* Follow button for non-owners */}
-              {!isOwner && user && (
+              {/* Follow button - only show if not following and not the owner */}
+              {!isOwner && user && !isFollowingAuthor && (
                 <Button
-                  variant={isFollowingAuthor ? "outline" : "default"}
+                  variant="default"
                   size="sm"
-                  className={cn(
-                    "h-8 px-4 rounded-full text-xs font-semibold transition-all",
-                    !isFollowingAuthor && "bg-primary hover:bg-primary-hover"
-                  )}
+                  className="h-8 px-4 rounded-full text-xs font-semibold bg-primary hover:bg-primary/90"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleFollowToggle();
                   }}
                 >
-                  {isFollowingAuthor ? 'Following' : 'Follow'}
+                  Follow
                 </Button>
               )}
 
