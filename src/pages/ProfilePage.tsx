@@ -200,43 +200,65 @@ const ProfilePage = () => {
       <main className="container mx-auto max-w-4xl">
         {/* Cover Photo */}
         <div 
-          className="relative h-36 md:h-52 overflow-hidden cursor-pointer"
+          className="relative h-40 md:h-56 overflow-hidden cursor-pointer group"
           onClick={() => profile?.cover_url && setShowCoverViewer(true)}
         >
           {profile?.cover_url ? (
-            <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover" />
+            <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/20 to-accent/30 flex items-center justify-center">
-              <Camera className="h-10 w-10 text-muted-foreground/40" />
+              <Camera className="h-12 w-12 text-muted-foreground/40" />
             </div>
           )}
-          {/* Blur fallback overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+          {/* Change cover button for own profile */}
+          {isOwnProfile && (
+            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileEdit(true);
+                }}
+              >
+                <Camera className="h-4 w-4" />
+                Change Cover
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Profile Info Section */}
         <div className="px-4 relative">
           {/* Avatar - overlapping cover */}
-          <div className="relative -mt-16 md:-mt-20 mb-3">
+          <div className="relative -mt-16 md:-mt-20 mb-4">
             <div 
-              className="relative inline-block cursor-pointer"
-              onClick={() => profile?.avatar_url && setShowAvatarViewer(true)}
+              className="relative inline-block cursor-pointer group"
+              onClick={() => profile?.avatar_url ? setShowAvatarViewer(true) : isOwnProfile && setShowProfileEdit(true)}
             >
-              <Avatar className="h-28 w-28 md:h-36 md:w-36 ring-4 ring-background shadow-xl hover:ring-primary/30 transition-all">
+              <Avatar className="h-32 w-32 md:h-40 md:w-40 ring-4 ring-background shadow-xl group-hover:ring-primary/30 transition-all">
                 {profile?.avatar_url ? (
                   <AvatarImage src={profile.avatar_url} alt={profile.display_name} className="object-cover" />
                 ) : (
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-3xl md:text-4xl font-bold">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-4xl md:text-5xl font-bold">
                     {profile?.display_name?.split(' ').map(n => n[0]).join('') || 'U'}
                   </AvatarFallback>
                 )}
               </Avatar>
               {profile?.is_verified && (
-                <div className="absolute -bottom-1 -right-1">
+                <div className="absolute bottom-1 right-1 p-0.5 bg-background rounded-full">
                   <VerificationBadge 
                     isVerified={profile.is_verified}
                     verificationType={profile.verification_type}
                   />
+                </div>
+              )}
+              {isOwnProfile && !profile?.avatar_url && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="h-8 w-8 text-white" />
                 </div>
               )}
             </div>
@@ -300,14 +322,29 @@ const ProfilePage = () => {
 
           {/* User Info Block */}
           <div className="mb-4">
-            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-              {profile?.display_name}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl md:text-2xl font-bold">
+                {profile?.display_name}
+              </h1>
+              {profile?.is_verified && (
+                <VerificationBadge 
+                  isVerified={profile.is_verified}
+                  verificationType={profile.verification_type}
+                />
+              )}
+            </div>
             <p className="text-muted-foreground">@{profile?.username}</p>
             
             {/* Bio */}
-            {profile?.bio && (
-              <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap">{profile.bio}</p>
+            {profile?.bio ? (
+              <p className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">{profile.bio}</p>
+            ) : isOwnProfile && (
+              <button 
+                onClick={() => setShowProfileEdit(true)}
+                className="mt-3 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                + Add a bio to tell people about yourself
+              </button>
             )}
           </div>
 
@@ -338,20 +375,30 @@ const ProfilePage = () => {
           </div>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-4 mb-3 text-sm">
+            <div className="group">
+              <span className="font-bold">{userPosts.length}</span>
+              <span className="text-muted-foreground ml-1">
+                {userPosts.length === 1 ? 'Post' : 'Posts'}
+              </span>
+            </div>
+            <div className="text-muted-foreground">•</div>
             <div 
-              className="cursor-pointer hover:underline"
+              className="cursor-pointer group hover:text-primary transition-colors"
               onClick={() => setShowFollowingDialog(true)}
             >
-              <span className="font-bold">{following.length}</span>
-              <span className="text-muted-foreground ml-1">Following</span>
+              <span className="font-bold group-hover:underline">{following.length}</span>
+              <span className="text-muted-foreground group-hover:text-primary ml-1">Following</span>
             </div>
+            <div className="text-muted-foreground">•</div>
             <div 
-              className="cursor-pointer hover:underline"
+              className="cursor-pointer group hover:text-primary transition-colors"
               onClick={() => setShowFollowersDialog(true)}
             >
-              <span className="font-bold">{followers.length}</span>
-              <span className="text-muted-foreground ml-1">Followers</span>
+              <span className="font-bold group-hover:underline">{followers.length}</span>
+              <span className="text-muted-foreground group-hover:text-primary ml-1">
+                {followers.length === 1 ? 'Follower' : 'Followers'}
+              </span>
             </div>
           </div>
 
