@@ -351,7 +351,7 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, BIO_MAX_LENGTH) })}
                   placeholder="Tell us about yourself..."
                   rows={3}
-                  className={`resize-none ${errors.bio ? 'border-destructive' : ''}`}
+                  className={`resize-none max-h-[40vh] overflow-y-auto ${errors.bio ? 'border-destructive' : ''}`}
                 />
                 {errors.bio && (
                   <p className="text-xs text-destructive">{errors.bio}</p>
