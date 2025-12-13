@@ -1,21 +1,41 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// This function should only be called by Supabase Cron or with service role key
+// No public CORS headers - this is an internal function
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Only allow POST requests (cron uses POST)
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
+    // Verify authorization - require service role key or cron secret
+    const authHeader = req.headers.get('authorization');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    
+    // Check if request is authorized
+    const isAuthorized = authHeader && (
+      authHeader === `Bearer ${serviceRoleKey}` ||
+      (cronSecret && authHeader === `Bearer ${cronSecret}`)
+    );
+    
+    if (!isAuthorized) {
+      console.log('Unauthorized access attempt to delete-expired-messages');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      serviceRoleKey
     );
 
     console.log('Starting expired messages cleanup...');
@@ -43,7 +63,7 @@ serve(async (req) => {
         timestamp: new Date().toISOString()
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         status: 200
       }
     );
@@ -51,11 +71,11 @@ serve(async (req) => {
     console.error('Error in delete-expired-messages function:', error);
     return new Response(
       JSON.stringify({
-        error: (error as Error).message,
+        error: 'Internal server error',
         success: false
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         status: 500
       }
     );
