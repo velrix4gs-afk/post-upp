@@ -5,19 +5,22 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Plus, Heart, MessageCircle, Share2, Bookmark, Pause, Play, Volume2, VolumeX, Film, Loader2, Send, MoreHorizontal, UserPlus } from 'lucide-react';
 import { useReels } from '@/hooks/useReels';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { InstagramReelCreator } from '@/components/InstagramReelCreator';
 import { useNavigate } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
 
 const ReelsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { reels, loading, hasMore, fetchReels, viewReel, likeReel, fetchComments, addComment } = useReels();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(true); // Muted by default for autoplay
+  const [isMuted, setIsMuted] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -25,6 +28,7 @@ const ReelsPage = () => {
   const [likeAnimations, setLikeAnimations] = useState<{ [key: string]: boolean }>({});
   const [savedReels, setSavedReels] = useState<Set<string>>(new Set());
   const [loadingComment, setLoadingComment] = useState(false);
+  const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   
   const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,11 +57,24 @@ const ReelsPage = () => {
     };
   }, []);
 
-  // Observe videos
+  // Observe videos and attach timeupdate listeners
   useEffect(() => {
-    Object.values(videoRefs.current).forEach((video) => {
+    Object.entries(videoRefs.current).forEach(([indexStr, video]) => {
       if (video && observerRef.current) {
         observerRef.current.observe(video);
+        
+        // Add timeupdate listener for progress bar
+        const handleTimeUpdate = () => {
+          if (video.duration) {
+            const progress = (video.currentTime / video.duration) * 100;
+            const reelId = reels[parseInt(indexStr)]?.id;
+            if (reelId) {
+              setVideoProgress(prev => ({ ...prev, [reelId]: progress }));
+            }
+          }
+        };
+        
+        video.addEventListener('timeupdate', handleTimeUpdate);
       }
     });
 
@@ -133,13 +150,11 @@ const ReelsPage = () => {
     if (reel && !reel.is_liked) {
       handleLike(reelId);
     }
-    // Show heart animation
     setLikeAnimations(prev => ({ ...prev, [reelId]: true }));
     setTimeout(() => {
       setLikeAnimations(prev => ({ ...prev, [reelId]: false }));
     }, 1000);
     
-    // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }
@@ -219,6 +234,56 @@ const ReelsPage = () => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
     if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
     return count.toString();
+  };
+
+  const formatTimestamp = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: false })
+        .replace('about ', '')
+        .replace(' hours', 'h')
+        .replace(' hour', 'h')
+        .replace(' minutes', 'm')
+        .replace(' minute', 'm')
+        .replace(' days', 'd')
+        .replace(' day', 'd')
+        .replace(' weeks', 'w')
+        .replace(' week', 'w')
+        .replace(' months', 'mo')
+        .replace(' month', 'mo')
+        .replace('less than a', '<1');
+    } catch {
+      return '';
+    }
+  };
+
+  const extractHashtags = (caption: string) => {
+    const hashtagRegex = /#[\w\u0590-\u05ff]+/gi;
+    return caption.match(hashtagRegex) || [];
+  };
+
+  const renderCaptionWithHashtags = (caption: string) => {
+    const parts = caption.split(/(#[\w\u0590-\u05ff]+)/gi);
+    return parts.map((part, index) => {
+      if (part.startsWith('#')) {
+        return (
+          <span
+            key={index}
+            className="text-blue-400 cursor-pointer hover:underline"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/hashtag/${part.slice(1)}`);
+            }}
+          >
+            {part}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
+  const isOwnReel = (reelUserId: string) => {
+    return user?.id === reelUserId;
   };
 
   if (loading && reels.length === 0) {
@@ -351,18 +416,21 @@ const ReelsPage = () => {
               </div>
             )}
 
-            {/* Progress Bar */}
+            {/* Progress Bar - Now with real progress */}
             {currentIndex === index && (
               <div className="absolute top-16 left-4 right-4 z-20">
                 <div className="h-0.5 bg-white/30 rounded-full overflow-hidden">
-                  <div className="h-full bg-white rounded-full animate-pulse" style={{ width: '30%' }} />
+                  <div 
+                    className="h-full bg-white rounded-full transition-all duration-100" 
+                    style={{ width: `${videoProgress[reel.id] || 0}%` }} 
+                  />
                 </div>
               </div>
             )}
 
             {/* Right Side Actions */}
-            <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5 z-20">
-              {/* Creator Avatar with Follow */}
+            <div className="absolute right-3 bottom-32 flex flex-col items-center gap-6 z-20">
+              {/* Creator Avatar with Follow - hide follow button for own reels */}
               <div className="relative">
                 <Avatar 
                   className="h-12 w-12 ring-2 ring-white cursor-pointer"
@@ -373,9 +441,12 @@ const ReelsPage = () => {
                     {reel.creator_name?.[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <button className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center">
-                  <Plus className="h-3 w-3 text-white" />
-                </button>
+                {/* Only show follow button if not own reel */}
+                {!isOwnReel(reel.user_id) && (
+                  <button className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center">
+                    <Plus className="h-3 w-3 text-white" />
+                  </button>
+                )}
               </div>
 
               {/* Like */}
@@ -385,13 +456,13 @@ const ReelsPage = () => {
               >
                 <Heart
                   className={cn(
-                    "h-8 w-8 transition-all",
+                    "h-8 w-8 transition-all drop-shadow-lg",
                     reel.is_liked 
                       ? "fill-red-500 text-red-500 scale-110" 
                       : "text-white"
                   )}
                 />
-                <span className="text-xs text-white font-semibold">
+                <span className="text-xs text-white font-semibold drop-shadow-md">
                   {formatCount(reel.likes_count)}
                 </span>
               </button>
@@ -401,8 +472,8 @@ const ReelsPage = () => {
                 onClick={() => handleOpenComments(reel.id)}
                 className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
               >
-                <MessageCircle className="h-8 w-8 text-white" />
-                <span className="text-xs text-white font-semibold">
+                <MessageCircle className="h-8 w-8 text-white drop-shadow-lg" />
+                <span className="text-xs text-white font-semibold drop-shadow-md">
                   {formatCount(reel.comments_count)}
                 </span>
               </button>
@@ -412,8 +483,8 @@ const ReelsPage = () => {
                 onClick={() => handleShare(reel)}
                 className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
               >
-                <Share2 className="h-7 w-7 text-white" />
-                <span className="text-xs text-white font-semibold">Share</span>
+                <Share2 className="h-7 w-7 text-white drop-shadow-lg" />
+                <span className="text-xs text-white font-semibold drop-shadow-md">Share</span>
               </button>
 
               {/* Save */}
@@ -423,7 +494,7 @@ const ReelsPage = () => {
               >
                 <Bookmark 
                   className={cn(
-                    "h-7 w-7 transition-all",
+                    "h-7 w-7 transition-all drop-shadow-lg",
                     savedReels.has(reel.id) ? "fill-white text-white" : "text-white"
                   )} 
                 />
@@ -431,42 +502,61 @@ const ReelsPage = () => {
 
               {/* More */}
               <button className="active:scale-90 transition-transform">
-                <MoreHorizontal className="h-6 w-6 text-white" />
+                <MoreHorizontal className="h-6 w-6 text-white drop-shadow-lg" />
               </button>
             </div>
 
-            {/* Bottom Info */}
+            {/* Bottom Info - Improved layout with text shadows */}
             <div className="absolute left-4 right-20 bottom-8 z-20 text-white">
-              {/* Creator Info */}
-              <div className="flex items-center gap-2 mb-2">
+              {/* Creator Info with Follow Button */}
+              <div className="flex items-center gap-2 mb-3">
                 <span 
-                  className="font-bold text-base flex items-center gap-1 cursor-pointer"
+                  className="font-bold text-base flex items-center gap-1 cursor-pointer drop-shadow-md"
                   onClick={() => navigate(`/profile/${reel.user_id}`)}
                 >
                   {reel.creator_name}
                   {reel.is_verified && <VerificationBadge isVerified={true} />}
                 </span>
-                <span className="text-white/60">·</span>
-                <button className="text-sm font-semibold">Follow</button>
+                {!isOwnReel(reel.user_id) && (
+                  <>
+                    <span className="text-white/60">·</span>
+                    <button className="text-sm font-semibold hover:opacity-80 transition-opacity">Follow</button>
+                  </>
+                )}
+                {isOwnReel(reel.user_id) && (
+                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full ml-1">Your reel</span>
+                )}
               </div>
 
-              {/* Caption */}
+              {/* Caption with clickable hashtags */}
               {reel.caption && (
-                <p className="text-sm leading-relaxed line-clamp-2 mb-2">{reel.caption}</p>
+                <p className="text-sm leading-relaxed line-clamp-2 mb-3 drop-shadow-md">
+                  {renderCaptionWithHashtags(reel.caption)}
+                </p>
               )}
 
-              {/* Music/Audio */}
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full bg-white/20 flex items-center justify-center">
+              {/* Music/Audio with scrolling effect */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-4 w-4 rounded-full bg-white/20 flex items-center justify-center animate-spin" style={{ animationDuration: '3s' }}>
                   <span className="text-[8px]">🎵</span>
                 </div>
-                <p className="text-xs text-white/80 line-clamp-1">Original Audio</p>
+                <div className="overflow-hidden max-w-[200px]">
+                  <p className="text-xs text-white/80 whitespace-nowrap animate-marquee">
+                    Original Audio · {reel.creator_name}
+                  </p>
+                </div>
               </div>
 
-              {/* View Count */}
-              <p className="text-xs text-white/60 mt-2">
-                {formatCount(reel.views_count)} views
-              </p>
+              {/* View Count and Timestamp */}
+              <div className="flex items-center gap-2 text-xs text-white/60">
+                <span>{formatCount(reel.views_count)} views</span>
+                {reel.created_at && (
+                  <>
+                    <span>·</span>
+                    <span>{formatTimestamp(reel.created_at)} ago</span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Mute Button */}
@@ -529,7 +619,9 @@ const ReelsPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm">{comment.user?.display_name}</span>
-                        <span className="text-xs text-muted-foreground">2h</span>
+                        <span className="text-xs text-muted-foreground">
+                          {comment.created_at ? formatTimestamp(comment.created_at) : ''}
+                        </span>
                       </div>
                       <p className="text-sm mt-0.5 break-words">{comment.content}</p>
                       <div className="flex items-center gap-4 mt-1">
