@@ -1,217 +1,554 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { X, Image, Video, Send, Loader2, Type, Sparkles } from 'lucide-react';
+import { 
+  X, Send, Type, Pencil, Smile, Wand2, Image as ImageIcon, 
+  Camera, RefreshCw, Zap, Timer, Settings, Music, Sparkles,
+  LayoutGrid, Undo2, Redo2, Download, Users, ChevronDown
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { BackNavigation } from '@/components/BackNavigation';
+import { StoryFilterPicker, storyFilters } from '@/components/story/StoryFilters';
+import { StoryStickerPicker, StickerDisplay, Sticker } from '@/components/story/StoryStickers';
+import { StoryTextOverlay } from '@/components/story/StoryTextOverlay';
+import { StoryDrawing } from '@/components/story/StoryDrawing';
+import { StoryAudienceSelector, StoryAudience } from '@/components/story/StoryAudienceSelector';
+import { Loader2 } from 'lucide-react';
 
-const filters = [
-  { id: 'none', name: 'Original', css: 'none' },
-  { id: 'retro', name: 'Retro', css: 'sepia(50%) contrast(120%) saturate(150%)' },
-  { id: 'vintage', name: 'Vintage', css: 'sepia(40%) brightness(105%) contrast(95%)' },
-  { id: 'bw', name: 'B&W', css: 'grayscale(100%) contrast(110%)' },
-  { id: 'sepia', name: 'Sepia', css: 'sepia(100%)' },
-  { id: 'warm', name: 'Warm', css: 'saturate(130%) brightness(105%) hue-rotate(-10deg)' },
-  { id: 'cool', name: 'Cool', css: 'saturate(110%) hue-rotate(20deg)' },
-  { id: 'dramatic', name: 'Dramatic', css: 'contrast(150%) brightness(90%) saturate(120%)' }
+interface TextOverlay {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  color: string;
+  fontSize: number;
+  fontFamily: string;
+  align: 'left' | 'center' | 'right';
+}
+
+type EditorMode = 'capture' | 'preview' | 'text' | 'draw' | 'stickers' | 'filters' | 'audience';
+
+const textBackgrounds = [
+  { id: 'gradient1', bg: 'bg-gradient-to-br from-purple-600 to-pink-500' },
+  { id: 'gradient2', bg: 'bg-gradient-to-br from-blue-500 to-cyan-400' },
+  { id: 'gradient3', bg: 'bg-gradient-to-br from-orange-500 to-red-500' },
+  { id: 'gradient4', bg: 'bg-gradient-to-br from-green-500 to-emerald-400' },
+  { id: 'gradient5', bg: 'bg-gradient-to-br from-indigo-600 to-purple-500' },
+  { id: 'dark', bg: 'bg-gradient-to-br from-gray-900 to-black' },
+  { id: 'light', bg: 'bg-gradient-to-br from-gray-100 to-white' },
 ];
 
 const CreateStoryPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [content, setContent] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<string>('none');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  // Core state
+  const [mode, setMode] = useState<EditorMode>('capture');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'image' | 'video' | 'text'>('text');
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Text story state
+  const [storyText, setStoryText] = useState('');
+  const [textBackground, setTextBackground] = useState(textBackgrounds[0]);
+
+  // Editing state
+  const [selectedFilter, setSelectedFilter] = useState('none');
+  const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [textOverlays, setTextOverlays] = useState<TextOverlay[]>([]);
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [drawingOverlay, setDrawingOverlay] = useState<string | null>(null);
+  const [audience, setAudience] = useState<StoryAudience>('public');
+
+  // Camera state (for future camera integration)
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
+  const [flashEnabled, setFlashEnabled] = useState(false);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 50 * 1024 * 1024) {
-      toast({ title: 'ERR_S1', description: 'File too large (max 50MB)', variant: 'destructive', duration: 1500 });
+      toast({ title: 'File too large', description: 'Max 50MB allowed', variant: 'destructive' });
       return;
     }
 
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      toast({ title: 'ERR_S2', description: 'Only images/videos allowed', variant: 'destructive', duration: 1500 });
+      toast({ title: 'Invalid file', description: 'Only images and videos allowed', variant: 'destructive' });
       return;
     }
 
-    setSelectedFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewUrl(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    setMediaFile(file);
+    setMediaPreview(URL.createObjectURL(file));
+    setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+    setMode('preview');
   };
 
-  const handleCreateStory = async () => {
-    if (!selectedFile || !user) {
-      toast({ title: 'ERR_S3', description: 'Select a file first', variant: 'destructive', duration: 1500 });
-      return;
+  const handleAddText = () => {
+    const newOverlay: TextOverlay = {
+      id: Date.now().toString(),
+      text: 'Tap to edit',
+      x: 50,
+      y: 50,
+      color: '#FFFFFF',
+      fontSize: 32,
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      align: 'center'
+    };
+    setTextOverlays(prev => [...prev, newOverlay]);
+    setEditingTextId(newOverlay.id);
+  };
+
+  const handleUpdateTextOverlay = (updated: TextOverlay) => {
+    setTextOverlays(prev => prev.map(t => t.id === updated.id ? updated : t));
+  };
+
+  const handleDeleteTextOverlay = (id: string) => {
+    setTextOverlays(prev => prev.filter(t => t.id !== id));
+    setEditingTextId(null);
+  };
+
+  const handleAddSticker = (stickerData: Omit<Sticker, 'id' | 'x' | 'y'>) => {
+    const newSticker: Sticker = {
+      ...stickerData,
+      id: Date.now().toString(),
+      x: 50,
+      y: 50
+    };
+    setStickers(prev => [...prev, newSticker]);
+    setMode('preview');
+  };
+
+  const handleDeleteSticker = (id: string) => {
+    setStickers(prev => prev.filter(s => s.id !== id));
+  };
+
+  const handleSaveDrawing = (dataUrl: string) => {
+    setDrawingOverlay(dataUrl);
+    setMode('preview');
+  };
+
+  const handleClose = () => {
+    if (mediaFile || storyText) {
+      // Could add confirmation dialog here
     }
+    navigate('/');
+  };
+
+  const handleShare = async () => {
+    if (!user) return;
 
     setIsUploading(true);
     try {
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      let media_url = null;
+      let media_type = null;
+      let content = null;
 
-      const { error: uploadError } = await supabase.storage
-        .from('stories')
-        .upload(fileName, selectedFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      if (mediaType === 'text') {
+        content = storyText;
+      } else if (mediaFile) {
+        const fileExt = mediaFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage
+          .from('stories')
+          .upload(fileName, mediaFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('stories')
-        .getPublicUrl(fileName);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('stories')
+          .getPublicUrl(fileName);
+
+        media_url = publicUrl;
+        media_type = mediaType;
+      }
 
       const { error: storyError } = await supabase
         .from('stories')
         .insert({
           user_id: user.id,
-          media_url: publicUrl,
-          media_type: selectedFile.type.startsWith('image/') ? 'image' : 'video',
-          content: content.trim() || null
+          media_url,
+          media_type,
+          content
         });
 
       if (storyError) throw storyError;
 
-      toast({ title: '🎉 Story posted!', duration: 1500 });
+      toast({ title: 'Story shared! 🎉' });
       navigate('/');
     } catch (error: any) {
-      toast({ title: 'ERR_S4', description: 'Post failed', variant: 'destructive', duration: 1500 });
+      console.error('Story creation error:', error);
+      toast({ title: 'Failed to share story', variant: 'destructive' });
     } finally {
       setIsUploading(false);
     }
   };
 
-  return (
-    <div className="h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="flex items-center justify-between p-4">
-          <BackNavigation />
-          <h1 className="text-xl font-bold">Create Story</h1>
-          <Button
-            size="sm"
-            onClick={handleCreateStory}
-            disabled={isUploading || !selectedFile}
-          >
-            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
-        </div>
-      </div>
+  const currentFilter = storyFilters.find(f => f.id === selectedFilter);
 
-      {/* Preview Area */}
-      <div className="flex-1 relative flex items-center justify-center bg-black">
-        {previewUrl ? (
-          <>
-            {selectedFile?.type.startsWith('video/') ? (
-              <video
-                src={previewUrl}
-                className="max-h-full max-w-full object-contain"
-                style={{ filter: filters.find(f => f.id === selectedFilter)?.css }}
-                controls
-                loop
-              />
-            ) : (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-full max-w-full object-contain"
-                style={{ filter: filters.find(f => f.id === selectedFilter)?.css }}
-              />
-            )}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70"
-              onClick={() => {
-                setSelectedFile(null);
-                setPreviewUrl(null);
-              }}
+  // Render capture mode (initial screen)
+  if (mode === 'capture') {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col z-50">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4">
+          <Button variant="ghost" size="icon" onClick={handleClose} className="text-white hover:bg-white/10">
+            <X className="h-6 w-6" />
+          </Button>
+          <span className="text-white font-semibold text-lg">Create Story</span>
+          <div className="w-10" />
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-8">
+          {/* Text Story Option */}
+          <div className="w-full max-w-sm">
+            <div 
+              className={`aspect-[9/16] rounded-3xl ${textBackground.bg} flex items-center justify-center p-6 shadow-2xl cursor-pointer relative overflow-hidden`}
+              onClick={() => setMode('preview')}
             >
-              <X className="h-5 w-5 text-white" />
-            </Button>
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-4">
+              <textarea
+                value={storyText}
+                onChange={(e) => {
+                  setStoryText(e.target.value);
+                  setMediaType('text');
+                }}
+                placeholder="Type your story..."
+                className="w-full h-full bg-transparent text-white text-2xl font-bold text-center resize-none focus:outline-none placeholder:text-white/50"
+                style={{ caretColor: 'white' }}
+              />
+            </div>
+            
+            {/* Background Picker */}
+            <div className="flex gap-2 justify-center mt-4">
+              {textBackgrounds.map((bg) => (
+                <button
+                  key={bg.id}
+                  onClick={() => setTextBackground(bg)}
+                  className={`w-10 h-10 rounded-full ${bg.bg} border-2 transition-all ${
+                    textBackground.id === bg.id ? 'border-white scale-110' : 'border-transparent'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 w-full max-w-sm">
+            <div className="flex-1 h-px bg-white/20" />
+            <span className="text-white/50 text-sm">or</span>
+            <div className="flex-1 h-px bg-white/20" />
+          </div>
+
+          {/* Media Upload Options */}
+          <div className="flex gap-4">
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*,video/*"
               onChange={handleFileSelect}
               className="hidden"
-              id="story-file-input"
             />
-            <label
-              htmlFor="story-file-input"
-              className="cursor-pointer flex flex-col items-center gap-4 p-8 rounded-2xl bg-muted hover:bg-muted/80 transition"
+            
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 gap-3 px-6 py-6"
             >
-              <div className="flex gap-4">
-                <div className="p-4 rounded-full bg-primary/10">
-                  <Image className="h-8 w-8 text-primary" />
-                </div>
-                <div className="p-4 rounded-full bg-primary/10">
-                  <Video className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="font-semibold">Upload Image or Video</p>
-                <p className="text-sm text-muted-foreground mt-1">Max 50MB</p>
-              </div>
-            </label>
+              <ImageIcon className="h-6 w-6" />
+              <span>Gallery</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => toast({ title: 'Camera coming soon!' })}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 gap-3 px-6 py-6"
+            >
+              <Camera className="h-6 w-6" />
+              <span>Camera</span>
+            </Button>
           </div>
+        </div>
+
+        {/* Bottom hint */}
+        <div className="p-6 text-center">
+          <p className="text-white/50 text-sm">
+            Type a text story or select media from your gallery
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render sticker picker
+  if (mode === 'stickers') {
+    return (
+      <StoryStickerPicker
+        onSelect={handleAddSticker}
+        onClose={() => setMode('preview')}
+      />
+    );
+  }
+
+  // Render drawing mode
+  if (mode === 'draw') {
+    return (
+      <StoryDrawing
+        canvasWidth={1080}
+        canvasHeight={1920}
+        onSave={handleSaveDrawing}
+        onClose={() => setMode('preview')}
+      />
+    );
+  }
+
+  // Render audience selector
+  if (mode === 'audience') {
+    return (
+      <StoryAudienceSelector
+        selected={audience}
+        onSelect={setAudience}
+        onClose={() => setMode('preview')}
+      />
+    );
+  }
+
+  // Render editing text overlay
+  const editingOverlay = textOverlays.find(t => t.id === editingTextId);
+  if (editingTextId && editingOverlay) {
+    return (
+      <StoryTextOverlay
+        overlay={editingOverlay}
+        onUpdate={handleUpdateTextOverlay}
+        onDelete={handleDeleteTextOverlay}
+        isEditing={true}
+        onEditComplete={() => setEditingTextId(null)}
+      />
+    );
+  }
+
+  // Render preview/editing mode
+  return (
+    <div className="fixed inset-0 bg-black flex flex-col z-50">
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => {
+            if (mediaFile) {
+              setMediaFile(null);
+              setMediaPreview(null);
+              setMode('capture');
+            } else {
+              handleClose();
+            }
+          }} 
+          className="text-white hover:bg-white/10 bg-black/30 backdrop-blur-sm"
+        >
+          <X className="h-6 w-6" />
+        </Button>
+
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMode('audience')}
+            className="text-white hover:bg-white/10 bg-black/30 backdrop-blur-sm"
+          >
+            <Users className="h-5 w-5" />
+          </Button>
+          <Button
+            onClick={handleShare}
+            disabled={isUploading || (!mediaFile && !storyText.trim())}
+            className="bg-primary hover:bg-primary/90 gap-2 px-4"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                Share
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Right Side Tools */}
+      <div className="absolute top-20 right-4 z-20 flex flex-col gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleAddText}
+          className="text-white hover:bg-white/10 bg-black/30 backdrop-blur-sm rounded-full w-12 h-12"
+        >
+          <Type className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMode('draw')}
+          className="text-white hover:bg-white/10 bg-black/30 backdrop-blur-sm rounded-full w-12 h-12"
+        >
+          <Pencil className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMode('stickers')}
+          className="text-white hover:bg-white/10 bg-black/30 backdrop-blur-sm rounded-full w-12 h-12"
+        >
+          <Smile className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => toast({ title: 'Music coming soon!' })}
+          className="text-white hover:bg-white/10 bg-black/30 backdrop-blur-sm rounded-full w-12 h-12"
+        >
+          <Music className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => toast({ title: 'Effects coming soon!' })}
+          className="text-white hover:bg-white/10 bg-black/30 backdrop-blur-sm rounded-full w-12 h-12"
+        >
+          <Sparkles className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Preview Area */}
+      <div 
+        ref={previewRef}
+        className="flex-1 flex items-center justify-center relative overflow-hidden"
+      >
+        {mediaType === 'text' ? (
+          <div 
+            className={`w-full h-full ${textBackground.bg} flex items-center justify-center p-8`}
+          >
+            <p className="text-white text-3xl font-bold text-center break-words max-w-[80%]">
+              {storyText || 'Type your story...'}
+            </p>
+          </div>
+        ) : mediaPreview ? (
+          <>
+            {mediaType === 'video' ? (
+              <video
+                src={mediaPreview}
+                className="w-full h-full object-contain"
+                style={{ filter: currentFilter?.css || 'none' }}
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
+            ) : (
+              <img
+                src={mediaPreview}
+                alt="Story preview"
+                className="w-full h-full object-contain"
+                style={{ filter: currentFilter?.css || 'none' }}
+              />
+            )}
+          </>
+        ) : null}
+
+        {/* Drawing Overlay */}
+        {drawingOverlay && (
+          <img
+            src={drawingOverlay}
+            alt="Drawing"
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          />
         )}
+
+        {/* Text Overlays */}
+        {textOverlays.map((overlay) => (
+          <div
+            key={overlay.id}
+            onClick={() => setEditingTextId(overlay.id)}
+            className="cursor-pointer"
+          >
+            <StoryTextOverlay
+              overlay={overlay}
+              onUpdate={handleUpdateTextOverlay}
+              onDelete={handleDeleteTextOverlay}
+              isEditing={false}
+              onEditComplete={() => {}}
+            />
+          </div>
+        ))}
+
+        {/* Stickers */}
+        {stickers.map((sticker) => (
+          <StickerDisplay
+            key={sticker.id}
+            sticker={sticker}
+            onDelete={handleDeleteSticker}
+          />
+        ))}
       </div>
 
       {/* Bottom Controls */}
-      {selectedFile && (
-        <div className="bg-background border-t p-4 space-y-4">
-          {/* Caption */}
-          <div>
-            <Textarea
-              placeholder="Add caption..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={2}
-              className="resize-none"
-            />
-          </div>
+      <div className="absolute bottom-0 left-0 right-0 z-20 pb-safe">
+        {/* Filters (only for image/video) */}
+        {mediaPreview && mediaType !== 'text' && (
+          <StoryFilterPicker
+            selectedFilter={selectedFilter}
+            onSelect={setSelectedFilter}
+            previewUrl={mediaPreview}
+          />
+        )}
 
-          {/* Filters */}
-          <div>
-            <p className="text-sm font-medium mb-2 flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Filters
-            </p>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {filters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setSelectedFilter(filter.id)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
-                    selectedFilter === filter.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted hover:bg-muted/80'
-                  }`}
-                >
-                  {filter.name}
-                </button>
-              ))}
-            </div>
+        {/* Text Background Picker (only for text stories) */}
+        {mediaType === 'text' && (
+          <div className="flex gap-2 justify-center p-4">
+            {textBackgrounds.map((bg) => (
+              <button
+                key={bg.id}
+                onClick={() => setTextBackground(bg)}
+                className={`w-8 h-8 rounded-full ${bg.bg} border-2 transition-all ${
+                  textBackground.id === bg.id ? 'border-white scale-110' : 'border-transparent'
+                }`}
+              />
+            ))}
           </div>
+        )}
+
+        {/* Gallery Button */}
+        <div className="flex justify-center pb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-white hover:bg-white/10 gap-2"
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Change Media
+          </Button>
         </div>
-      )}
+      </div>
+
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
     </div>
   );
 };
