@@ -289,8 +289,8 @@ const CreatePost = () => {
               value={postContent}
               onChange={(e) => setPostContent(e.target.value)}
               onFocus={() => setIsExpanded(true)}
-              className="border-0 bg-muted/50 resize-none focus-visible:ring-primary min-h-[60px]"
-              rows={isExpanded ? 3 : 2}
+              className="border-0 bg-muted/50 resize-none focus-visible:ring-primary min-h-[60px] max-h-[40vh] overflow-y-auto"
+              rows={isExpanded ? 4 : 2}
             />
           </div>
         </div>

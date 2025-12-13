@@ -39,7 +39,7 @@ interface NotificationCenterProps {
 }
 
 const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, refetch } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [expandedGroup, setExpandedGroup] = useState<NotificationGroup | null>(null);
   const [showClearAllDialog, setShowClearAllDialog] = useState(false);
@@ -53,6 +53,7 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
         .eq('id', notificationId);
       
       if (error) throw error;
+      await refetch(); // Refresh notifications list
     } catch (err) {
       console.error('Error clearing notification:', err);
     }
@@ -71,7 +72,8 @@ const NotificationCenter = ({ isOpen, onClose }: NotificationCenterProps) => {
       if (error) throw error;
       
       setShowClearAllDialog(false);
-      window.location.reload(); // Refresh to show cleared state
+      setExpandedGroup(null);
+      await refetch(); // Refresh notifications from database
       
       toast({
         title: 'Notifications cleared',
