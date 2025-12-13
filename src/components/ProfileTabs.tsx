@@ -77,54 +77,53 @@ export const ProfileTabs = ({ tabs, activeTab, onTabChange, sticky = true }: Pro
     <div 
       ref={containerRef}
       className={cn(
-        "bg-background/95 backdrop-blur-xl border-b border-border z-40 overflow-x-auto scrollbar-hide",
+        "bg-background/95 backdrop-blur-xl border-b border-border z-40",
         sticky && "sticky top-[53px]"
       )}
       onTouchStart={handleTouchStart}
     >
-      <div className="flex relative min-w-max">
+      <div className="flex relative">
         {tabs.map((tab, index) => {
           const icon = tab.icon || TAB_ICONS[tab.id];
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               ref={(el) => (tabRefs.current[index] = el)}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex-1 min-w-[90px] px-4 py-3.5 text-sm font-medium transition-all relative",
-                activeTab === tab.id
+                "flex-1 px-3 py-3.5 text-sm font-medium transition-all relative flex items-center justify-center gap-2",
+                isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground/80 hover:bg-muted/30"
               )}
             >
-              <span className="flex items-center justify-center gap-2">
-                {icon && (
-                  <span className={cn(
-                    "transition-colors",
-                    activeTab === tab.id ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    {icon}
-                  </span>
-                )}
-                <span className="hidden sm:inline">{tab.label}</span>
-                {tab.count !== undefined && tab.count > 0 && (
-                  <span className={cn(
-                    "text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center",
-                    activeTab === tab.id 
-                      ? "bg-primary/10 text-primary" 
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {tab.count > 99 ? '99+' : tab.count}
-                  </span>
-                )}
-              </span>
+              {icon && (
+                <span className={cn(
+                  "transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {icon}
+                </span>
+              )}
+              <span className="hidden sm:inline">{tab.label}</span>
+              {tab.count !== undefined && tab.count > 0 && (
+                <span className={cn(
+                  "text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center font-medium",
+                  isActive 
+                    ? "bg-primary/15 text-primary" 
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {tab.count > 99 ? '99+' : tab.count}
+                </span>
+              )}
             </button>
           );
         })}
         
         {/* Animated underline indicator */}
         <div 
-          className="absolute bottom-0 h-[3px] bg-primary rounded-full transition-all duration-300 ease-out"
+          className="absolute bottom-0 h-[2px] bg-primary rounded-full transition-all duration-300 ease-out"
           style={{
             left: indicatorStyle.left,
             width: indicatorStyle.width,
