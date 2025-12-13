@@ -2,19 +2,28 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { X, Camera, Play, Music, Send, Loader2, Film } from 'lucide-react';
+import { Camera, Film } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useReels } from '@/hooks/useReels';
 import { toast } from '@/hooks/use-toast';
 import { BackNavigation } from '@/components/BackNavigation';
 import { ReelPostConfirmModal } from '@/components/ReelPostConfirmModal';
+import { cn } from '@/lib/utils';
 
+// TikTok-style filters - synced with InstagramReelCreator
 const filters = [
   { id: 'none', name: 'Original', css: 'none' },
-  { id: 'warm', name: 'Warm', css: 'saturate(130%) brightness(105%) hue-rotate(-10deg)' },
-  { id: 'cool', name: 'Cool', css: 'saturate(110%) hue-rotate(20deg)' },
-  { id: 'vivid', name: 'Vivid', css: 'saturate(200%) contrast(110%)' },
-  { id: 'dramatic', name: 'Dramatic', css: 'contrast(150%) brightness(90%)' },
+  { id: 'retro', name: 'Retro', css: 'sepia(0.5) contrast(1.2) saturate(1.3)' },
+  { id: 'vintage', name: 'Vintage', css: 'sepia(0.4) contrast(1.1) saturate(1.2) hue-rotate(-10deg)' },
+  { id: 'warm', name: 'Warm', css: 'brightness(1.1) contrast(1.1) saturate(1.2)' },
+  { id: 'cool', name: 'Cool', css: 'brightness(1.1) contrast(1.1) hue-rotate(180deg) saturate(1.1)' },
+  { id: 'cinematic', name: 'Cinematic', css: 'contrast(1.3) saturate(1.2) brightness(0.9)' },
+  { id: 'noir', name: 'Noir', css: 'grayscale(1) contrast(1.5)' },
+  { id: 'vibrant', name: 'Vibrant', css: 'saturate(1.5) contrast(1.2)' },
+  { id: 'pastel', name: 'Pastel', css: 'saturate(0.7) contrast(0.9) brightness(1.1)' },
+  { id: 'sunset', name: 'Sunset', css: 'sepia(0.3) saturate(1.4) brightness(1.1) hue-rotate(-15deg)' },
+  { id: 'arctic', name: 'Arctic', css: 'brightness(1.2) contrast(0.9) saturate(0.8) hue-rotate(190deg)' },
+  { id: 'pop', name: 'Pop', css: 'saturate(2) contrast(1.3) brightness(1.05)' },
 ];
 
 const CreateReelPage = () => {
@@ -135,14 +144,17 @@ const CreateReelPage = () => {
 
           <div>
             <label className="text-sm font-medium mb-2 block">Filter</label>
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {filters.map((filter) => (
                 <button
                   key={filter.id}
                   onClick={() => setSelectedFilter(filter.id)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-lg border ${
-                    selectedFilter === filter.id ? 'border-primary bg-primary/10' : 'border-border'
-                  }`}
+                  className={cn(
+                    "flex-shrink-0 px-4 py-2 rounded-lg border transition-all",
+                    selectedFilter === filter.id 
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/50" 
+                      : "border-border hover:border-primary/50"
+                  )}
                 >
                   {filter.name}
                 </button>

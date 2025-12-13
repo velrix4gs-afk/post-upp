@@ -2,8 +2,7 @@ import { useState, useRef } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
-import { X, Image as ImageIcon, Camera, Play, Music, Scissors, Send, Loader2 } from 'lucide-react';
+import { X, Image as ImageIcon, Camera, Send, Loader2 } from 'lucide-react';
 import { useReels } from '@/hooks/useReels';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -14,14 +13,22 @@ interface InstagramReelCreatorProps {
   onReelCreated?: () => void;
 }
 
+// TikTok-style filters with comprehensive options
 const filters = [
   { id: 'none', name: 'Original', css: 'none' },
-  { id: 'warm', name: 'Warm', css: 'saturate(130%) brightness(105%) hue-rotate(-10deg)' },
-  { id: 'cool', name: 'Cool', css: 'saturate(110%) hue-rotate(20deg)' },
-  { id: 'vivid', name: 'Vivid', css: 'saturate(200%) contrast(110%)' },
-  { id: 'dramatic', name: 'Dramatic', css: 'contrast(150%) brightness(90%)' },
-  { id: 'retro', name: 'Retro', css: 'sepia(50%) contrast(120%)' },
-  { id: 'bw', name: 'B&W', css: 'grayscale(100%)' },
+  { id: 'retro', name: 'Retro', css: 'sepia(0.5) contrast(1.2) saturate(1.3)' },
+  { id: 'vintage', name: 'Vintage', css: 'sepia(0.4) contrast(1.1) saturate(1.2) hue-rotate(-10deg)' },
+  { id: 'warm', name: 'Warm', css: 'brightness(1.1) contrast(1.1) saturate(1.2)' },
+  { id: 'cool', name: 'Cool', css: 'brightness(1.1) contrast(1.1) hue-rotate(180deg) saturate(1.1)' },
+  { id: 'cinematic', name: 'Cinematic', css: 'contrast(1.3) saturate(1.2) brightness(0.9)' },
+  { id: 'noir', name: 'Noir', css: 'grayscale(1) contrast(1.5)' },
+  { id: 'vibrant', name: 'Vibrant', css: 'saturate(1.5) contrast(1.2)' },
+  { id: 'pastel', name: 'Pastel', css: 'saturate(0.7) contrast(0.9) brightness(1.1)' },
+  { id: 'sunset', name: 'Sunset', css: 'sepia(0.3) saturate(1.4) brightness(1.1) hue-rotate(-15deg)' },
+  { id: 'arctic', name: 'Arctic', css: 'brightness(1.2) contrast(0.9) saturate(0.8) hue-rotate(190deg)' },
+  { id: 'pop', name: 'Pop', css: 'saturate(2) contrast(1.3) brightness(1.05)' },
+  { id: 'fade', name: 'Fade', css: 'contrast(0.9) brightness(1.1) saturate(0.9)' },
+  { id: 'drama', name: 'Drama', css: 'contrast(1.4) saturate(1.1) brightness(0.85)' },
 ];
 
 export const InstagramReelCreator = ({ open, onOpenChange, onReelCreated }: InstagramReelCreatorProps) => {
@@ -63,8 +70,7 @@ export const InstagramReelCreator = ({ open, onOpenChange, onReelCreated }: Inst
     setStep('edit');
   };
 
-  const handleSpeedChange = (value: number[]) => {
-    const speed = value[0];
+  const handleSpeedChange = (speed: number) => {
     setPlaybackSpeed(speed);
     if (videoRef.current) {
       videoRef.current.playbackRate = speed;
@@ -216,7 +222,7 @@ export const InstagramReelCreator = ({ open, onOpenChange, onReelCreated }: Inst
                   {[0.5, 1, 1.5, 2].map((speed) => (
                     <button
                       key={speed}
-                      onClick={() => handleSpeedChange([speed])}
+                      onClick={() => handleSpeedChange(speed)}
                       className={cn(
                         "flex-1 py-2 rounded-full text-sm font-medium transition-all",
                         playbackSpeed === speed
@@ -230,10 +236,10 @@ export const InstagramReelCreator = ({ open, onOpenChange, onReelCreated }: Inst
                 </div>
               </div>
 
-              {/* Filters */}
+              {/* TikTok-Style Filters */}
               <div className="mb-4">
                 <p className="text-white text-sm font-medium mb-2">Filters</p>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {filters.map((filter) => (
                     <button
                       key={filter.id}
@@ -244,7 +250,7 @@ export const InstagramReelCreator = ({ open, onOpenChange, onReelCreated }: Inst
                         className={cn(
                           "w-16 h-16 rounded-xl overflow-hidden border-2 transition-all",
                           selectedFilter === filter.id
-                            ? "border-white scale-110"
+                            ? "border-white scale-110 ring-2 ring-purple-500"
                             : "border-white/30 hover:border-white/50"
                         )}
                       >
