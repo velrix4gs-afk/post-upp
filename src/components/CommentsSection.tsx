@@ -43,7 +43,7 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Write a comment..."
-            className="min-h-[60px] resize-none"
+            className="min-h-[60px] max-h-[40vh] overflow-y-auto resize-none"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();

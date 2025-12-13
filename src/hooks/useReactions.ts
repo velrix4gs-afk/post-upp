@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export type ReactionType = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry';
+export type ReactionType = 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry';
 
 export const REACTION_EMOJIS: Record<ReactionType, string> = {
   like: '👍',
   love: '❤️',
+  care: '🤗',
   haha: '😂',
   wow: '😮',
   sad: '😢',
@@ -16,6 +17,7 @@ export const REACTION_EMOJIS: Record<ReactionType, string> = {
 interface ReactionCounts {
   like: number;
   love: number;
+  care: number;
   haha: number;
   wow: number;
   sad: number;
@@ -28,6 +30,7 @@ export const useReactions = (postId: string) => {
   const [reactionCounts, setReactionCounts] = useState<ReactionCounts>({
     like: 0,
     love: 0,
+    care: 0,
     haha: 0,
     wow: 0,
     sad: 0,
@@ -55,6 +58,7 @@ export const useReactions = (postId: string) => {
       const counts: ReactionCounts = {
         like: 0,
         love: 0,
+        care: 0,
         haha: 0,
         wow: 0,
         sad: 0,
