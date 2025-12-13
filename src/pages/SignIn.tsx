@@ -120,20 +120,38 @@ const SignIn = () => {
     setLoading(true);
 
     try {
+      // Validate email
+      if (!magicLinkEmail || !magicLinkEmail.includes('@')) {
+        toast({
+          title: 'Invalid email',
+          description: 'Please enter a valid email address',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         email: magicLinkEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/feed`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           shouldCreateUser: false,
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('User not found') || error.message.includes('no user')) {
+          toast({
+            title: 'Account not found',
+            description: 'No account exists with this email. Please sign up first.',
+            variant: 'destructive'
+          });
+          return;
+        }
+        throw error;
+      }
 
-      toast({
-        title: 'Magic link sent!',
-        description: 'Check your email and click the link to sign in.',
-      });
+      // Navigate to magic link sent page
+      navigate('/auth/magic-link-sent', { state: { email: magicLinkEmail } });
       
     } catch (error: any) {
       toast({
