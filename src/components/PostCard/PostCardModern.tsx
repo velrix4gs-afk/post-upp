@@ -1,11 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { 
-  MoreHorizontal, Pencil, Trash2, UserPlus, UserMinus, BellOff, 
-  AlertCircle, Ban, UserCircle, Pin, PinOff, MessageCircle, 
-  Repeat2, Share2, Bookmark, Heart, ExternalLink 
-} from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, UserPlus, UserMinus, BellOff, AlertCircle, Ban, UserCircle, Pin, PinOff, MessageCircle, Repeat2, Share2, Bookmark, Heart, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePosts } from "@/hooks/usePosts";
@@ -30,37 +26,11 @@ import { ThreadedCommentsSection } from "../ThreadedCommentsSection";
 import { cn } from "@/lib/utils";
 import { VerificationBadge } from "../premium/VerificationBadge";
 import { ProfileHoverCard } from "../ProfileHoverCard";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem,
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 export interface PostCardModernProps {
   post: {
     id: string;
@@ -91,8 +61,7 @@ const extractLinkPreview = (content: string) => {
       return {
         url: match[0],
         domain: url.hostname.replace('www.', ''),
-        title: url.hostname.replace('www.', '').split('.')[0].charAt(0).toUpperCase() + 
-               url.hostname.replace('www.', '').split('.')[0].slice(1),
+        title: url.hostname.replace('www.', '').split('.')[0].charAt(0).toUpperCase() + url.hostname.replace('www.', '').split('.')[0].slice(1)
       };
     } catch {
       return null;
@@ -106,7 +75,6 @@ const formatRelativeTime = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
   if (diffInSeconds < 60) return `${diffInSeconds}s`;
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
@@ -114,16 +82,43 @@ const formatRelativeTime = (dateString: string) => {
   if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)}w`;
   return format(date, 'MMM d');
 };
-
-export const PostCardModern = ({ post }: PostCardModernProps) => {
-  const { user } = useAuth();
-  const { updatePost, deletePost } = usePosts();
-  const { toggleBookmark, isBookmarked } = useBookmarks();
-  const { followUser, unfollowUser, following } = useFollowers();
-  const { blockUser } = useBlockedUsers();
-  const { toggleRepost, isReposted } = useReposts();
-  const { pinPost, unpinPost, isPinned } = usePinnedPosts();
-  const { userReaction, reactionCounts, toggleReaction: handleReactionToggle, getTotalReactions } = useReactions(post.id);
+export const PostCardModern = ({
+  post
+}: PostCardModernProps) => {
+  const {
+    user
+  } = useAuth();
+  const {
+    updatePost,
+    deletePost
+  } = usePosts();
+  const {
+    toggleBookmark,
+    isBookmarked
+  } = useBookmarks();
+  const {
+    followUser,
+    unfollowUser,
+    following
+  } = useFollowers();
+  const {
+    blockUser
+  } = useBlockedUsers();
+  const {
+    toggleRepost,
+    isReposted
+  } = useReposts();
+  const {
+    pinPost,
+    unpinPost,
+    isPinned
+  } = usePinnedPosts();
+  const {
+    userReaction,
+    reactionCounts,
+    toggleReaction: handleReactionToggle,
+    getTotalReactions
+  } = useReactions(post.id);
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -137,29 +132,30 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
   const [galleryStartIndex, setGalleryStartIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
-
   const isOwner = user?.id === post.author_id;
   const isFollowingAuthor = following.some(f => f.following?.id === post.author_id);
   const linkPreview = extractLinkPreview(post.content || '');
-
   const handleFollowToggle = async () => {
     if (isFollowingAuthor) {
       await unfollowUser(post.author_id);
-      toast({ title: 'Unfollowed' });
+      toast({
+        title: 'Unfollowed'
+      });
     } else {
       await followUser(post.author_id, false);
-      toast({ title: 'Following' });
+      toast({
+        title: 'Following'
+      });
     }
   };
-
   const handleMuteUser = () => {
-    toast({ title: 'Mute feature coming soon' });
+    toast({
+      title: 'Mute feature coming soon'
+    });
   };
-
   const handleReportPost = () => {
     setShowReportDialog(true);
   };
-
   const handlePinToggle = async () => {
     if (isPinned(post.id)) {
       await unpinPost(post.id);
@@ -167,29 +163,32 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
       await pinPost(post.id);
     }
   };
-
   const handleBlockUser = async () => {
     await blockUser(post.author_id, 'Blocked from post');
-    toast({ title: 'User Blocked' });
+    toast({
+      title: 'User Blocked'
+    });
   };
-
   useEffect(() => {
     setLocalReactionCount(getTotalReactions());
   }, [reactionCounts]);
-
   const handleEdit = async () => {
     if (!editContent.trim()) return;
-    await updatePost(post.id, { content: editContent });
+    await updatePost(post.id, {
+      content: editContent
+    });
     setShowEditDialog(false);
-    toast({ title: "Post updated" });
+    toast({
+      title: "Post updated"
+    });
   };
-
   const handleDelete = async () => {
     await deletePost(post.id);
     setShowDeleteDialog(false);
-    toast({ title: "Post deleted" });
+    toast({
+      title: "Post deleted"
+    });
   };
-
   const handleRepost = async () => {
     if (!user) return;
     const wasReposted = isReposted(post.id);
@@ -200,17 +199,14 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
       setLocalRepostCount(post.shares_count || 0);
     }
   };
-
   const handleLikeWithAnimation = async () => {
     setIsLikeAnimating(true);
     await handleReactionToggle('like');
     setTimeout(() => setIsLikeAnimating(false), 300);
   };
-
   const handleShare = () => {
     setShowShareDialog(true);
   };
-
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a') || target.closest('[role="button"]')) {
@@ -222,43 +218,30 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
   // Parse content for @mentions and #hashtags
   const renderContent = (text: string) => {
     if (!text) return null;
-    
+
     // Remove URL if we're showing link preview
     let displayText = text;
     if (linkPreview) {
       displayText = text.replace(linkPreview.url, '').trim();
     }
-
     const parts = displayText.split(/(@\w+|#\w+)/g);
     return parts.map((part, index) => {
       if (part.startsWith('@')) {
-        return (
-          <button
-            key={index}
-            onClick={(e) => {
-              e.stopPropagation();
-              // Navigate to user profile
-            }}
-            className="text-primary hover:underline font-medium"
-          >
+        return <button key={index} onClick={e => {
+          e.stopPropagation();
+          // Navigate to user profile
+        }} className="text-primary hover:underline font-medium">
             {part}
-          </button>
-        );
+          </button>;
       }
       if (part.startsWith('#')) {
         const tag = part.slice(1);
-        return (
-          <button
-            key={index}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/hashtag/${tag}`);
-            }}
-            className="text-primary hover:underline font-medium"
-          >
+        return <button key={index} onClick={e => {
+          e.stopPropagation();
+          navigate(`/hashtag/${tag}`);
+        }} className="text-primary hover:underline font-medium">
             {part}
-          </button>
-        );
+          </button>;
       }
       return <span key={index}>{part}</span>;
     });
@@ -269,9 +252,7 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
     const name = post.author_name || 'U';
     return name.charAt(0).toUpperCase();
   };
-
-  return (
-    <TooltipProvider>
+  return <TooltipProvider>
       <>
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
@@ -293,11 +274,7 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
             <DialogHeader>
               <DialogTitle>Edit Post</DialogTitle>
             </DialogHeader>
-            <Textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="min-h-[100px]"
-            />
+            <Textarea value={editContent} onChange={e => setEditContent(e.target.value)} className="min-h-[100px]" />
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
               <Button onClick={handleEdit} className="bg-primary">Save</Button>
@@ -305,32 +282,21 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
           </DialogContent>
         </Dialog>
 
-        <Card 
-          className={cn(
-            "post-card bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden",
-            post.is_pinned && "ring-2 ring-primary/20"
-          )}
-          onClick={handleCardClick}
-        >
+        <Card className={cn("post-card bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden", post.is_pinned && "ring-2 ring-primary/20")} onClick={handleCardClick}>
           {/* Pinned indicator */}
-          {post.is_pinned && (
-            <div className="px-4 pt-2 flex items-center gap-2 text-muted-foreground text-xs">
+          {post.is_pinned && <div className="px-4 pt-2 flex items-center gap-2 text-muted-foreground text-xs">
               <Pin className="h-3 w-3" />
               <span>Pinned post</span>
-            </div>
-          )}
+            </div>}
 
           <div className="p-4">
             {/* Post Header */}
             <div className="flex items-start gap-3 mb-3">
               <ProfileHoverCard userId={post.author_id}>
-                <Avatar 
-                  className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-border flex-shrink-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/profile/${post.author_id}`);
-                  }}
-                >
+                <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-border flex-shrink-0" onClick={e => {
+                e.stopPropagation();
+                navigate(`/profile/${post.author_id}`);
+              }}>
                   <AvatarImage src={post.author_avatar} />
                   <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                     {getAvatarFallback()}
@@ -340,24 +306,16 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
 
               <div className="flex-1 min-w-0">
                 <ProfileHoverCard userId={post.author_id}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/profile/${post.author_id}`);
-                    }}
-                    className="font-semibold text-foreground hover:underline text-[15px] flex items-center gap-1"
-                  >
+                  <button onClick={e => {
+                  e.stopPropagation();
+                  navigate(`/profile/${post.author_id}`);
+                }} className="font-semibold text-foreground hover: text-[15px] flex items-center gap-1">
                     {post.author_name}
-                    <VerificationBadge 
-                      isVerified={post.is_verified}
-                      verificationType={post.verification_type}
-                    />
+                    <VerificationBadge isVerified={post.is_verified} verificationType={post.verification_type} />
                   </button>
                 </ProfileHoverCard>
                 
-                {post.author_username && (
-                  <div className="text-muted-foreground text-sm">@{post.author_username}</div>
-                )}
+                {post.author_username && <div className="text-muted-foreground text-sm">@{post.author_username}</div>}
                 
                 <div className="flex items-center gap-1.5 text-muted-foreground text-xs mt-0.5">
                   <Tooltip>
@@ -374,73 +332,74 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
               </div>
 
               {/* Follow button - only show if not following and not the owner */}
-              {!isOwner && user && !isFollowingAuthor && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="h-8 px-4 rounded-full text-xs font-semibold bg-primary hover:bg-primary/90"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleFollowToggle();
-                  }}
-                >
+              {!isOwner && user && !isFollowingAuthor && <Button variant="default" size="sm" className="h-8 px-4 rounded-full text-xs font-semibold bg-primary hover:bg-primary/90" onClick={e => {
+              e.stopPropagation();
+              handleFollowToggle();
+            }}>
                   Follow
-                </Button>
-              )}
+                </Button>}
 
               {/* More options menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 w-8 p-0 rounded-full hover:bg-muted"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-muted" onClick={e => e.stopPropagation()}>
                     <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {isOwner ? (
-                    <>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePinToggle(); }}>
-                        {isPinned(post.id) ? (
-                          <><PinOff className="h-4 w-4 mr-2" />Unpin from Profile</>
-                        ) : (
-                          <><Pin className="h-4 w-4 mr-2" />Pin to Profile</>
-                        )}
+                  {isOwner ? <>
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    handlePinToggle();
+                  }}>
+                        {isPinned(post.id) ? <><PinOff className="h-4 w-4 mr-2" />Unpin from Profile</> : <><Pin className="h-4 w-4 mr-2" />Pin to Profile</>}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowEditDialog(true); }}>
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    setShowEditDialog(true);
+                  }}>
                         <Pencil className="h-4 w-4 mr-2" />Edit Post
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(true); }}
-                        className="text-destructive focus:text-destructive"
-                      >
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    setShowDeleteDialog(true);
+                  }} className="text-destructive focus:text-destructive">
                         <Trash2 className="h-4 w-4 mr-2" />Delete Post
                       </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author_id}`); }}>
+                    </> : <>
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    navigate(`/profile/${post.author_id}`);
+                  }}>
                         <UserCircle className="h-4 w-4 mr-2" />View Profile
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleBookmark(post.id); }}>
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    toggleBookmark(post.id);
+                  }}>
                         <Bookmark className="h-4 w-4 mr-2" />Save Post
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMuteUser(); }}>
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    handleMuteUser();
+                  }}>
                         <BellOff className="h-4 w-4 mr-2" />Mute User
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleReportPost(); }} className="text-destructive">
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    handleReportPost();
+                  }} className="text-destructive">
                         <AlertCircle className="h-4 w-4 mr-2" />Report Post
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleBlockUser(); }} className="text-destructive">
+                      <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    handleBlockUser();
+                  }} className="text-destructive">
                         <Ban className="h-4 w-4 mr-2" />Block User
                       </DropdownMenuItem>
-                    </>
-                  )}
+                    </>}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -453,14 +412,7 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
             </div>
 
             {/* Link Preview */}
-            {linkPreview && (
-              <a
-                href={linkPreview.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="block mb-3 border border-border rounded-xl overflow-hidden hover:bg-muted/50 transition-colors"
-              >
+            {linkPreview && <a href={linkPreview.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="block mb-3 border border-border rounded-xl overflow-hidden hover:bg-muted/50 transition-colors">
                 <div className="p-3 flex items-center gap-3">
                   <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                     <ExternalLink className="h-5 w-5 text-muted-foreground" />
@@ -470,91 +422,56 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
                     <p className="text-xs text-muted-foreground truncate">{linkPreview.domain}</p>
                   </div>
                 </div>
-              </a>
-            )}
+              </a>}
 
             {/* Media */}
-            {post.media_url && (
-              <>
-                {(post.media_url.endsWith('.mp4') || post.media_url.endsWith('.webm') || post.media_url.includes('/video/')) ? (
-                  <div className="rounded-xl overflow-hidden mb-3">
+            {post.media_url && <>
+                {post.media_url.endsWith('.mp4') || post.media_url.endsWith('.webm') || post.media_url.includes('/video/') ? <div className="rounded-xl overflow-hidden mb-3">
                     <VideoViewer videoUrl={post.media_url} />
-                  </div>
-                ) : (
-                  <div 
-                    className="rounded-xl overflow-hidden mb-3 cursor-pointer hover:opacity-95 transition"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setGalleryImages([post.media_url!]);
-                      setGalleryStartIndex(0);
-                      setShowImageGallery(true);
-                    }}
-                  >
-                    <img 
-                      src={post.media_url} 
-                      alt="Post media"
-                      className="w-full h-auto object-cover max-h-[400px]"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-              </>
-            )}
+                  </div> : <div className="rounded-xl overflow-hidden mb-3 cursor-pointer hover:opacity-95 transition" onClick={e => {
+              e.stopPropagation();
+              setGalleryImages([post.media_url!]);
+              setGalleryStartIndex(0);
+              setShowImageGallery(true);
+            }}>
+                    <img src={post.media_url} alt="Post media" className="w-full h-auto object-cover max-h-[400px]" loading="lazy" />
+                  </div>}
+              </>}
 
             <PollCard postId={post.id} />
 
             {/* Engagement Stats */}
-            {(localReactionCount > 0 || post.comments_count > 0 || localRepostCount > 0) && (
-              <div className="flex items-center justify-between py-2 border-b border-border text-xs text-muted-foreground">
+            {(localReactionCount > 0 || post.comments_count > 0 || localRepostCount > 0) && <div className="flex items-center justify-between py-2 border-b border-border text-xs text-muted-foreground">
                 <div className="flex items-center gap-4">
-                  {localReactionCount > 0 && (
-                    <span className="flex items-center gap-1.5">
+                  {localReactionCount > 0 && <span className="flex items-center gap-1.5">
                       <span className="flex -space-x-1">
                         <span className="h-4 w-4 rounded-full bg-destructive flex items-center justify-center">
                           <Heart className="h-2.5 w-2.5 text-white fill-white" />
                         </span>
                       </span>
                       <span className="font-medium">{localReactionCount}</span>
-                    </span>
-                  )}
+                    </span>}
                 </div>
                 <div className="flex items-center gap-3">
-                  {post.comments_count > 0 && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}
-                      className="hover:underline"
-                    >
+                  {post.comments_count > 0 && <button onClick={e => {
+                e.stopPropagation();
+                setShowComments(!showComments);
+              }} className="hover:underline">
                       {post.comments_count} comment{post.comments_count !== 1 ? 's' : ''}
-                    </button>
-                  )}
-                  {localRepostCount > 0 && (
-                    <span>{localRepostCount} share{localRepostCount !== 1 ? 's' : ''}</span>
-                  )}
+                    </button>}
+                  {localRepostCount > 0 && <span>{localRepostCount} share{localRepostCount !== 1 ? 's' : ''}</span>}
                 </div>
-              </div>
-            )}
+              </div>}
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-1 -mx-2">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "flex-1 gap-2 h-10 rounded-lg hover:bg-destructive/10 transition-all",
-                      userReaction && "text-destructive",
-                      isLikeAnimating && "scale-110"
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLikeWithAnimation();
-                    }}
-                  >
-                    <Heart className={cn(
-                      "h-5 w-5 transition-all",
-                      userReaction && "fill-current"
-                    )} />
+                  <Button variant="ghost" size="sm" className={cn("flex-1 gap-2 h-10 rounded-lg hover:bg-destructive/10 transition-all", userReaction && "text-destructive", isLikeAnimating && "scale-110")} onClick={e => {
+                  e.stopPropagation();
+                  handleLikeWithAnimation();
+                }}>
+                    <Heart className={cn("h-5 w-5 transition-all", userReaction && "fill-current")} />
                     <span className="text-sm font-medium">Like</span>
                   </Button>
                 </TooltipTrigger>
@@ -563,15 +480,10 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex-1 gap-2 h-10 rounded-lg hover:bg-primary/10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowComments(!showComments);
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" className="flex-1 gap-2 h-10 rounded-lg hover:bg-primary/10" onClick={e => {
+                  e.stopPropagation();
+                  setShowComments(!showComments);
+                }}>
                     <MessageCircle className="h-5 w-5" />
                     <span className="text-sm font-medium">Comment</span>
                   </Button>
@@ -581,18 +493,10 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "flex-1 gap-2 h-10 rounded-lg hover:bg-success/10",
-                      isReposted(post.id) && "text-success"
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRepost();
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" className={cn("flex-1 gap-2 h-10 rounded-lg hover:bg-success/10", isReposted(post.id) && "text-success")} onClick={e => {
+                  e.stopPropagation();
+                  handleRepost();
+                }}>
                     <Repeat2 className="h-5 w-5" />
                     <span className="text-sm font-medium">Share</span>
                   </Button>
@@ -602,22 +506,11 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "flex-1 gap-2 h-10 rounded-lg hover:bg-warning/10",
-                      isBookmarked(post.id) && "text-warning"
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleBookmark(post.id);
-                    }}
-                  >
-                    <Bookmark className={cn(
-                      "h-5 w-5",
-                      isBookmarked(post.id) && "fill-current"
-                    )} />
+                  <Button variant="ghost" size="sm" className={cn("flex-1 gap-2 h-10 rounded-lg hover:bg-warning/10", isBookmarked(post.id) && "text-warning")} onClick={e => {
+                  e.stopPropagation();
+                  toggleBookmark(post.id);
+                }}>
+                    <Bookmark className={cn("h-5 w-5", isBookmarked(post.id) && "fill-current")} />
                     <span className="text-sm font-medium">Save</span>
                   </Button>
                 </TooltipTrigger>
@@ -626,34 +519,17 @@ export const PostCardModern = ({ post }: PostCardModernProps) => {
             </div>
 
             {/* Comments Section */}
-            {showComments && (
-              <div className="mt-3 pt-3 border-t border-border">
+            {showComments && <div className="mt-3 pt-3 border-t border-border">
                 <ThreadedCommentsSection postId={post.id} />
-              </div>
-            )}
+              </div>}
           </div>
         </Card>
 
-        <SharePostDialog
-          postId={post.id}
-          open={showShareDialog}
-          onOpenChange={setShowShareDialog}
-        />
+        <SharePostDialog postId={post.id} open={showShareDialog} onOpenChange={setShowShareDialog} />
 
-        <ImageGalleryViewer 
-          images={galleryImages}
-          initialIndex={galleryStartIndex}
-          open={showImageGallery}
-          onOpenChange={setShowImageGallery}
-        />
+        <ImageGalleryViewer images={galleryImages} initialIndex={galleryStartIndex} open={showImageGallery} onOpenChange={setShowImageGallery} />
 
-        <ReportDialog
-          open={showReportDialog}
-          onOpenChange={setShowReportDialog}
-          contentId={post.id}
-          contentType="post"
-        />
+        <ReportDialog open={showReportDialog} onOpenChange={setShowReportDialog} contentId={post.id} contentType="post" />
       </>
-    </TooltipProvider>
-  );
+    </TooltipProvider>;
 };
