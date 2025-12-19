@@ -153,7 +153,7 @@ const Stories = () => {
       {selectedStory && <Dialog open={!!selectedStory} onOpenChange={() => setSelectedStory(null)}>
           <DialogContent className="max-w-md p-0">
             <div className="relative bg-black rounded-lg overflow-hidden">
-              <div className="absolute top-4 left-4 right-4 z-10 flex-row flex items-start justify-between bg-primary-foreground">
+              <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={selectedStory.profiles.avatar_url} />
@@ -173,11 +173,11 @@ const Stories = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex-row gap-px mx-[17px] flex items-center justify-start pb-px">
+                <div className="flex gap-2">
                   {selectedStory.user_id === user?.id && <Button size="sm" variant="destructive" className="hover:bg-destructive/90" onClick={e => handleDeleteStory(selectedStory.id, e)}>
                       Delete
                     </Button>}
-                  <Button size="sm" variant="ghost" onClick={() => setSelectedStory(null)} className="text-white hover:bg-white/20 text-justify">
+                  <Button size="sm" variant="ghost" className="text-white hover:bg-white/20" onClick={() => setSelectedStory(null)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
