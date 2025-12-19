@@ -5,26 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Image, 
-  Video, 
-  Smile, 
-  MapPin, 
-  Users,
-  X,
-  Save,
-  Clock,
-  Globe,
-  Lock,
-  UserCheck
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Image, Video, Smile, MapPin, Users, X, Save, Clock, Globe, Lock, UserCheck } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -38,28 +20,54 @@ import DraftsDialog from "../DraftsDialog";
 import { UserTagSelector } from "../UserTagSelector";
 import { postContentSchema } from "@/lib/validationSchemas";
 import { cn } from "@/lib/utils";
-
-const FEELINGS = [
-  { emoji: '😊', label: 'happy' },
-  { emoji: '😍', label: 'loved' },
-  { emoji: '😎', label: 'cool' },
-  { emoji: '😢', label: 'sad' },
-  { emoji: '😤', label: 'frustrated' },
-  { emoji: '🤔', label: 'thoughtful' },
-  { emoji: '🎉', label: 'excited' },
-  { emoji: '😴', label: 'tired' },
-  { emoji: '🤗', label: 'grateful' },
-  { emoji: '💪', label: 'motivated' },
-];
-
+const FEELINGS = [{
+  emoji: '😊',
+  label: 'happy'
+}, {
+  emoji: '😍',
+  label: 'loved'
+}, {
+  emoji: '😎',
+  label: 'cool'
+}, {
+  emoji: '😢',
+  label: 'sad'
+}, {
+  emoji: '😤',
+  label: 'frustrated'
+}, {
+  emoji: '🤔',
+  label: 'thoughtful'
+}, {
+  emoji: '🎉',
+  label: 'excited'
+}, {
+  emoji: '😴',
+  label: 'tired'
+}, {
+  emoji: '🤗',
+  label: 'grateful'
+}, {
+  emoji: '💪',
+  label: 'motivated'
+}];
 const MAX_CHARS = 5000;
-
 const CreatePostCard = () => {
-  const { user } = useAuth();
-  const { profile } = useProfile();
-  const { createPost } = usePosts();
-  const { saveDraft } = useDrafts();
-  const { processHashtags } = useHashtags();
+  const {
+    user
+  } = useAuth();
+  const {
+    profile
+  } = useProfile();
+  const {
+    createPost
+  } = usePosts();
+  const {
+    saveDraft
+  } = useDrafts();
+  const {
+    processHashtags
+  } = useHashtags();
   const [postContent, setPostContent] = useState("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -72,102 +80,101 @@ const CreatePostCard = () => {
   const [showFeelings, setShowFeelings] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [privacy, setPrivacy] = useState<'public' | 'friends' | 'private'>('public');
-
   const charCount = postContent.length;
-  const charPercentage = (charCount / MAX_CHARS) * 100;
-
+  const charPercentage = charCount / MAX_CHARS * 100;
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
-
     if (selectedImages.length + files.length > 10) {
-      showCleanError({ code: 'POST_001', message: 'Maximum 10 images per post' }, toast);
+      showCleanError({
+        code: 'POST_001',
+        message: 'Maximum 10 images per post'
+      }, toast);
       return;
     }
-
     const validFiles = files.filter(file => {
       if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        showCleanError({ code: 'POST_002', message: `${file.name} is not an image or video` }, toast);
+        showCleanError({
+          code: 'POST_002',
+          message: `${file.name} is not an image or video`
+        }, toast);
         return false;
       }
       const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        showCleanError({ 
-          code: 'POST_003', 
-          message: `${file.name} exceeds ${file.type.startsWith('video/') ? '100MB' : '10MB'} limit` 
+        showCleanError({
+          code: 'POST_003',
+          message: `${file.name} exceeds ${file.type.startsWith('video/') ? '100MB' : '10MB'} limit`
         }, toast);
         return false;
       }
       return true;
     });
-
     if (validFiles.length === 0) return;
-
     setSelectedImages(prev => [...prev, ...validFiles]);
-    
     validFiles.forEach(file => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         setPreviewImages(prev => [...prev, e.target?.result as string]);
       };
       reader.readAsDataURL(file);
     });
   };
-
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
   };
-
   const uploadPostMedia = async (files: File[]): Promise<string[]> => {
     const uploadedUrls: string[] = [];
     setUploadProgress(0);
-    
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const fileExt = file.name.split('.').pop();
         const fileName = `${user?.id}/${Date.now()}-${Math.random()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('posts')
-          .upload(fileName, file);
-
+        const {
+          error: uploadError
+        } = await supabase.storage.from('posts').upload(fileName, file);
         if (uploadError) {
           console.error('[POST_004] Upload error:', uploadError);
-          showCleanError({ code: 'POST_004', message: `Failed to upload ${file.name}` }, toast);
+          showCleanError({
+            code: 'POST_004',
+            message: `Failed to upload ${file.name}`
+          }, toast);
           throw uploadError;
         }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('posts')
-          .getPublicUrl(fileName);
-
+        const {
+          data: {
+            publicUrl
+          }
+        } = supabase.storage.from('posts').getPublicUrl(fileName);
         uploadedUrls.push(publicUrl);
-        setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+        setUploadProgress(Math.round((i + 1) / files.length * 100));
       }
-      
       return uploadedUrls;
     } catch (error: any) {
       showCleanError(error, toast, 'Upload Failed');
       return [];
     }
   };
-
   const handlePost = async () => {
     if (!postContent.trim() && selectedImages.length === 0) {
-      showCleanError({ code: 'POST_005', message: 'Add content or media to post' }, toast);
+      showCleanError({
+        code: 'POST_005',
+        message: 'Add content or media to post'
+      }, toast);
       return;
     }
-
     if (postContent.trim()) {
       const validation = postContentSchema.safeParse(postContent);
       if (!validation.success) {
-        showCleanError({ code: 'POST_006', message: validation.error.issues[0].message }, toast);
+        showCleanError({
+          code: 'POST_006',
+          message: validation.error.issues[0].message
+        }, toast);
         return;
       }
     }
-
     setIsPosting(true);
     try {
       let mediaUrls: string[] = [];
@@ -178,19 +185,17 @@ const CreatePostCard = () => {
           return;
         }
       }
-
       let contentWithFeeling = postContent.trim();
       if (feeling) {
         const feelingData = FEELINGS.find(f => f.label === feeling);
         contentWithFeeling = `${feelingData?.emoji} feeling ${feeling}\n\n${contentWithFeeling}`;
       }
-
-      const postData: any = { privacy };
-      
+      const postData: any = {
+        privacy
+      };
       if (contentWithFeeling) {
         postData.content = contentWithFeeling;
       }
-      
       if (mediaUrls.length > 0) {
         if (mediaUrls.length === 1) {
           postData.media_url = mediaUrls[0];
@@ -200,25 +205,19 @@ const CreatePostCard = () => {
           postData.media_type = 'multiple';
         }
       }
-
       if (location.trim()) {
         postData.location = location.trim();
       }
-
       if (taggedUsers.length > 0) {
         postData.tagged_users = taggedUsers;
       }
-
       if (scheduledDate) {
         postData.scheduled_for = scheduledDate.toISOString();
       }
-
       const newPostId = await createPost(postData);
-
       if (contentWithFeeling) {
         await processHashtags(newPostId, contentWithFeeling);
       }
-
       toast({
         title: 'Posted!',
         description: scheduledDate ? 'Post scheduled successfully' : 'Your post is now live'
@@ -241,22 +240,18 @@ const CreatePostCard = () => {
       setUploadProgress(0);
     }
   };
-
   const handleSaveDraft = async () => {
     if (!postContent.trim() && selectedImages.length === 0) return;
-    
     let mediaUrls: string[] = [];
     if (selectedImages.length > 0) {
       mediaUrls = await uploadPostMedia(selectedImages);
     }
-
     await saveDraft({
       content: postContent.trim(),
       media_url: mediaUrls[0] || null,
       media_type: selectedImages[0]?.type.startsWith('image/') ? 'image' : 'video',
       scheduled_for: scheduledDate?.toISOString()
     });
-
     setPostContent("");
     setSelectedImages([]);
     setPreviewImages([]);
@@ -265,7 +260,6 @@ const CreatePostCard = () => {
     setIsExpanded(false);
     setScheduledDate(undefined);
   };
-
   const handleLoadDraft = (draft: any) => {
     setPostContent(draft.content || '');
     if (draft.media_url) {
@@ -276,17 +270,17 @@ const CreatePostCard = () => {
     }
     setIsExpanded(true);
   };
-
   const getPrivacyIcon = () => {
     switch (privacy) {
-      case 'public': return <Globe className="h-4 w-4" />;
-      case 'friends': return <UserCheck className="h-4 w-4" />;
-      case 'private': return <Lock className="h-4 w-4" />;
+      case 'public':
+        return <Globe className="h-4 w-4" />;
+      case 'friends':
+        return <UserCheck className="h-4 w-4" />;
+      case 'private':
+        return <Lock className="h-4 w-4" />;
     }
   };
-
-  return (
-    <Card className="bg-card rounded-xl border border-border shadow-sm w-full max-w-full overflow-hidden">
+  return <Card className="bg-card rounded-xl border border-border shadow-sm w-full max-w-full overflow-hidden">
       <div className="p-4 w-full max-w-full overflow-hidden">
         {/* Header with Avatar */}
         <div className="flex items-start gap-3 w-full max-w-full">
@@ -298,120 +292,62 @@ const CreatePostCard = () => {
           </Avatar>
           
           <div className="flex-1 min-w-0 max-w-full overflow-hidden">
-            <Textarea
-              placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`}
-              value={postContent}
-              onChange={(e) => {
-                if (e.target.value.length <= MAX_CHARS) {
-                  setPostContent(e.target.value);
-                }
-              }}
-              onFocus={() => setIsExpanded(true)}
-              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary min-h-[44px] max-h-[120px] overflow-y-auto rounded-xl text-[15px] placeholder:text-muted-foreground w-full max-w-full box-border"
-              rows={isExpanded ? 3 : 1}
-            />
+            <Textarea placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`} value={postContent} onChange={e => {
+            if (e.target.value.length <= MAX_CHARS) {
+              setPostContent(e.target.value);
+            }
+          }} onFocus={() => setIsExpanded(true)} className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary min-h-[44px] max-h-[120px] overflow-y-auto rounded-xl text-[15px] placeholder:text-muted-foreground w-full max-w-full box-border" rows={isExpanded ? 3 : 1} />
             
             {/* Character counter */}
-            {isExpanded && postContent.length > 0 && (
-              <div className="flex items-center justify-end mt-2 gap-2">
+            {isExpanded && postContent.length > 0 && <div className="flex items-center justify-end mt-2 gap-2">
                 <div className="relative h-5 w-5">
                   <svg className="h-5 w-5 -rotate-90" viewBox="0 0 20 20">
-                    <circle
-                      cx="10"
-                      cy="10"
-                      r="8"
-                      fill="none"
-                      stroke="hsl(var(--muted))"
-                      strokeWidth="2"
-                    />
-                    <circle
-                      cx="10"
-                      cy="10"
-                      r="8"
-                      fill="none"
-                      stroke={charPercentage > 90 ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}
-                      strokeWidth="2"
-                      strokeDasharray={`${charPercentage * 0.5} 50`}
-                      strokeLinecap="round"
-                    />
+                    <circle cx="10" cy="10" r="8" fill="none" stroke="hsl(var(--muted))" strokeWidth="2" />
+                    <circle cx="10" cy="10" r="8" fill="none" stroke={charPercentage > 90 ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'} strokeWidth="2" strokeDasharray={`${charPercentage * 0.5} 50`} strokeLinecap="round" />
                   </svg>
                 </div>
-                <span className={cn(
-                  "text-xs",
-                  charPercentage > 90 ? "text-destructive" : "text-muted-foreground"
-                )}>
+                <span className={cn("text-xs", charPercentage > 90 ? "text-destructive" : "text-muted-foreground")}>
                   {charCount}/{MAX_CHARS}
                 </span>
-              </div>
-            )}
+              </div>}
           </div>
         </div>
 
         {/* Image Previews */}
-        {previewImages.length > 0 && (
-          <div className={cn(
-            "grid gap-2 mt-4",
-            previewImages.length === 1 && "grid-cols-1",
-            previewImages.length === 2 && "grid-cols-2",
-            previewImages.length >= 3 && "grid-cols-3"
-          )}>
-            {previewImages.map((preview, index) => (
-              <div key={index} className="relative group">
-                <img 
-                  src={preview} 
-                  alt={`Preview ${index + 1}`} 
-                  className="w-full h-32 object-cover rounded-xl"
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
-                  onClick={() => removeImage(index)}
-                >
+        {previewImages.length > 0 && <div className={cn("grid gap-2 mt-4", previewImages.length === 1 && "grid-cols-1", previewImages.length === 2 && "grid-cols-2", previewImages.length >= 3 && "grid-cols-3")}>
+            {previewImages.map((preview, index) => <div key={index} className="relative group">
+                <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-32 object-cover rounded-xl" />
+                <Button variant="secondary" size="sm" className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background" onClick={() => removeImage(index)}>
                   <X className="h-3 w-3" />
                 </Button>
-              </div>
-            ))}
-          </div>
-        )}
+              </div>)}
+          </div>}
 
         {/* Upload Progress */}
-        {uploadProgress > 0 && uploadProgress < 100 && (
-          <div className="mt-3">
+        {uploadProgress > 0 && uploadProgress < 100 && <div className="mt-3">
             <div className="h-1 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary transition-all duration-300 rounded-full"
-                style={{ width: `${uploadProgress}%` }}
-              />
+              <div className="h-full bg-primary transition-all duration-300 rounded-full" style={{
+            width: `${uploadProgress}%`
+          }} />
             </div>
-          </div>
-        )}
+          </div>}
 
         {/* Divider */}
-        <div className="border-t border-border mt-4 pt-3">
+        <div className="border-t mt-4 pt-3 border-black">
           {/* Action Buttons */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1 flex-wrap">
               {/* Photo/Video */}
               <div className="relative">
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="image-upload"
-                  multiple
-                />
+                <input type="file" accept="image/*,video/*" onChange={handleImageUpload} className="hidden" id="image-upload" multiple />
                 <label htmlFor="image-upload">
                   <Button variant="ghost" size="sm" className="h-9 px-3 gap-2 cursor-pointer rounded-lg hover:bg-success/10" asChild>
                     <span>
                       <Image className="h-5 w-5 text-success" />
                       <span className="text-sm hidden sm:inline">Photo/Video</span>
-                      {selectedImages.length > 0 && (
-                        <span className="text-xs bg-success/20 text-success px-1.5 rounded-full">
+                      {selectedImages.length > 0 && <span className="text-xs bg-success/20 text-success px-1.5 rounded-full">
                           {selectedImages.length}
-                        </span>
-                      )}
+                        </span>}
                     </span>
                   </Button>
                 </label>
@@ -429,44 +365,31 @@ const CreatePostCard = () => {
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-3">
                   <div className="grid grid-cols-5 gap-2">
-                    {FEELINGS.map((f) => (
-                      <Button
-                        key={f.label}
-                        variant={feeling === f.label ? "secondary" : "ghost"}
-                        className="h-12 flex flex-col items-center justify-center p-1"
-                        onClick={() => {
-                          setFeeling(feeling === f.label ? '' : f.label);
-                          setShowFeelings(false);
-                        }}
-                      >
+                    {FEELINGS.map(f => <Button key={f.label} variant={feeling === f.label ? "secondary" : "ghost"} className="h-12 flex flex-col items-center justify-center p-1" onClick={() => {
+                    setFeeling(feeling === f.label ? '' : f.label);
+                    setShowFeelings(false);
+                  }}>
                         <span className="text-xl">{f.emoji}</span>
                         <span className="text-[9px] mt-0.5 truncate">{f.label}</span>
-                      </Button>
-                    ))}
+                      </Button>)}
                   </div>
                 </PopoverContent>
               </Popover>
 
-              {isExpanded && (
-                <>
+              {isExpanded && <>
                   {/* Tag */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-9 px-3 gap-2 rounded-lg hover:bg-accent/10">
                         <Users className="h-5 w-5 text-accent" />
                         <span className="text-sm hidden sm:inline">Tag</span>
-                        {taggedUsers.length > 0 && (
-                          <span className="text-xs bg-accent/20 text-accent px-1.5 rounded-full">
+                        {taggedUsers.length > 0 && <span className="text-xs bg-accent/20 text-accent px-1.5 rounded-full">
                             {taggedUsers.length}
-                          </span>
-                        )}
+                          </span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-80">
-                      <UserTagSelector
-                        selectedUsers={taggedUsers}
-                        onUsersChange={setTaggedUsers}
-                      />
+                      <UserTagSelector selectedUsers={taggedUsers} onUsersChange={setTaggedUsers} />
                     </PopoverContent>
                   </Popover>
 
@@ -479,21 +402,14 @@ const CreatePostCard = () => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={scheduledDate}
-                        onSelect={setScheduledDate}
-                        disabled={(date) => date < new Date()}
-                      />
+                      <Calendar mode="single" selected={scheduledDate} onSelect={setScheduledDate} disabled={date => date < new Date()} />
                     </PopoverContent>
                   </Popover>
-                </>
-              )}
+                </>}
             </div>
 
             <div className="flex items-center gap-2">
-              {isExpanded && (
-                <>
+              {isExpanded && <>
                   {/* Privacy Selector */}
                   <Select value={privacy} onValueChange={(v: any) => setPrivacy(v)}>
                     <SelectTrigger className="w-auto h-9 gap-2 border-0 bg-muted/50">
@@ -523,33 +439,19 @@ const CreatePostCard = () => {
 
                   <DraftsDialog onSelectDraft={handleLoadDraft} />
                   
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-9"
-                    onClick={handleSaveDraft}
-                    disabled={!postContent.trim() && selectedImages.length === 0}
-                  >
+                  <Button variant="outline" size="sm" className="h-9" onClick={handleSaveDraft} disabled={!postContent.trim() && selectedImages.length === 0}>
                     <Save className="h-4 w-4 mr-2" />
                     Draft
                   </Button>
-                </>
-              )}
+                </>}
               
-              <Button 
-                size="sm" 
-                className="h-9 px-6 rounded-full bg-primary hover:bg-primary-hover font-semibold"
-                disabled={(!postContent.trim() && selectedImages.length === 0) || isPosting}
-                onClick={handlePost}
-              >
+              <Button size="sm" className="h-9 px-6 rounded-full bg-primary hover:bg-primary-hover font-semibold" disabled={!postContent.trim() && selectedImages.length === 0 || isPosting} onClick={handlePost}>
                 {isPosting ? 'Posting...' : scheduledDate ? 'Schedule' : 'Post'}
               </Button>
             </div>
           </div>
         </div>
       </div>
-    </Card>
-  );
+    </Card>;
 };
-
 export default CreatePostCard;
