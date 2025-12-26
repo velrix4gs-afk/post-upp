@@ -6,59 +6,33 @@ import { Check, Crown, Star, Zap, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { CoinsDialog } from '@/components/premium/CoinsDialog';
-
 const PremiumPage = () => {
-  const { user } = useAuth();
-
-  const plans = [
-    {
-      name: 'Basic Premium',
-      tier: 'basic',
-      icon: Star,
-      price: 4.99,
-      color: 'from-yellow-500 to-amber-500',
-      features: [
-        'Remove all ads',
-        'Custom profile themes',
-        'Priority support',
-        'Verification badge',
-        '50GB storage'
-      ]
-    },
-    {
-      name: 'Pro',
-      tier: 'pro',
-      icon: Zap,
-      price: 9.99,
-      color: 'from-purple-500 to-pink-500',
-      popular: true,
-      features: [
-        'Everything in Basic',
-        'Advanced analytics',
-        'Schedule unlimited posts',
-        'Custom URL',
-        '200GB storage',
-        'Exclusive content creation tools'
-      ]
-    },
-    {
-      name: 'Elite',
-      tier: 'elite',
-      icon: Crown,
-      price: 19.99,
-      color: 'from-blue-500 to-cyan-500',
-      features: [
-        'Everything in Pro',
-        'Dedicated account manager',
-        'API access',
-        'White-label options',
-        'Unlimited storage',
-        'Early access to features',
-        'Monetization tools'
-      ]
-    }
-  ];
-
+  const {
+    user
+  } = useAuth();
+  const plans = [{
+    name: 'Basic Premium',
+    tier: 'basic',
+    icon: Star,
+    price: 4.99,
+    color: 'from-yellow-500 to-amber-500',
+    features: ['Remove all ads', 'Custom profile themes', 'Priority support', 'Verification badge', '50GB storage']
+  }, {
+    name: 'Pro',
+    tier: 'pro',
+    icon: Zap,
+    price: 9.99,
+    color: 'from-purple-500 to-pink-500',
+    popular: true,
+    features: ['Everything in Basic', 'Advanced analytics', 'Schedule unlimited posts', 'Custom URL', '200GB storage', 'Exclusive content creation tools']
+  }, {
+    name: 'Elite',
+    tier: 'elite',
+    icon: Crown,
+    price: 19.99,
+    color: 'from-blue-500 to-cyan-500',
+    features: ['Everything in Pro', 'Dedicated account manager', 'API access', 'White-label options', 'Unlimited storage', 'Early access to features', 'Monetization tools']
+  }];
   const handleSubscribe = (tier: string) => {
     if (!user) {
       toast({
@@ -67,21 +41,17 @@ const PremiumPage = () => {
       });
       return;
     }
-
     const paymentLinks = {
       basic: 'https://paystack.shop/pay/flqjzwvndy',
       pro: 'https://paystack.shop/pay/kppl07pl5r',
       elite: 'https://paystack.shop/pay/fap9ccj2m4'
     };
-
     const link = paymentLinks[tier as keyof typeof paymentLinks];
     if (link) {
       window.open(link, '_blank');
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
 
       <main className="container mx-auto px-4 py-12">
@@ -96,34 +66,22 @@ const PremiumPage = () => {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Unlock exclusive features, remove ads, and get priority support. Choose the plan that's right for you.
           </p>
-          <div className="mt-6">
+          <div className="mt-6 mr-0 pr-[1700px]">
             <CoinsDialog />
           </div>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {plans.map((plan) => {
-            const Icon = plan.icon;
-            return (
-              <Card 
-                key={plan.tier}
-                className={cn(
-                  'relative p-6 border-2 transition-all hover:scale-105',
-                  plan.popular ? 'border-primary shadow-lg shadow-primary/20' : 'border-border'
-                )}
-              >
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
+          {plans.map(plan => {
+          const Icon = plan.icon;
+          return <Card key={plan.tier} className={cn('relative p-6 border-2 transition-all hover:scale-105', plan.popular ? 'border-primary shadow-lg shadow-primary/20' : 'border-border')}>
+                {plan.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
                     Most Popular
-                  </Badge>
-                )}
+                  </Badge>}
 
                 <div className="text-center mb-6">
-                  <div className={cn(
-                    'inline-flex p-3 rounded-full bg-gradient-to-r mb-4',
-                    plan.color
-                  )}>
+                  <div className={cn('inline-flex p-3 rounded-full bg-gradient-to-r mb-4', plan.color)}>
                     <Icon className="h-8 w-8 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
@@ -134,26 +92,17 @@ const PremiumPage = () => {
                 </div>
 
                 <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
+                  {plan.features.map((feature, idx) => <li key={idx} className="flex items-start gap-2">
                       <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                       <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
 
-                <Button 
-                  className={cn(
-                    'w-full bg-gradient-to-r text-white',
-                    plan.color
-                  )}
-                  onClick={() => handleSubscribe(plan.tier)}
-                >
+                <Button className={cn('w-full bg-gradient-to-r text-white', plan.color)} onClick={() => handleSubscribe(plan.tier)}>
                   Subscribe Now
                 </Button>
-              </Card>
-            );
-          })}
+              </Card>;
+        })}
         </div>
 
         {/* Benefits Section */}
@@ -177,12 +126,9 @@ const PremiumPage = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 function cn(...classes: any[]) {
   return classes.filter(Boolean).join(' ');
 }
-
 export default PremiumPage;
