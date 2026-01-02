@@ -1,12 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const ALLOWED_ORIGINS = [
+  'https://post-upp.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:8080',
+];
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin && ALLOWED_ORIGINS.includes(origin) 
+    ? origin 
+    : ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Credentials': 'true',
+});
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -105,9 +118,6 @@ serve(async (req) => {
       throw roleError;
     }
 
-    // Note: First admin must be granted manually via SQL to prevent race conditions:
-    // INSERT INTO public.user_roles (user_id, role) VALUES ('your-user-id-here', 'admin');
-
     return new Response(
       JSON.stringify({
         success: true,
@@ -126,7 +136,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req.headers.get('origin')), 'Content-Type': 'application/json' },
         status: 400
       }
     );

@@ -1,10 +1,20 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const ALLOWED_ORIGINS = [
+  'https://post-upp.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:8080',
+];
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin && ALLOWED_ORIGINS.includes(origin) 
+    ? origin 
+    : ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Credentials': 'true',
+});
 
 interface EmailUpdateRequest {
   new_email: string;
@@ -35,6 +45,9 @@ const checkRateLimit = (ip: string, maxRequests = 5, windowMs = 60000): boolean 
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -193,7 +206,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Security: Don't expose internal error details
     return new Response(
       JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req.headers.get('origin')) } }
     );
   }
 };
