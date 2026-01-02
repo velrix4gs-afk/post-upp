@@ -223,38 +223,46 @@ export const useReels = () => {
   const likeReel = async (reelId: string) => {
     if (!user) return;
 
-    try {
-      const reel = reels.find(r => r.id === reelId);
-      if (!reel) return;
+    const reel = reels.find(r => r.id === reelId);
+    if (!reel) return;
 
-      if (reel.is_liked) {
+    // Optimistic update first
+    const wasLiked = reel.is_liked;
+    const newLikesCount = wasLiked 
+      ? Math.max(0, reel.likes_count - 1)  // Prevent negative counts
+      : reel.likes_count + 1;
+
+    setReels(prev => prev.map(r =>
+      r.id === reelId
+        ? { ...r, is_liked: !wasLiked, likes_count: newLikesCount }
+        : r
+    ));
+
+    try {
+      if (wasLiked) {
         // Unlike
         await supabase
           .from('reel_reactions')
           .delete()
           .eq('reel_id', reelId)
           .eq('user_id', user.id);
-
-        setReels(prev => prev.map(r =>
-          r.id === reelId
-            ? { ...r, is_liked: false, likes_count: r.likes_count - 1 }
-            : r
-        ));
       } else {
-        // Like
-        await supabase.from('reel_reactions').insert({
+        // Like - use upsert to prevent duplicates
+        await supabase.from('reel_reactions').upsert({
           reel_id: reelId,
           user_id: user.id,
           reaction_type: 'like'
+        }, {
+          onConflict: 'reel_id,user_id'
         });
-
-        setReels(prev => prev.map(r =>
-          r.id === reelId
-            ? { ...r, is_liked: true, likes_count: r.likes_count + 1 }
-            : r
-        ));
       }
     } catch (error: any) {
+      // Revert optimistic update on error
+      setReels(prev => prev.map(r =>
+        r.id === reelId
+          ? { ...r, is_liked: wasLiked, likes_count: reel.likes_count }
+          : r
+      ));
       console.error('Error toggling like:', error);
       toast({
         title: 'Failed to like reel',

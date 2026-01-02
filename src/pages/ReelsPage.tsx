@@ -29,6 +29,7 @@ const ReelsPage = () => {
   const [savedReels, setSavedReels] = useState<Set<string>>(new Set());
   const [loadingComment, setLoadingComment] = useState(false);
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
+  const [likingReels, setLikingReels] = useState<Set<string>>(new Set());
   
   const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
@@ -161,9 +162,21 @@ const ReelsPage = () => {
   };
 
   const handleLike = async (reelId: string) => {
-    await likeReel(reelId);
-    if ('vibrate' in navigator) {
-      navigator.vibrate(30);
+    // Prevent multiple rapid clicks
+    if (likingReels.has(reelId)) return;
+    
+    setLikingReels(prev => new Set(prev).add(reelId));
+    try {
+      await likeReel(reelId);
+      if ('vibrate' in navigator) {
+        navigator.vibrate(30);
+      }
+    } finally {
+      setLikingReels(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(reelId);
+        return newSet;
+      });
     }
   };
 
@@ -452,18 +465,23 @@ const ReelsPage = () => {
               {/* Like */}
               <button
                 onClick={() => handleLike(reel.id)}
-                className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
+                disabled={likingReels.has(reel.id)}
+                className={cn(
+                  "flex flex-col items-center gap-1 transition-transform",
+                  likingReels.has(reel.id) ? "opacity-70" : "active:scale-90"
+                )}
               >
                 <Heart
                   className={cn(
                     "h-8 w-8 transition-all drop-shadow-lg",
                     reel.is_liked 
-                      ? "fill-red-500 text-red-500 scale-110" 
-                      : "text-white"
+                      ? "fill-red-500 text-red-500 animate-[heartBeat_0.3s_ease-in-out]" 
+                      : "text-white",
+                    likeAnimations[reel.id] && "animate-ping"
                   )}
                 />
                 <span className="text-xs text-white font-semibold drop-shadow-md">
-                  {formatCount(reel.likes_count)}
+                  {formatCount(Math.max(0, reel.likes_count))}
                 </span>
               </button>
 

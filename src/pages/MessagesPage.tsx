@@ -436,9 +436,13 @@ const MessagesPage = () => {
                       filteredChats.map(chat => {
                         const otherParticipant = chat.participants.find(p => p.user_id !== user?.id);
                         const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
+                        const chatUsername = otherParticipant?.profiles?.username;
                         const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
-                        const lastMessageTime = chat.updated_at 
-                          ? formatDistanceToNow(new Date(chat.updated_at), { addSuffix: false })
+                        // Get last message from messages array for this chat
+                        const chatMessages = messages.filter(m => m.chat_id === chat.id);
+                        const lastMessage = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null;
+                        const lastMessageTime = lastMessage?.created_at || chat.updated_at
+                          ? formatDistanceToNow(new Date(lastMessage?.created_at || chat.updated_at), { addSuffix: false })
                               .replace('about ', '')
                               .replace(' minutes', 'm')
                               .replace(' minute', 'm')
@@ -453,6 +457,10 @@ const MessagesPage = () => {
                               .replace('less than a', '<1')
                           : '';
                         const isOnlineUser = otherParticipant ? isUserOnline(otherParticipant.user_id) : false;
+                        // Get last message snippet
+                        const lastMessageSnippet = lastMessage?.content 
+                          ? (lastMessage.content.length > 30 ? lastMessage.content.slice(0, 30) + '...' : lastMessage.content)
+                          : (lastMessage?.media_url ? '📷 Media' : 'Tap to chat');
 
                         return (
                           <div
@@ -478,11 +486,16 @@ const MessagesPage = () => {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-0.5">
-                                  <p className={`font-medium truncate text-sm md:text-base transition-colors ${
-                                    selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
-                                  }`}>
-                                    {chatName}
-                                  </p>
+                                  <div className="min-w-0 flex-1">
+                                    <p className={`font-medium truncate text-sm md:text-base transition-colors ${
+                                      selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
+                                    }`}>
+                                      {chatName}
+                                      {chatUsername && !chat.is_group && (
+                                        <span className="text-muted-foreground font-normal ml-1">@{chatUsername}</span>
+                                      )}
+                                    </p>
+                                  </div>
                                   {lastMessageTime && (
                                     <span className="text-xs flex-shrink-0 text-muted-foreground">
                                       {lastMessageTime}
@@ -490,7 +503,7 @@ const MessagesPage = () => {
                                   )}
                                 </div>
                                 <p className="text-xs md:text-sm text-muted-foreground truncate">
-                                  {chat.is_group ? `${chat.participants.length} members` : 'Tap to chat'}
+                                  {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
                                 </p>
                               </div>
                             </div>
