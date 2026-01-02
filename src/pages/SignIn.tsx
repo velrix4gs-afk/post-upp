@@ -320,8 +320,9 @@ const SignIn = () => {
                     className="h-11 gap-2 hover:bg-muted/50 transition-colors"
                     onClick={handleGoogleSignIn}
                     disabled={loading}
+                    aria-label="Sign in with Google"
                   >
-                    <Chrome className="h-4 w-4" />
+                    <Chrome className="h-4 w-4" aria-hidden="true" />
                     <span className="hidden sm:inline">Google</span>
                   </Button>
                   
@@ -331,8 +332,9 @@ const SignIn = () => {
                     className="h-11 gap-2 hover:bg-muted/50 transition-colors"
                     onClick={handleTwitterSignIn}
                     disabled={loading}
+                    aria-label="Sign in with Twitter"
                   >
-                    <Twitter className="h-4 w-4" />
+                    <Twitter className="h-4 w-4" aria-hidden="true" />
                     <span className="hidden sm:inline">Twitter</span>
                   </Button>
                 </div>
