@@ -120,14 +120,14 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
   };
 
   // Fix: Only load feed on mount or when feedType changes
+  // Don't clear posts immediately to preserve scroll position during normal scrolling
   useEffect(() => {
     if (user) {
       setPage(1);
-      setPosts([]);
       setHasMore(true);
       fetchFeed(1, true);
     }
-  }, [user, feedType]);
+  }, [user?.id, feedType]);
 
   return {
     posts,
