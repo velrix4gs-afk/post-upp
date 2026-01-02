@@ -1,12 +1,25 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const ALLOWED_ORIGINS = [
+  'https://post-upp.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:8080',
+];
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin && ALLOWED_ORIGINS.includes(origin) 
+    ? origin 
+    : ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Credentials': 'true',
+});
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -252,7 +265,7 @@ serve(async (req) => {
           is_edited: true
         })
         .eq('id', messageId)
-        .eq('sender_id', user.id) // Ensure user owns the message
+        .eq('sender_id', user.id)
         .select(`
           *,
           sender:sender_id (
@@ -272,10 +285,9 @@ serve(async (req) => {
 
     // Handle delete message action
     if (action === 'delete') {
-      const { messageId, deleteFor } = body; // deleteFor: 'me' | 'everyone'
+      const { messageId, deleteFor } = body;
 
       if (deleteFor === 'everyone') {
-        // Delete for everyone - actually delete the message
         const { error } = await supabaseClient
           .from('messages')
           .delete()
@@ -284,7 +296,6 @@ serve(async (req) => {
 
         if (error) throw error;
       } else {
-        // Delete for me - add user to deleted_for array
         const { data: message, error: fetchError } = await supabaseClient
           .from('messages')
           .select('deleted_for')
@@ -315,7 +326,6 @@ serve(async (req) => {
     if (action === 'react') {
       const { messageId, reactionType } = body;
 
-      // Check if reaction already exists
       const { data: existing } = await supabaseClient
         .from('message_reactions')
         .select('id')
@@ -324,7 +334,6 @@ serve(async (req) => {
         .maybeSingle();
 
       if (existing) {
-        // Update existing reaction
         const { error } = await supabaseClient
           .from('message_reactions')
           .update({ reaction_type: reactionType })
@@ -332,7 +341,6 @@ serve(async (req) => {
 
         if (error) throw error;
       } else {
-        // Create new reaction
         const { error } = await supabaseClient
           .from('message_reactions')
           .insert({
@@ -378,7 +386,7 @@ serve(async (req) => {
             message_id: messageId
           });
 
-        if (error && error.code !== '23505') throw error; // Ignore duplicate key error
+        if (error && error.code !== '23505') throw error;
       } else {
         const { error } = await supabaseClient
           .from('starred_messages')
@@ -398,7 +406,6 @@ serve(async (req) => {
     if (action === 'forward') {
       const { messageId, toChatIds } = body;
 
-      // Get original message
       const { data: originalMessage, error: fetchError } = await supabaseClient
         .from('messages')
         .select('content, media_url, media_type')
@@ -407,7 +414,6 @@ serve(async (req) => {
 
       if (fetchError) throw fetchError;
 
-      // Create forwarded messages for each chat
       const forwardedMessages = toChatIds.map((chatId: string) => ({
         chat_id: chatId,
         sender_id: user.id,
@@ -440,7 +446,7 @@ serve(async (req) => {
           user_id: user.id
         });
 
-      if (error && error.code !== '23505') throw error; // Ignore duplicate
+      if (error && error.code !== '23505') throw error;
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -477,7 +483,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req.headers.get('origin')), 'Content-Type': 'application/json' },
     });
   }
 });

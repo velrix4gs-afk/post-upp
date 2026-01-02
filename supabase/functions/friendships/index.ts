@@ -1,12 +1,25 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+const ALLOWED_ORIGINS = [
+  'https://post-upp.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:8080',
+];
+
+const getCorsHeaders = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin && ALLOWED_ORIGINS.includes(origin) 
+    ? origin 
+    : ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Credentials': 'true',
+});
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,7 +60,6 @@ serve(async (req) => {
     console.log(`Friendships API: ${method}`);
 
     if (method === 'GET') {
-      // Get user's friendships
       const { data: friendships, error } = await supabaseClient
         .from('friendships')
         .select(`
@@ -81,7 +93,6 @@ serve(async (req) => {
       const body = await req.json();
       const { addressee_id, action, participant_id, participant_uuid } = body;
 
-      // Handle chat creation - accepts both participant_id and participant_uuid
       if (action === 'create_chat') {
         const targetUserId = participant_uuid || participant_id;
         
@@ -96,7 +107,6 @@ serve(async (req) => {
           });
         }
 
-        // Validate UUID format
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(targetUserId)) {
           return new Response(JSON.stringify({ 
@@ -109,7 +119,6 @@ serve(async (req) => {
           });
         }
 
-        // Check if trying to chat with self
         if (targetUserId === user.id) {
           return new Response(JSON.stringify({ 
             error: 'CHAT_003: Cannot create chat with yourself',
@@ -121,7 +130,6 @@ serve(async (req) => {
           });
         }
 
-        // Check if chat already exists between these users
         const { data: existingParticipants } = await supabaseClient
           .from('chat_participants')
           .select('chat_id')
@@ -156,7 +164,6 @@ serve(async (req) => {
           }
         }
 
-        // Create new chat
         const { data: newChat, error: chatError } = await supabaseClient
           .from('chats')
           .insert({
@@ -189,7 +196,6 @@ serve(async (req) => {
           });
         }
 
-        // Add participants
         const { error: participantsError } = await supabaseClient
           .from('chat_participants')
           .insert([
@@ -227,7 +233,6 @@ serve(async (req) => {
       }
 
       if (action === 'request') {
-        // Send friend request
         const { data: friendship, error } = await supabaseClient
           .from('friendships')
           .insert({
@@ -251,13 +256,12 @@ serve(async (req) => {
           .single();
 
         if (error) {
-          if (error.code === '23505') { // Unique constraint violation
+          if (error.code === '23505') {
             throw new Error('Friend request already exists');
           }
           throw error;
         }
 
-        // Create notification
         await supabaseClient.from('notifications').insert({
           user_id: addressee_id,
           type: 'friend_request',
@@ -272,7 +276,6 @@ serve(async (req) => {
       }
 
       if (action === 'accept' || action === 'decline') {
-        // Accept or decline friend request
         const status = action === 'accept' ? 'accepted' : 'declined';
         
         const { data: friendship, error } = await supabaseClient
@@ -299,7 +302,6 @@ serve(async (req) => {
         if (error) throw error;
 
         if (action === 'accept') {
-          // Create notification for requester
           await supabaseClient.from('notifications').insert({
             user_id: addressee_id,
             type: 'friend_request',
@@ -325,7 +327,6 @@ serve(async (req) => {
         throw new Error('friend_id is required');
       }
 
-      // Remove friendship (unfriend or cancel request)
       const { error } = await supabaseClient
         .from('friendships')
         .delete()
@@ -348,7 +349,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req.headers.get('origin')), 'Content-Type': 'application/json' },
     });
   }
 });
