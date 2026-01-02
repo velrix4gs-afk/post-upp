@@ -301,7 +301,7 @@ const CreatePostCard = () => {
                 }
               }} 
               onFocus={() => setIsExpanded(true)} 
-              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary h-[150px] overflow-y-auto rounded-xl text-[15px] placeholder:text-muted-foreground w-full max-w-full box-border" 
+              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary h-[150px] overflow-y-auto rounded-xl text-[16px] placeholder:text-muted-foreground w-full max-w-full box-border" 
               style={{ height: isExpanded ? '150px' : '44px', maxHeight: '150px' }}
             />
             
