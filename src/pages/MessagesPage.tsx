@@ -8,6 +8,7 @@ import { usePresence } from '@/hooks/usePresence';
 import { useLastSeen } from '@/hooks/useLastSeen';
 import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
 import { useChatSettings } from '@/hooks/useChatSettings';
+import { useAdmin } from '@/hooks/useAdmin';
 import Navigation from '@/components/Navigation';
 import { BackNavigation } from '@/components/BackNavigation';
 import { VideoCall } from '@/components/VideoCall';
@@ -28,6 +29,7 @@ import { WallpaperDialog } from '@/components/messaging/WallpaperDialog';
 import { ClearChatDialog } from '@/components/messaging/ClearChatDialog';
 import { BlockUserDialog } from '@/components/messaging/BlockUserDialog';
 import { ReportUserDialog } from '@/components/messaging/ReportUserDialog';
+import { AIAssistantChat } from '@/components/AIAssistantChat';
 
 import { LocationShareDialog } from '@/components/messaging/LocationShareDialog';
 import { ContactShareDialog } from '@/components/messaging/ContactShareDialog';
@@ -41,7 +43,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -54,7 +56,9 @@ import { useNavigate } from 'react-router-dom';
 const MessagesPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [showAIChat, setShowAIChat] = useState(false);
   const { 
     chats, 
     messages, 
@@ -342,7 +346,7 @@ const MessagesPage = () => {
       <main className="container mx-auto px-0 md:px-4 h-screen">
         <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}
-          <div className={`${selectedChatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
+          <div className={`${selectedChatId || showAIChat ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
             <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
@@ -380,6 +384,49 @@ const MessagesPage = () => {
 
             <ScrollArea className="flex-1 overflow-y-auto">
               <div className="space-y-1">
+                  {/* AI Assistant Chat - Pinned at top */}
+                  <div
+                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
+                      showAIChat 
+                        ? 'bg-gradient-to-r from-primary/20 to-primary/5 border-primary/30 shadow-md' 
+                        : 'hover:bg-primary/5 border-transparent hover:border-primary/10'
+                    }`}
+                    onClick={() => {
+                      setShowAIChat(true);
+                      setSelectedChatId(null);
+                    }}
+                  >
+                    <div className="flex gap-3">
+                      <div className="relative flex-shrink-0">
+                        <div className={`h-12 w-12 rounded-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/60 ring-2 transition-all ${
+                          showAIChat ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'
+                        }`}>
+                          <Sparkles className="h-6 w-6 text-primary-foreground" />
+                        </div>
+                        <div className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-success rounded-full border-2 border-background" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <div className="min-w-0 flex-1">
+                            <p className={`font-medium truncate text-sm md:text-base transition-colors ${
+                              showAIChat ? 'text-primary' : 'group-hover:text-primary'
+                            }`}>
+                              {isAdmin ? 'Admin AI Assistant' : 'Post Up AI'}
+                              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
+                                AI
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {isAdmin ? 'Summarize requests & feedback' : 'Your helpful assistant'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Separator className="my-2 bg-primary/10" />
+
                   {/* Friends who aren't in chats yet */}
                     {!selectedChatId && friends
                       .filter(f => 
@@ -518,8 +565,14 @@ const MessagesPage = () => {
           {/* NewChatDialog is rendered at bottom of component */}
 
           {/* Chat Area */}
-          <div className={`${selectedChatId ? 'flex' : 'hidden md:flex'} flex-1 flex-col relative`}>
-            {selectedChat ? (
+          <div className={`${selectedChatId || showAIChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col relative`}>
+            {/* AI Assistant Chat */}
+            {showAIChat ? (
+              <AIAssistantChat 
+                isAdmin={isAdmin}
+                onBack={() => setShowAIChat(false)}
+              />
+            ) : selectedChat ? (
               <>
                 {/* Chat Header */}
                 <div
