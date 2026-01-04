@@ -4,7 +4,7 @@ project_id = "ccyyxkjpgebjnstevgkw"
 verify_jwt = true
 
 [functions.publish-scheduled-posts]
-verify_jwt = true
+verify_jwt = false
 
 [functions.posts]
 verify_jwt = true
@@ -45,8 +45,8 @@ verify_jwt = true
 [functions.process-tip]
 verify_jwt = true
 
-[functions.publish-scheduled-posts]
-verify_jwt = false
-
 [functions.create-coins-checkout]
 verify_jwt = true
+
+[functions.ai-chat]
+verify_jwt = false
