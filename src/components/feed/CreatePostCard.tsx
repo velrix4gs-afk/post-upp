@@ -292,18 +292,14 @@ const CreatePostCard = () => {
           </Avatar>
           
           <div className="flex-1 min-w-0 max-w-full overflow-hidden">
-            <Textarea 
-              placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`} 
-              value={postContent} 
-              onChange={e => {
-                if (e.target.value.length <= MAX_CHARS) {
-                  setPostContent(e.target.value);
-                }
-              }} 
-              onFocus={() => setIsExpanded(true)} 
-              className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary h-[150px] overflow-y-auto rounded-xl text-[16px] placeholder:text-muted-foreground w-full max-w-full box-border" 
-              style={{ height: isExpanded ? '150px' : '44px', maxHeight: '150px' }}
-            />
+            <Textarea placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`} value={postContent} onChange={e => {
+            if (e.target.value.length <= MAX_CHARS) {
+              setPostContent(e.target.value);
+            }
+          }} onFocus={() => setIsExpanded(true)} className="border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary h-[150px] overflow-y-auto rounded-xl text-[16px] placeholder:text-muted-foreground w-full max-w-full box-border" style={{
+            height: isExpanded ? '150px' : '44px',
+            maxHeight: '150px'
+          }} />
             
             {/* Character counter */}
             {isExpanded && postContent.length > 0 && <div className="flex items-center justify-end mt-2 gap-2">
@@ -321,27 +317,14 @@ const CreatePostCard = () => {
         </div>
 
         {/* Image Previews - BELOW text area as thumbnails */}
-        {previewImages.length > 0 && (
-          <div className="flex gap-2 mt-3 flex-wrap">
-            {previewImages.map((preview, index) => (
-              <div key={index} className="relative group w-20 h-20 flex-shrink-0">
-                <img 
-                  src={preview} 
-                  alt={`Preview ${index + 1}`} 
-                  className="w-20 h-20 object-cover rounded-lg border border-border" 
-                />
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="absolute -top-2 -right-2 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive hover:bg-destructive/90 rounded-full shadow-sm" 
-                  onClick={() => removeImage(index)}
-                >
+        {previewImages.length > 0 && <div className="flex gap-2 mt-3 flex-wrap">
+            {previewImages.map((preview, index) => <div key={index} className="relative group w-20 h-20 flex-shrink-0">
+                <img src={preview} alt={`Preview ${index + 1}`} className="w-20 h-20 object-cover rounded-lg border border-border" />
+                <Button variant="secondary" size="sm" className="absolute -top-2 -right-2 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive hover:bg-destructive/90 rounded-full shadow-sm" onClick={() => removeImage(index)}>
                   <X className="h-3 w-3 text-white" />
                 </Button>
-              </div>
-            ))}
-          </div>
-        )}
+              </div>)}
+          </div>}
 
         {/* Upload Progress */}
         {uploadProgress > 0 && uploadProgress < 100 && <div className="mt-3">
@@ -353,7 +336,7 @@ const CreatePostCard = () => {
           </div>}
 
         {/* Divider */}
-        <div className="border-t mt-4 pt-3 border-black">
+        <div className="border-t mt-4 pt-3 border-black/0">
           {/* Action Buttons */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1 flex-wrap">
