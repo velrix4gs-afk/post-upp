@@ -147,8 +147,8 @@ export const EnhancedMessageBubble = ({
       <div 
         id={`message-${id}`}
         className={cn(
-          "flex gap-2 group mb-2 relative scroll-mt-20",
-          isOwn ? "flex-row-reverse justify-start" : "flex-row justify-start"
+          "flex gap-2 group mb-2 relative scroll-mt-20 w-full",
+          isOwn ? "flex-row-reverse" : "flex-row"
         )}
       >
         <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
@@ -157,8 +157,9 @@ export const EnhancedMessageBubble = ({
         </Avatar>
         
         <div className={cn(
-          "flex flex-col max-w-[75%]",
-          isOwn ? "items-end" : "items-start"
+          "flex flex-col min-w-0",
+          isOwn ? "items-end" : "items-start",
+          "max-w-[75%]"
         )}>
           {!isOwn && (
             <span className="text-xs text-muted-foreground mb-1 px-3">
@@ -166,7 +167,7 @@ export const EnhancedMessageBubble = ({
             </span>
           )}
 
-          <div className="flex items-start gap-1">
+          <div className={cn("flex items-start gap-1", isOwn ? "flex-row-reverse" : "flex-row")}>
             <div className="relative">
               {isStarred && (
                 <div className="absolute -top-2 -right-2 z-10">

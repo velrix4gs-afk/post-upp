@@ -24,6 +24,10 @@ interface ProfileUpdateRequest {
   relationship_status?: string;
   theme_color?: string;
   is_private?: boolean;
+  gender?: string;
+  phone?: string;
+  occupation?: string;
+  interests?: string[];
 }
 
 interface SettingsUpdateRequest {
