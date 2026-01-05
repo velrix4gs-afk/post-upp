@@ -1,9 +1,117 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+interface AISettings {
+  provider: 'lovable' | 'openai' | 'anthropic';
+  model: string;
+  custom_api_key: string;
+  system_prompt_user: string;
+  system_prompt_admin: string;
+}
+
+const DEFAULT_SETTINGS: AISettings = {
+  provider: 'lovable',
+  model: 'google/gemini-2.5-flash',
+  custom_api_key: '',
+  system_prompt_user: 'You are Post Up AI - a friendly and helpful assistant for the Post Up social media platform. Help users navigate the app, answer questions about features, and provide tips for better engagement. Be conversational and friendly. Use emojis occasionally.',
+  system_prompt_admin: 'You are Post Up Admin AI - an intelligent assistant for administrators. Summarize user feedback, identify patterns in complaints or suggestions, provide actionable insights, and help draft responses to user issues. Be concise, professional, and data-driven.'
+};
+
+async function getAISettings(): Promise<AISettings> {
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data, error } = await supabase
+      .from('ai_settings')
+      .select('setting_key, setting_value');
+
+    if (error || !data || data.length === 0) {
+      console.log('Using default AI settings');
+      return DEFAULT_SETTINGS;
+    }
+
+    const settings: Partial<AISettings> = {};
+    data.forEach((row: { setting_key: string; setting_value: string }) => {
+      try {
+        settings[row.setting_key as keyof AISettings] = JSON.parse(row.setting_value);
+      } catch {
+        settings[row.setting_key as keyof AISettings] = row.setting_value as any;
+      }
+    });
+
+    return { ...DEFAULT_SETTINGS, ...settings };
+  } catch (error) {
+    console.error('Error fetching AI settings:', error);
+    return DEFAULT_SETTINGS;
+  }
+}
+
+async function callLovableAI(messages: any[], model: string, systemPrompt: string) {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    throw new Error("LOVABLE_API_KEY is not configured");
+  }
+
+  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      stream: true,
+    }),
+  });
+}
+
+async function callOpenAI(messages: any[], model: string, apiKey: string, systemPrompt: string) {
+  return fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      stream: true,
+    }),
+  });
+}
+
+async function callAnthropic(messages: any[], model: string, apiKey: string, systemPrompt: string) {
+  // Convert messages format for Anthropic
+  const anthropicMessages = messages.map((m: any) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: m.content,
+  }));
+
+  return fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: anthropicMessages,
+      stream: true,
+    }),
+  });
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,47 +119,32 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, isAdmin } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const { messages, isAdmin, testConnection } = await req.json();
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    // Fetch admin-configured settings
+    const settings = await getAISettings();
+    
+    // Use appropriate system prompt based on user type
+    const systemPrompt = isAdmin ? settings.system_prompt_admin : settings.system_prompt_user;
+
+    // For connection test, just return success
+    if (testConnection) {
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Different system prompts for users vs admins
-    const systemPrompt = isAdmin 
-      ? `You are Post Up Admin AI - an intelligent assistant for administrators of the Post Up social platform. Your role is to:
-- Summarize user feedback, reports, and requests
-- Help identify patterns in user complaints or suggestions
-- Provide actionable insights for improving the platform
-- Help draft responses to common user issues
-- Analyze trends in user behavior and engagement
+    let response: Response;
 
-Be concise, professional, and data-driven in your responses. When summarizing, organize by categories like: bugs, feature requests, complaints, and positive feedback.`
-      : `You are Post Up AI - a friendly and helpful assistant for the Post Up social media platform. Your role is to:
-- Help users navigate and use the app features
-- Answer questions about Post Up functionality
-- Provide tips for better engagement and content creation
-- Assist with account-related queries
-- Be conversational and friendly while staying helpful
-
-Keep responses concise and friendly. Use emojis occasionally to match the social media vibe. If asked about things you can't help with, politely redirect to human support.`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        stream: true,
-      }),
-    });
+    // Route to appropriate AI provider
+    if (settings.provider === 'openai' && settings.custom_api_key) {
+      response = await callOpenAI(messages, settings.model, settings.custom_api_key, systemPrompt);
+    } else if (settings.provider === 'anthropic' && settings.custom_api_key) {
+      response = await callAnthropic(messages, settings.model, settings.custom_api_key, systemPrompt);
+    } else {
+      // Default to Lovable AI
+      response = await callLovableAI(messages, settings.model, systemPrompt);
+    }
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -67,7 +160,7 @@ Keep responses concise and friendly. Use emojis occasionally to match the social
         });
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI provider error:", response.status, errorText);
       return new Response(JSON.stringify({ error: "AI service temporarily unavailable" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -19,16 +19,19 @@ import { useTheme } from '@/hooks/useTheme';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { showCleanError } from '@/lib/errorHandler';
-import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark, ShieldCheck, Sparkles, Settings2, Loader2 } from 'lucide-react';
+import { Palette, Shield, Bell, User, Download, Trash2, LogOut, Moon, Sun, Monitor, Lock, Eye, EyeOff, Users, Phone, MessageCircle, FileText, Camera, MapPin, Globe, Smartphone, Bookmark, ShieldCheck, Sparkles, Settings2, Loader2, Bot } from 'lucide-react';
 import { VerificationSettings } from './settings/VerificationSettings';
 import { CreatorStudio } from './settings/CreatorStudio';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
+import { AISettings } from './settings/AISettings';
+import { useAdmin } from '@/hooks/useAdmin';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile, updateProfile } = useProfile();
   const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
+  const { isAdmin } = useAdmin();
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
@@ -556,7 +559,7 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-9 mb-6 overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-10 mb-6 overflow-x-auto">
             <TabsTrigger value="general"><User className="h-4 w-4 mr-2" /><span className="hidden sm:inline">General</span></TabsTrigger>
             <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Appearance</span></TabsTrigger>
             <TabsTrigger value="privacy"><Shield className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Privacy</span></TabsTrigger>
@@ -566,6 +569,7 @@ const SettingsPage = () => {
             <TabsTrigger value="verification"><ShieldCheck className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Verification</span></TabsTrigger>
             <TabsTrigger value="creator"><Sparkles className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Creator</span></TabsTrigger>
             <TabsTrigger value="chat-settings"><MessageCircle className="h-4 w-4 mr-2" /><span className="hidden sm:inline">Chat</span></TabsTrigger>
+            {isAdmin && <TabsTrigger value="ai-settings"><Bot className="h-4 w-4 mr-2" /><span className="hidden sm:inline">AI</span></TabsTrigger>}
           </TabsList>
 
           {/* General Settings */}
@@ -1307,6 +1311,13 @@ const SettingsPage = () => {
           <TabsContent value="chat-settings">
             <Card className="p-6"><h3 className="text-lg font-semibold">Messaging Settings</h3><p className="text-muted-foreground mt-2">Configure chat preferences</p></Card>
           </TabsContent>
+
+          {/* AI Settings - Admin Only */}
+          {isAdmin && (
+            <TabsContent value="ai-settings">
+              <AISettings />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 
