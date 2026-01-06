@@ -171,6 +171,14 @@ const CreateReelPage = () => {
         onChange={handleFileSelect}
         className="hidden"
       />
+
+      <ReelPostConfirmModal
+        open={showConfirmModal}
+        onOpenChange={setShowConfirmModal}
+        videoPreview={videoPreview || ''}
+        onConfirm={handlePublish}
+        isUploading={uploading}
+      />
     </div>
   );
 };

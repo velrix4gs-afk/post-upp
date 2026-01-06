@@ -4,7 +4,7 @@ import { useAdmin } from './useAdmin';
 import { toast } from './use-toast';
 
 export interface AISettings {
-  provider: 'lovable' | 'openai' | 'anthropic';
+  provider: 'lovable' | 'openai' | 'anthropic' | 'google';
   model: string;
   custom_api_key: string;
   system_prompt_user: string;
@@ -34,6 +34,12 @@ export const AVAILABLE_MODELS = {
   anthropic: [
     { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
     { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku' },
+  ],
+  google: [
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
   ]
 };
 

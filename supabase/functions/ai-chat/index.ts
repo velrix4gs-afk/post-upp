@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface AISettings {
-  provider: 'lovable' | 'openai' | 'anthropic';
+  provider: 'lovable' | 'openai' | 'anthropic' | 'google';
   model: string;
   custom_api_key: string;
   system_prompt_user: string;
@@ -113,6 +113,32 @@ async function callAnthropic(messages: any[], model: string, apiKey: string, sys
   });
 }
 
+async function callGoogleAI(messages: any[], model: string, apiKey: string, systemPrompt: string) {
+  // Convert messages to Gemini format
+  const contents = messages.map((m: any) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 4096,
+        }
+      }),
+    }
+  );
+
+  return response;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -137,7 +163,26 @@ serve(async (req) => {
     let response: Response;
 
     // Route to appropriate AI provider
-    if (settings.provider === 'openai' && settings.custom_api_key) {
+    if (settings.provider === 'google' && settings.custom_api_key) {
+      // Google Gemini direct API (non-streaming for simplicity)
+      response = await callGoogleAI(messages, settings.model, settings.custom_api_key, systemPrompt);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Google AI error:", response.status, errorText);
+        throw new Error("Google AI service error");
+      }
+
+      const data = await response.json();
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated";
+      
+      // Return as OpenAI-compatible format for consistency
+      return new Response(JSON.stringify({
+        choices: [{ message: { role: 'assistant', content } }]
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } else if (settings.provider === 'openai' && settings.custom_api_key) {
       response = await callOpenAI(messages, settings.model, settings.custom_api_key, systemPrompt);
     } else if (settings.provider === 'anthropic' && settings.custom_api_key) {
       response = await callAnthropic(messages, settings.model, settings.custom_api_key, systemPrompt);
