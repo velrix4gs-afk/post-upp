@@ -1,94 +1,175 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
-import { Home, Search, Bell, MessageCircle, User, Plus } from 'lucide-react';
+import { Home, Search, Bell, MessageCircle, Plus, Film } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CreatePost from './CreatePost';
 import { cn } from '@/lib/utils';
+
 export const BottomNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
-  const {
-    unreadCount
-  } = useUnreadMessages();
+  const { user } = useAuth();
+  const { unreadCount } = useUnreadMessages();
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastInteraction, setLastInteraction] = useState(Date.now());
 
-  // Hide bottom nav on auth pages
+  // Pages where bottom nav should be shown
+  const allowedPages = ['/feed', '/', '/reels'];
+  const isAllowedPage = allowedPages.some(page => 
+    location.pathname === page || location.pathname.startsWith('/feed')
+  );
+
+  // Hide bottom nav on auth pages or non-allowed pages
   const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
   const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
-  if (!user || isAuthPage) {
+
+  // Auto-hide after 2 seconds of no interaction
+  useEffect(() => {
+    if (!isAllowedPage) return;
+
+    const hideTimer = setTimeout(() => {
+      setIsVisible(false);
+    }, 2000);
+
+    return () => clearTimeout(hideTimer);
+  }, [lastInteraction, isAllowedPage]);
+
+  // Show nav on any user interaction
+  const handleInteraction = useCallback(() => {
+    setIsVisible(true);
+    setLastInteraction(Date.now());
+  }, []);
+
+  // Listen for scroll, touch, and mouse events
+  useEffect(() => {
+    if (!isAllowedPage) return;
+
+    const events = ['scroll', 'touchstart', 'touchmove', 'mousemove', 'click'];
+    events.forEach(event => {
+      window.addEventListener(event, handleInteraction, { passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleInteraction);
+      });
+    };
+  }, [handleInteraction, isAllowedPage]);
+
+  // Don't render if not authenticated, on auth page, or not on allowed pages
+  if (!user || isAuthPage || !isAllowedPage) {
     return null;
   }
+
   const isActive = (path: string) => location.pathname === path;
-  const navItems = [{
-    label: 'Home',
-    icon: Home,
-    path: '/feed',
-    isActive: isActive('/feed') || location.pathname === '/'
-  }, {
-    label: 'Search',
-    icon: Search,
-    path: '/search',
-    isActive: isActive('/search')
-  }, {
-    label: 'Create',
-    icon: Plus,
-    action: () => setShowCreatePost(true),
-    isCenter: true
-  }, {
-    label: 'Notifications',
-    icon: Bell,
-    path: '/notifications',
-    isActive: isActive('/notifications')
-  }, {
-    label: 'Messages',
-    icon: MessageCircle,
-    path: '/messages',
-    isActive: isActive('/messages'),
-    badge: unreadCount
-  }];
-  return <>
-      <nav className={cn("md:hidden fixed left-0 right-0 z-50 bg-background/98 backdrop-blur-xl border-t border-border/50 transition-all duration-300", isScrolled ? "bottom-0" : "bottom-0")}>
-        <div className="flex items-center justify-around px-2 py-1 safe-area-bottom max-w-md mx-auto opacity-70">
+
+  const navItems = [
+    {
+      label: 'Home',
+      icon: Home,
+      path: '/feed',
+      isActive: isActive('/feed') || location.pathname === '/'
+    },
+    {
+      label: 'Reels',
+      icon: Film,
+      path: '/reels',
+      isActive: isActive('/reels')
+    },
+    {
+      label: 'Create',
+      icon: Plus,
+      action: () => setShowCreatePost(true),
+      isCenter: true
+    },
+    {
+      label: 'Notifications',
+      icon: Bell,
+      path: '/notifications',
+      isActive: isActive('/notifications')
+    },
+    {
+      label: 'Messages',
+      icon: MessageCircle,
+      path: '/messages',
+      isActive: isActive('/messages'),
+      badge: unreadCount
+    }
+  ];
+
+  return (
+    <>
+      <nav
+        className={cn(
+          "md:hidden fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-in-out",
+          isVisible 
+            ? "bottom-6 opacity-100 translate-y-0" 
+            : "bottom-6 opacity-0 translate-y-4 pointer-events-none"
+        )}
+      >
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/80 backdrop-blur-md shadow-lg border border-border/30">
           {navItems.map((item, index) => {
-          const Icon = item.icon;
-          const isActiveTab = item.isActive;
-          if (item.isCenter) {
-            return <button key={index} onClick={item.action} className="flex items-center justify-center relative -mt-4">
-                  <div className="h-12 w-12 rounded-full bg-primary shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200">
-                    <Icon className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
+            const Icon = item.icon;
+            const isActiveTab = item.isActive;
+
+            if (item.isCenter) {
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    handleInteraction();
+                    item.action?.();
+                  }}
+                  className="flex items-center justify-center mx-2"
+                >
+                  <div className="h-11 w-11 rounded-full bg-primary shadow-md flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200">
+                    <Icon className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
                   </div>
-                </button>;
-          }
-          return <button key={index} onClick={() => {
-            if (item.action) {
-              item.action();
-            } else if (item.path) {
-              navigate(item.path);
+                </button>
+              );
             }
-          }} className={cn("flex flex-col items-center justify-center py-2 px-3 relative transition-all duration-200", isActiveTab ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+
+            return (
+              <button
+                key={index}
+                onClick={() => {
+                  handleInteraction();
+                  if (item.action) {
+                    item.action();
+                  } else if (item.path) {
+                    navigate(item.path);
+                  }
+                }}
+                className={cn(
+                  "flex items-center justify-center p-3 relative transition-all duration-200 rounded-full",
+                  isActiveTab 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
                 <div className="relative">
-                  <Icon className={cn("h-6 w-6 transition-all duration-200", isActiveTab ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
-                  {item.badge && item.badge > 0 && <Badge variant="destructive" className="absolute -top-1.5 -right-2 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center">
+                  <Icon
+                    className={cn(
+                      "h-5 w-5 transition-all duration-200",
+                      isActiveTab ? "stroke-[2.5px]" : "stroke-[1.5px]"
+                    )}
+                  />
+                  {item.badge && item.badge > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-2 -right-2 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
+                    >
                       {item.badge > 99 ? '99+' : item.badge}
-                    </Badge>}
+                    </Badge>
+                  )}
                 </div>
-                {isActiveTab && <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />}
-              </button>;
-        })}
+              </button>
+            );
+          })}
         </div>
       </nav>
 
@@ -101,5 +182,6 @@ export const BottomNavigation = () => {
           <CreatePost />
         </DialogContent>
       </Dialog>
-    </>;
+    </>
+  );
 };
