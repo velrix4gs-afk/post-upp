@@ -22,7 +22,7 @@ export const AISettings = () => {
     setLocalSettings(settings);
   }, [settings]);
 
-  const handleProviderChange = (provider: 'lovable' | 'openai' | 'anthropic') => {
+  const handleProviderChange = (provider: 'lovable' | 'openai' | 'anthropic' | 'google') => {
     const models = AVAILABLE_MODELS[provider];
     setLocalSettings(prev => ({
       ...prev,
@@ -92,6 +92,12 @@ export const AISettings = () => {
                     Lovable AI (Default - No API Key Required)
                   </div>
                 </SelectItem>
+                <SelectItem value="google">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-blue-500" />
+                    Google Gemini (Direct API)
+                  </div>
+                </SelectItem>
                 <SelectItem value="openai">
                   <div className="flex items-center gap-2">
                     <Bot className="h-4 w-4 text-green-500" />
@@ -138,7 +144,10 @@ export const AISettings = () => {
                   type={showApiKey ? 'text' : 'password'}
                   value={localSettings.custom_api_key}
                   onChange={(e) => setLocalSettings(prev => ({ ...prev, custom_api_key: e.target.value }))}
-                  placeholder={`Enter your ${localSettings.provider === 'openai' ? 'OpenAI' : 'Anthropic'} API key`}
+                  placeholder={`Enter your ${
+                    localSettings.provider === 'openai' ? 'OpenAI' : 
+                    localSettings.provider === 'google' ? 'Google AI' : 'Anthropic'
+                  } API key`}
                   className="pr-10"
                 />
                 <Button
@@ -152,7 +161,9 @@ export const AISettings = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Your API key is stored securely and only used for AI requests
+                {localSettings.provider === 'google' 
+                  ? 'Get your API key from Google AI Studio (aistudio.google.com)'
+                  : 'Your API key is stored securely and only used for AI requests'}
               </p>
             </div>
           )}
