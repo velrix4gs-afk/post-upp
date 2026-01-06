@@ -3,8 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import { Plus, Heart, MessageCircle, Share2, Bookmark, Pause, Play, Volume2, VolumeX, Film, Loader2, Send, MoreHorizontal, UserPlus } from 'lucide-react';
-import { useReels } from '@/hooks/useReels';
+import { 
+  Plus, Heart, MessageCircle, Share2, Bookmark, Pause, Play, 
+  Volume2, VolumeX, Film, Loader2, Send, MoreHorizontal, 
+  UserPlus, Eye, Pin, Reply, Trash2, Flag
+} from 'lucide-react';
+import { useReels, ReelComment } from '@/hooks/useReels';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -12,17 +16,30 @@ import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { InstagramReelCreator } from '@/components/InstagramReelCreator';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+interface CommentWithReplies extends ReelComment {
+  replies?: ReelComment[];
+  likes_count?: number;
+  is_liked?: boolean;
+  is_pinned?: boolean;
+}
 
 const ReelsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { reels, loading, hasMore, fetchReels, viewReel, likeReel, fetchComments, addComment } = useReels();
+  const { reels, loading, hasMore, fetchReels, viewReel, likeReel, fetchComments, addComment, deleteReel } = useReels();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<CommentWithReplies[]>([]);
   const [newComment, setNewComment] = useState('');
   const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
   const [likeAnimations, setLikeAnimations] = useState<{ [key: string]: boolean }>({});
@@ -30,11 +47,17 @@ const ReelsPage = () => {
   const [loadingComment, setLoadingComment] = useState(false);
   const [videoProgress, setVideoProgress] = useState<{ [key: string]: number }>({});
   const [likingReels, setLikingReels] = useState<Set<string>>(new Set());
-  
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [pinnedComments, setPinnedComments] = useState<Set<string>>(new Set());
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+  const [commentLikes, setCommentLikes] = useState<{ [key: string]: number }>({});
+  const [showReplies, setShowReplies] = useState<Set<string>>(new Set());
+
   const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const viewTimers = useRef<{ [key: string]: number }>({});
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   // Setup Intersection Observer for auto-play
   useEffect(() => {
@@ -63,8 +86,7 @@ const ReelsPage = () => {
     Object.entries(videoRefs.current).forEach(([indexStr, video]) => {
       if (video && observerRef.current) {
         observerRef.current.observe(video);
-        
-        // Add timeupdate listener for progress bar
+
         const handleTimeUpdate = () => {
           if (video.duration) {
             const progress = (video.currentTime / video.duration) * 100;
@@ -74,7 +96,7 @@ const ReelsPage = () => {
             }
           }
         };
-        
+
         video.addEventListener('timeupdate', handleTimeUpdate);
       }
     });
@@ -98,7 +120,7 @@ const ReelsPage = () => {
 
   const startViewTracking = (reelId: string) => {
     if (!reelId || viewTimers.current[reelId]) return;
-    
+
     const startTime = Date.now();
     viewTimers.current[reelId] = window.setTimeout(() => {
       const duration = Math.floor((Date.now() - startTime) / 1000);
@@ -115,8 +137,7 @@ const ReelsPage = () => {
 
     if (newIndex !== currentIndex && newIndex >= 0 && newIndex < reels.length) {
       setCurrentIndex(newIndex);
-      
-      // Load more if near end
+
       if (newIndex >= reels.length - 2 && hasMore && !loading) {
         fetchReels();
       }
@@ -155,16 +176,15 @@ const ReelsPage = () => {
     setTimeout(() => {
       setLikeAnimations(prev => ({ ...prev, [reelId]: false }));
     }, 1000);
-    
+
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }
   };
 
   const handleLike = async (reelId: string) => {
-    // Prevent multiple rapid clicks
     if (likingReels.has(reelId)) return;
-    
+
     setLikingReels(prev => new Set(prev).add(reelId));
     try {
       await likeReel(reelId);
@@ -221,7 +241,26 @@ const ReelsPage = () => {
 
   const handleOpenComments = async (reelId: string) => {
     const fetchedComments = await fetchComments(reelId);
-    setComments(fetchedComments);
+    // Organize comments with replies
+    const parentComments = fetchedComments.filter(c => !c.parent_id);
+    const replies = fetchedComments.filter(c => c.parent_id);
+    
+    const commentsWithReplies = parentComments.map(comment => ({
+      ...comment,
+      replies: replies.filter(r => r.parent_id === comment.id),
+      likes_count: commentLikes[comment.id] || 0,
+      is_liked: likedComments.has(comment.id),
+      is_pinned: pinnedComments.has(comment.id)
+    }));
+
+    // Sort: pinned first, then by date
+    commentsWithReplies.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    setComments(commentsWithReplies);
     setCommentsOpen(true);
   };
 
@@ -230,12 +269,103 @@ const ReelsPage = () => {
 
     setLoadingComment(true);
     const reel = reels[currentIndex];
-    await addComment(reel.id, newComment);
-    
+    await addComment(reel.id, newComment, replyingTo || undefined);
+
     const updatedComments = await fetchComments(reel.id);
-    setComments(updatedComments);
+    const parentComments = updatedComments.filter(c => !c.parent_id);
+    const replies = updatedComments.filter(c => c.parent_id);
+    
+    const commentsWithReplies = parentComments.map(comment => ({
+      ...comment,
+      replies: replies.filter(r => r.parent_id === comment.id),
+      likes_count: commentLikes[comment.id] || 0,
+      is_liked: likedComments.has(comment.id),
+      is_pinned: pinnedComments.has(comment.id)
+    }));
+
+    commentsWithReplies.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    setComments(commentsWithReplies);
     setNewComment('');
+    setReplyingTo(null);
     setLoadingComment(false);
+  };
+
+  const handleReply = (commentId: string, userName: string) => {
+    setReplyingTo(commentId);
+    setNewComment(`@${userName} `);
+    commentInputRef.current?.focus();
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    setLikedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId);
+        setCommentLikes(p => ({ ...p, [commentId]: (p[commentId] || 1) - 1 }));
+      } else {
+        newSet.add(commentId);
+        setCommentLikes(p => ({ ...p, [commentId]: (p[commentId] || 0) + 1 }));
+      }
+      return newSet;
+    });
+  };
+
+  const handlePinComment = (commentId: string) => {
+    const reel = reels[currentIndex];
+    if (reel.user_id !== user?.id) {
+      toast({ title: 'Only the reel author can pin comments', variant: 'destructive' });
+      return;
+    }
+
+    setPinnedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId);
+        toast({ title: 'Comment unpinned' });
+      } else {
+        // Only allow one pinned comment
+        newSet.clear();
+        newSet.add(commentId);
+        toast({ title: 'Comment pinned' });
+      }
+      return newSet;
+    });
+
+    // Re-sort comments
+    setComments(prev => {
+      const sorted = [...prev].sort((a, b) => {
+        const aIsPinned = pinnedComments.has(a.id) || a.id === commentId;
+        const bIsPinned = pinnedComments.has(b.id);
+        if (aIsPinned && !bIsPinned) return -1;
+        if (!aIsPinned && bIsPinned) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      return sorted;
+    });
+  };
+
+  const handleDeleteReel = async (reelId: string) => {
+    await deleteReel(reelId);
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  const toggleShowReplies = (commentId: string) => {
+    setShowReplies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId);
+      } else {
+        newSet.add(commentId);
+      }
+      return newSet;
+    });
   };
 
   const handleReelCreated = () => {
@@ -267,11 +397,6 @@ const ReelsPage = () => {
     } catch {
       return '';
     }
-  };
-
-  const extractHashtags = (caption: string) => {
-    const hashtagRegex = /#[\w\u0590-\u05ff]+/gi;
-    return caption.match(hashtagRegex) || [];
   };
 
   const renderCaptionWithHashtags = (caption: string) => {
@@ -322,7 +447,7 @@ const ReelsPage = () => {
             <p className="text-white/60 mb-8">
               Be the first to share your moment with the community!
             </p>
-            <Button 
+            <Button
               size="lg"
               onClick={() => setCreateDialogOpen(true)}
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full px-8 py-6 text-lg font-semibold"
@@ -346,7 +471,7 @@ const ReelsPage = () => {
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/70 to-transparent">
         <h1 className="text-xl font-bold text-white">Reels</h1>
-        
+
         {/* Tabs */}
         <div className="flex items-center gap-4">
           <button
@@ -380,7 +505,7 @@ const ReelsPage = () => {
       </div>
 
       {/* Reels Container */}
-      <div 
+      <div
         ref={containerRef}
         className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
         onScroll={handleScroll}
@@ -413,9 +538,9 @@ const ReelsPage = () => {
             {/* Double-tap like animation */}
             {likeAnimations[reel.id] && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                <Heart 
-                  className="h-32 w-32 text-white animate-[scale-in_0.3s_ease-out] drop-shadow-2xl" 
-                  fill="white" 
+                <Heart
+                  className="h-32 w-32 text-white animate-[scale-in_0.3s_ease-out] drop-shadow-2xl"
+                  fill="white"
                 />
               </div>
             )}
@@ -429,23 +554,23 @@ const ReelsPage = () => {
               </div>
             )}
 
-            {/* Progress Bar - Now with real progress */}
+            {/* Progress Bar */}
             {currentIndex === index && (
               <div className="absolute top-16 left-4 right-4 z-20">
                 <div className="h-0.5 bg-white/30 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-white rounded-full transition-all duration-100" 
-                    style={{ width: `${videoProgress[reel.id] || 0}%` }} 
+                  <div
+                    className="h-full bg-white rounded-full transition-all duration-100"
+                    style={{ width: `${videoProgress[reel.id] || 0}%` }}
                   />
                 </div>
               </div>
             )}
 
             {/* Right Side Actions */}
-            <div className="absolute right-3 bottom-32 flex flex-col items-center gap-6 z-20">
-              {/* Creator Avatar with Follow - hide follow button for own reels */}
+            <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5 z-20">
+              {/* Creator Avatar with Follow */}
               <div className="relative">
-                <Avatar 
+                <Avatar
                   className="h-12 w-12 ring-2 ring-white cursor-pointer"
                   onClick={() => navigate(`/profile/${reel.user_id}`)}
                 >
@@ -454,7 +579,6 @@ const ReelsPage = () => {
                     {reel.creator_name?.[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                {/* Only show follow button if not own reel */}
                 {!isOwnReel(reel.user_id) && (
                   <button className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center">
                     <Plus className="h-3 w-3 text-white" />
@@ -473,11 +597,10 @@ const ReelsPage = () => {
               >
                 <Heart
                   className={cn(
-                    "h-8 w-8 transition-all drop-shadow-lg",
-                    reel.is_liked 
-                      ? "fill-red-500 text-red-500 animate-[heartBeat_0.3s_ease-in-out]" 
-                      : "text-white",
-                    likeAnimations[reel.id] && "animate-ping"
+                    "h-7 w-7 transition-all drop-shadow-lg",
+                    reel.is_liked
+                      ? "fill-red-500 text-red-500"
+                      : "text-white"
                   )}
                 />
                 <span className="text-xs text-white font-semibold drop-shadow-md">
@@ -490,7 +613,7 @@ const ReelsPage = () => {
                 onClick={() => handleOpenComments(reel.id)}
                 className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
               >
-                <MessageCircle className="h-8 w-8 text-white drop-shadow-lg" />
+                <MessageCircle className="h-7 w-7 text-white drop-shadow-lg" />
                 <span className="text-xs text-white font-semibold drop-shadow-md">
                   {formatCount(reel.comments_count)}
                 </span>
@@ -501,7 +624,7 @@ const ReelsPage = () => {
                 onClick={() => handleShare(reel)}
                 className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
               >
-                <Share2 className="h-7 w-7 text-white drop-shadow-lg" />
+                <Share2 className="h-6 w-6 text-white drop-shadow-lg" />
                 <span className="text-xs text-white font-semibold drop-shadow-md">Share</span>
               </button>
 
@@ -510,25 +633,57 @@ const ReelsPage = () => {
                 onClick={() => handleSave(reel.id)}
                 className="flex flex-col items-center gap-1 active:scale-90 transition-transform"
               >
-                <Bookmark 
+                <Bookmark
                   className={cn(
-                    "h-7 w-7 transition-all drop-shadow-lg",
+                    "h-6 w-6 transition-all drop-shadow-lg",
                     savedReels.has(reel.id) ? "fill-white text-white" : "text-white"
-                  )} 
+                  )}
                 />
               </button>
 
-              {/* More */}
-              <button className="active:scale-90 transition-transform">
-                <MoreHorizontal className="h-6 w-6 text-white drop-shadow-lg" />
-              </button>
+              {/* More Options */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="active:scale-90 transition-transform">
+                    <MoreHorizontal className="h-6 w-6 text-white drop-shadow-lg" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-sm">
+                  {isOwnReel(reel.user_id) ? (
+                    <>
+                      <DropdownMenuItem className="flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        <span>{formatCount(reel.views_count)} views</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="flex items-center gap-2 text-destructive"
+                        onClick={() => handleDeleteReel(reel.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete Reel</span>
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" />
+                        <span>Follow {reel.creator_name}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-2">
+                        <Flag className="h-4 w-4" />
+                        <span>Report</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
-            {/* Bottom Info - Improved layout with text shadows */}
+            {/* Bottom Info */}
             <div className="absolute left-4 right-20 bottom-8 z-20 text-white">
-              {/* Creator Info with Follow Button */}
+              {/* Creator Info */}
               <div className="flex items-center gap-2 mb-3">
-                <span 
+                <span
                   className="font-bold text-base flex items-center gap-1 cursor-pointer drop-shadow-md"
                   onClick={() => navigate(`/profile/${reel.user_id}`)}
                 >
@@ -546,20 +701,20 @@ const ReelsPage = () => {
                 )}
               </div>
 
-              {/* Caption with clickable hashtags */}
+              {/* Caption */}
               {reel.caption && (
                 <p className="text-sm leading-relaxed line-clamp-2 mb-3 drop-shadow-md">
                   {renderCaptionWithHashtags(reel.caption)}
                 </p>
               )}
 
-              {/* Music/Audio with scrolling effect */}
+              {/* Music/Audio */}
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-4 w-4 rounded-full bg-white/20 flex items-center justify-center animate-spin" style={{ animationDuration: '3s' }}>
                   <span className="text-[8px]">🎵</span>
                 </div>
                 <div className="overflow-hidden max-w-[200px]">
-                  <p className="text-xs text-white/80 whitespace-nowrap animate-marquee">
+                  <p className="text-xs text-white/80 whitespace-nowrap">
                     Original Audio · {reel.creator_name}
                   </p>
                 </div>
@@ -567,6 +722,7 @@ const ReelsPage = () => {
 
               {/* View Count and Timestamp */}
               <div className="flex items-center gap-2 text-xs text-white/60">
+                <Eye className="h-3 w-3" />
                 <span>{formatCount(reel.views_count)} views</span>
                 {reel.created_at && (
                   <>
@@ -578,7 +734,7 @@ const ReelsPage = () => {
             </div>
 
             {/* Mute Button */}
-            <button 
+            <button
               onClick={toggleMute}
               className="absolute right-3 bottom-8 z-20 h-8 w-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
             >
@@ -605,7 +761,7 @@ const ReelsPage = () => {
         onReelCreated={handleReelCreated}
       />
 
-      {/* Slide-up Comments Sheet */}
+      {/* Comments Sheet */}
       <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
         <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl bg-background border-t border-border/50 p-0">
           {/* Header */}
@@ -627,27 +783,98 @@ const ReelsPage = () => {
             ) : (
               <div className="space-y-4">
                 {comments.map(comment => (
-                  <div key={comment.id} className="flex gap-3">
-                    <Avatar className="h-9 w-9 flex-shrink-0">
-                      <AvatarImage src={comment.user?.avatar_url} />
-                      <AvatarFallback className="text-xs">
-                        {comment.user?.display_name?.[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm">{comment.user?.display_name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {comment.created_at ? formatTimestamp(comment.created_at) : ''}
-                        </span>
+                  <div key={comment.id} className="space-y-2">
+                    {/* Pinned badge */}
+                    {pinnedComments.has(comment.id) && (
+                      <div className="flex items-center gap-1 text-xs text-primary">
+                        <Pin className="h-3 w-3" />
+                        <span>Pinned by creator</span>
                       </div>
-                      <p className="text-sm mt-0.5 break-words">{comment.content}</p>
-                      <div className="flex items-center gap-4 mt-1">
-                        <button className="text-xs text-muted-foreground hover:text-foreground">Reply</button>
-                        <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          <Heart className="h-3 w-3" />
-                          <span>0</span>
-                        </button>
+                    )}
+                    
+                    <div className="flex gap-3">
+                      <Avatar className="h-9 w-9 flex-shrink-0">
+                        <AvatarImage src={comment.user?.avatar_url} />
+                        <AvatarFallback className="text-xs">
+                          {comment.user?.display_name?.[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{comment.user?.display_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {comment.created_at ? formatTimestamp(comment.created_at) : ''}
+                          </span>
+                        </div>
+                        <p className="text-sm mt-0.5 break-words">{comment.content}</p>
+                        <div className="flex items-center gap-4 mt-2">
+                          <button
+                            onClick={() => handleReply(comment.id, comment.user?.display_name || '')}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <Reply className="h-3 w-3" />
+                            Reply
+                          </button>
+                          <button
+                            onClick={() => handleLikeComment(comment.id)}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <Heart
+                              className={cn(
+                                "h-3 w-3",
+                                likedComments.has(comment.id) && "fill-red-500 text-red-500"
+                              )}
+                            />
+                            <span>{commentLikes[comment.id] || 0}</span>
+                          </button>
+                          {isOwnReel(reels[currentIndex]?.user_id) && (
+                            <button
+                              onClick={() => handlePinComment(comment.id)}
+                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              <Pin className={cn("h-3 w-3", pinnedComments.has(comment.id) && "fill-primary text-primary")} />
+                              {pinnedComments.has(comment.id) ? 'Unpin' : 'Pin'}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Replies */}
+                        {comment.replies && comment.replies.length > 0 && (
+                          <div className="mt-2">
+                            <button
+                              onClick={() => toggleShowReplies(comment.id)}
+                              className="text-xs text-primary font-medium"
+                            >
+                              {showReplies.has(comment.id)
+                                ? 'Hide replies'
+                                : `View ${comment.replies.length} ${comment.replies.length === 1 ? 'reply' : 'replies'}`}
+                            </button>
+                            
+                            {showReplies.has(comment.id) && (
+                              <div className="mt-2 space-y-3 pl-4 border-l-2 border-border/50">
+                                {comment.replies.map(reply => (
+                                  <div key={reply.id} className="flex gap-2">
+                                    <Avatar className="h-7 w-7 flex-shrink-0">
+                                      <AvatarImage src={reply.user?.avatar_url} />
+                                      <AvatarFallback className="text-xs">
+                                        {reply.user?.display_name?.[0]?.toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-xs">{reply.user?.display_name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {reply.created_at ? formatTimestamp(reply.created_at) : ''}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs mt-0.5">{reply.content}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -658,13 +885,28 @@ const ReelsPage = () => {
 
           {/* Comment Input */}
           <div className="sticky bottom-0 bg-background border-t border-border/50 px-4 py-3 safe-area-inset-bottom">
+            {replyingTo && (
+              <div className="flex items-center justify-between mb-2 px-2 py-1 bg-muted rounded-lg">
+                <span className="text-xs text-muted-foreground">Replying to comment</span>
+                <button
+                  onClick={() => {
+                    setReplyingTo(null);
+                    setNewComment('');
+                  }}
+                  className="text-xs text-primary"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8 flex-shrink-0">
                 <AvatarFallback>U</AvatarFallback>
               </Avatar>
               <div className="flex-1 relative">
                 <Input
-                  placeholder="Add a comment..."
+                  ref={commentInputRef}
+                  placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
