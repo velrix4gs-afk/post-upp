@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
-import { Home, Search, Bell, MessageCircle, Plus, Film } from 'lucide-react';
+import { Home, Film, Plus, Search, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,7 +17,7 @@ export const BottomNavigation = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastInteraction, setLastInteraction] = useState(Date.now());
 
-  // Pages where bottom nav should be shown
+  // Pages where bottom nav should be shown - ONLY feed and reels
   const allowedPages = ['/feed', '/', '/reels'];
   const isAllowedPage = allowedPages.some(page => 
     location.pathname === page || location.pathname.startsWith('/feed')
@@ -67,6 +67,7 @@ export const BottomNavigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Instagram-like bottom nav: Home, Search, Reels, Profile
   const navItems = [
     {
       label: 'Home',
@@ -75,10 +76,10 @@ export const BottomNavigation = () => {
       isActive: isActive('/feed') || location.pathname === '/'
     },
     {
-      label: 'Reels',
-      icon: Film,
-      path: '/reels',
-      isActive: isActive('/reels')
+      label: 'Search',
+      icon: Search,
+      path: '/search',
+      isActive: isActive('/search')
     },
     {
       label: 'Create',
@@ -87,17 +88,16 @@ export const BottomNavigation = () => {
       isCenter: true
     },
     {
-      label: 'Notifications',
-      icon: Bell,
-      path: '/notifications',
-      isActive: isActive('/notifications')
+      label: 'Reels',
+      icon: Film,
+      path: '/reels',
+      isActive: isActive('/reels')
     },
     {
-      label: 'Messages',
-      icon: MessageCircle,
-      path: '/messages',
-      isActive: isActive('/messages'),
-      badge: unreadCount
+      label: 'Profile',
+      icon: User,
+      path: `/profile/${user?.id}`,
+      isActive: location.pathname.startsWith('/profile')
     }
   ];
 
@@ -111,7 +111,8 @@ export const BottomNavigation = () => {
             : "bottom-6 opacity-0 translate-y-4 pointer-events-none"
         )}
       >
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/80 backdrop-blur-md shadow-lg border border-border/30">
+        {/* Floating icons without background */}
+        <div className="flex items-center gap-4">
           {navItems.map((item, index) => {
             const Icon = item.icon;
             const isActiveTab = item.isActive;
@@ -124,10 +125,10 @@ export const BottomNavigation = () => {
                     handleInteraction();
                     item.action?.();
                   }}
-                  className="flex items-center justify-center mx-2"
+                  className="flex items-center justify-center"
                 >
-                  <div className="h-11 w-11 rounded-full bg-primary shadow-md flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200">
-                    <Icon className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
+                  <div className="h-12 w-12 rounded-full bg-primary shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200">
+                    <Icon className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
                   </div>
                 </button>
               );
@@ -145,27 +146,19 @@ export const BottomNavigation = () => {
                   }
                 }}
                 className={cn(
-                  "flex items-center justify-center p-3 relative transition-all duration-200 rounded-full",
+                  "flex items-center justify-center p-3 transition-all duration-200",
                   isActiveTab 
-                    ? "text-primary bg-primary/10" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <div className="relative">
                   <Icon
                     className={cn(
-                      "h-5 w-5 transition-all duration-200",
-                      isActiveTab ? "stroke-[2.5px]" : "stroke-[1.5px]"
+                      "h-6 w-6 transition-all duration-200 drop-shadow-md",
+                      isActiveTab ? "stroke-[2.5px]" : "stroke-[2px]"
                     )}
                   />
-                  {item.badge && item.badge > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-2 -right-2 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
-                    >
-                      {item.badge > 99 ? '99+' : item.badge}
-                    </Badge>
-                  )}
                 </div>
               </button>
             );

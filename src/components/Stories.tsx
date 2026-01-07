@@ -57,25 +57,36 @@ const Stories = () => {
     }
   };
   return <>
-      <Card className="bg-gradient-card p-4 border-0 shadow-sm">
+      {/* Floating stories - no background */}
+      <div className="py-3 px-2">
         <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
           <style>{`
             .scrollbar-hide::-webkit-scrollbar { display: none; }
             .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
           `}</style>
-          {/* Add Story */}
+          {/* Add Story - Floating circle with + */}
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <div className="flex-shrink-0 w-16 text-center cursor-pointer">
-                <div className="relative w-16 h-16">
-                  <Avatar className="w-16 h-16 border-2 border-dashed border-muted-foreground">
-                    <AvatarImage src={profile?.avatar_url} />
-                    <AvatarFallback className="bg-muted">
-                      <Plus className="h-6 w-6 text-muted-foreground" />
-                    </AvatarFallback>
-                  </Avatar>
+              <div className="flex-shrink-0 w-[72px] text-center cursor-pointer">
+                <div className="relative w-[68px] h-[68px] mx-auto">
+                  <div className="w-[68px] h-[68px] rounded-full bg-background border-2 border-dashed border-primary/50 flex items-center justify-center hover:border-primary transition-colors">
+                    {profile?.avatar_url ? (
+                      <Avatar className="w-14 h-14">
+                        <AvatarImage src={profile.avatar_url} className="object-cover" />
+                        <AvatarFallback className="bg-muted text-muted-foreground">
+                          {profile?.display_name?.[0] || '+'}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Plus className="h-7 w-7 text-primary" />
+                    )}
+                  </div>
+                  {/* Plus badge */}
+                  <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+                    <Plus className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+                  </div>
                 </div>
-                <p className="text-xs mt-2 text-muted-foreground truncate">Add Story</p>
+                <p className="text-[11px] mt-1.5 text-muted-foreground truncate font-medium">Your Story</p>
               </div>
             </DialogTrigger>
             <DialogContent>
@@ -127,27 +138,32 @@ const Stories = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Story Items */}
-          {stories.map(story => <div key={story.id} className="flex-shrink-0 w-16 text-center cursor-pointer snap-start relative group" onClick={() => handleStoryClick(story)}>
+          {/* Story Items - Floating circles */}
+          {stories.map(story => <div key={story.id} className="flex-shrink-0 w-[72px] text-center cursor-pointer snap-start relative group" onClick={() => handleStoryClick(story)}>
               <ProfileHoverCard userId={story.user_id}>
-                <div className="w-16 h-16 relative">
-                  <Avatar className="w-16 h-16 ring-4 ring-primary hover:ring-primary/80 transition-all">
-                    <AvatarImage src={story.profiles.avatar_url} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-primary text-white">
-                      {story.profiles.display_name[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                <div className="w-[68px] h-[68px] mx-auto relative">
+                  {/* Gradient ring */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[3px]">
+                    <div className="w-full h-full rounded-full bg-background p-[2px]">
+                      <Avatar className="w-full h-full">
+                        <AvatarImage src={story.profiles.avatar_url} className="object-cover" />
+                        <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                          {story.profiles.display_name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
                   {story.user_id === user?.id && <Button size="sm" variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={e => handleDeleteStory(story.id, e)}>
                       <X className="h-3 w-3" />
                     </Button>}
                 </div>
               </ProfileHoverCard>
-              <p className="text-xs mt-2 w-16 truncate">
-                {story.profiles.display_name}
+              <p className="text-[11px] mt-1.5 w-[72px] truncate font-medium">
+                {story.profiles.display_name.split(' ')[0]}
               </p>
             </div>)}
         </div>
-      </Card>
+      </div>
 
       {/* Story Viewer */}
       {selectedStory && <Dialog open={!!selectedStory} onOpenChange={() => setSelectedStory(null)}>
