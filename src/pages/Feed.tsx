@@ -64,14 +64,31 @@ const Feed = () => {
         <main className="flex-1 max-w-2xl mx-auto lg:mx-0 min-h-screen pb-20">
           <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-          {/* Stories */}
-          <div className="border-b border-border">
+          {/* Stories - Floating at top, no background */}
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
             <Stories />
           </div>
 
-          {/* Create Post */}
-          <div className="p-4 border-b border-border">
+          {/* Create Post - Compact on mobile */}
+          <div className="p-4 border-b border-border hidden md:block">
             <CreatePostCard />
+          </div>
+          
+          {/* Mobile Create Post Button - Opens modal */}
+          <div className="p-3 border-b border-border md:hidden">
+            <button 
+              onClick={() => {
+                // Trigger the bottom nav create dialog
+                const createBtn = document.querySelector('[data-create-post]') as HTMLButtonElement;
+                if (createBtn) createBtn.click();
+              }}
+              className="w-full flex items-center gap-3 p-3 bg-muted/50 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <span className="text-sm">What's on your mind?</span>
+            </button>
           </div>
 
           {/* Feed Content */}
