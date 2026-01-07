@@ -29,7 +29,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, uploadAvatar, uploadCover } = useProfile();
   const { theme, setTheme, colorTheme, setColorTheme } = useTheme();
   const { isAdmin } = useAdmin();
   
@@ -43,6 +43,8 @@ const SettingsPage = () => {
   const [showNotificationPreferences, setShowNotificationPreferences] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   
   const [newPassword, setNewPassword] = useState('');
   const [newUsername, setNewUsername] = useState('');
@@ -417,9 +419,9 @@ const SettingsPage = () => {
       const { data: existing } = await supabase
         .from('profiles')
         .select('id')
-        .eq('username', newUsername)
+        .eq('username', newUsername.toLowerCase())
         .neq('id', user?.id)
-        .single();
+        .maybeSingle();
       
       if (existing) {
         toast({ 
@@ -430,14 +432,7 @@ const SettingsPage = () => {
         return;
       }
       
-      const { error } = await supabase
-        .from('profiles')
-        .update({ username: newUsername })
-        .eq('id', user?.id);
-        
-      if (error) throw error;
-      
-      await updateProfile({ username: newUsername });
+      await updateProfile({ username: newUsername.toLowerCase() });
       toast({ 
         title: 'Success',
         description: 'Username updated successfully' 
@@ -460,10 +455,8 @@ const SettingsPage = () => {
     if (!newDisplayName) return;
     try {
       setIsLoading(true);
-      const { error } = await supabase.from('profiles').update({ display_name: newDisplayName }).eq('id', user?.id);
-      if (error) throw error;
       await updateProfile({ display_name: newDisplayName });
-      toast({ description: 'Display name updated successfully' });
+      toast({ title: 'Success', description: 'Display name updated successfully' });
       setShowDisplayNameDialog(false);
       setNewDisplayName('');
     } catch (error) {
@@ -485,13 +478,6 @@ const SettingsPage = () => {
     
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ bio: newBio })
-        .eq('id', user?.id);
-        
-      if (error) throw error;
-      
       await updateProfile({ bio: newBio });
       toast({ 
         title: 'Success',
@@ -615,11 +601,98 @@ const SettingsPage = () => {
 
                   <div className="p-4 border rounded-lg">
                     <Label className="text-base mb-2 block">Profile Picture</Label>
-                    <p className="text-sm text-muted-foreground mb-3">Update your profile picture</p>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/profile/${user?.id}`)}>
-                      <Camera className="h-4 w-4 mr-2" />
-                      Edit in Profile
-                    </Button>
+                    <p className="text-sm text-muted-foreground mb-3">Update your profile picture (max 5MB)</p>
+                    <div className="flex items-center gap-4">
+                      {profile?.avatar_url && (
+                        <img 
+                          src={profile.avatar_url} 
+                          alt="Current avatar" 
+                          className="h-16 w-16 rounded-full object-cover border"
+                        />
+                      )}
+                      <div className="flex gap-2">
+                        <label htmlFor="avatar-upload-settings" className="cursor-pointer">
+                          <Button variant="outline" size="sm" asChild disabled={isUploadingAvatar}>
+                            <span>
+                              {isUploadingAvatar ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Camera className="h-4 w-4 mr-2" />
+                              )}
+                              {isUploadingAvatar ? 'Uploading...' : 'Upload Photo'}
+                            </span>
+                          </Button>
+                        </label>
+                        <input
+                          id="avatar-upload-settings"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setIsUploadingAvatar(true);
+                            try {
+                              await uploadAvatar(file);
+                            } catch (err) {
+                              // Error already handled in uploadAvatar
+                            } finally {
+                              setIsUploadingAvatar(false);
+                              e.target.value = '';
+                            }
+                          }}
+                          disabled={isUploadingAvatar}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <Label className="text-base mb-2 block">Cover Photo</Label>
+                    <p className="text-sm text-muted-foreground mb-3">Update your cover photo (max 5MB)</p>
+                    <div className="space-y-3">
+                      {profile?.cover_url && (
+                        <img 
+                          src={profile.cover_url} 
+                          alt="Current cover" 
+                          className="w-full h-24 object-cover rounded-lg border"
+                        />
+                      )}
+                      <div className="flex gap-2">
+                        <label htmlFor="cover-upload-settings" className="cursor-pointer">
+                          <Button variant="outline" size="sm" asChild disabled={isUploadingCover}>
+                            <span>
+                              {isUploadingCover ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Camera className="h-4 w-4 mr-2" />
+                              )}
+                              {isUploadingCover ? 'Uploading...' : 'Upload Cover'}
+                            </span>
+                          </Button>
+                        </label>
+                        <input
+                          id="cover-upload-settings"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setIsUploadingCover(true);
+                            try {
+                              await uploadCover(file);
+                            } catch (err) {
+                              // Error already handled in uploadCover
+                            } finally {
+                              setIsUploadingCover(false);
+                              e.target.value = '';
+                            }
+                          }}
+                          disabled={isUploadingCover}
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="p-4 border rounded-lg">
