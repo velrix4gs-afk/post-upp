@@ -118,28 +118,54 @@ export const useProfile = (userId?: string) => {
 
     try {
       // Remove read-only fields and ensure only valid fields
-      const { is_verified, created_at, updated_at, online_status, status_message, ...safeUpdates } = updates as any;
+      const { 
+        id, 
+        is_verified, 
+        verification_type,
+        verified_at,
+        created_at, 
+        updated_at, 
+        online_status, 
+        status_message, 
+        ...safeUpdates 
+      } = updates as any;
       
-      // Call the profiles edge function
-      const { data, error } = await supabase.functions.invoke('profiles', {
-        method: 'PUT',
-        body: safeUpdates
-      });
+      console.log('[PROFILE] Updating with:', safeUpdates);
+      
+      // Update directly via Supabase client
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...safeUpdates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Profile update error:', error);
+        console.error('[PROFILE] Update error:', error);
         throw error;
       }
 
+      console.log('[PROFILE] Update successful:', data);
+
       // Update local state with the returned data
-      setProfile(prev => prev ? { ...prev, ...data } : null);
+      setProfile(data as Profile);
+      
+      // Update cache
+      if (data) {
+        await CacheHelper.saveProfile(user.id, data as Profile);
+      }
       
       toast({
         title: 'Profile Updated',
         description: 'Your changes have been saved successfully'
       });
+      
+      return data;
     } catch (err: any) {
-      console.error('Profile update failed:', err);
+      console.error('[PROFILE] Update failed:', err);
       toast({
         title: 'Update Failed',
         description: err.message || 'Could not update your profile. Please try again.',
