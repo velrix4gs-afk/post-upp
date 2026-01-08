@@ -83,9 +83,12 @@ const ReelsPage = () => {
 
   // Observe videos and attach timeupdate listeners
   useEffect(() => {
+    const videosToObserve: HTMLVideoElement[] = [];
+    
     Object.entries(videoRefs.current).forEach(([indexStr, video]) => {
       if (video && observerRef.current) {
         observerRef.current.observe(video);
+        videosToObserve.push(video);
 
         const handleTimeUpdate = () => {
           if (video.duration) {
@@ -102,7 +105,10 @@ const ReelsPage = () => {
     });
 
     return () => {
-      observerRef.current?.disconnect();
+      // Only unobserve the videos we observed, don't disconnect the whole observer
+      videosToObserve.forEach(video => {
+        observerRef.current?.unobserve(video);
+      });
     };
   }, [reels]);
 
@@ -507,9 +513,9 @@ const ReelsPage = () => {
       {/* Reels Container */}
       <div
         ref={containerRef}
-        className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+        className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide touch-pan-y overscroll-contain"
         onScroll={handleScroll}
-        style={{ scrollSnapType: 'y mandatory' }}
+        style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
       >
         {reels.map((reel, index) => (
           <div
@@ -763,9 +769,9 @@ const ReelsPage = () => {
 
       {/* Comments Sheet */}
       <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
-        <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl bg-background border-t border-border/50 p-0">
+        <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl bg-background border-t border-border/50 p-0 flex flex-col">
           {/* Header */}
-          <div className="sticky top-0 bg-background border-b border-border/50 px-4 py-3 rounded-t-3xl">
+          <div className="flex-shrink-0 bg-background border-b border-border/50 px-4 py-3 rounded-t-3xl">
             <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-3" />
             <h3 className="text-center font-semibold">
               Comments {comments.length > 0 && `(${comments.length})`}
@@ -773,7 +779,7 @@ const ReelsPage = () => {
           </div>
 
           {/* Comments List */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 max-h-[calc(80vh-130px)]">
+          <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
             {comments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <MessageCircle className="h-16 w-16 text-muted-foreground/30 mb-4" />
@@ -884,7 +890,7 @@ const ReelsPage = () => {
           </div>
 
           {/* Comment Input */}
-          <div className="sticky bottom-0 bg-background border-t border-border/50 px-4 py-3 safe-area-inset-bottom">
+          <div className="flex-shrink-0 bg-background border-t border-border/50 px-4 py-3 pb-safe">
             {replyingTo && (
               <div className="flex items-center justify-between mb-2 px-2 py-1 bg-muted rounded-lg">
                 <span className="text-xs text-muted-foreground">Replying to comment</span>
