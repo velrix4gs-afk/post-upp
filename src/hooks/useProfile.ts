@@ -107,71 +107,69 @@ export const useProfile = (userId?: string) => {
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'You must be logged in to update your profile',
-        variant: 'destructive'
-      });
-      return;
+    if (!user?.id) {
+      toast({ title: 'Error', description: 'You must be logged in to update your profile', variant: 'destructive' });
+      return false;
     }
 
     try {
-      // Remove read-only fields and ensure only valid fields
-      const { 
-        id, 
-        is_verified, 
-        verification_type,
-        verified_at,
-        created_at, 
-        updated_at, 
-        online_status, 
-        status_message, 
-        ...safeUpdates 
-      } = updates as any;
-      
-      console.log('[PROFILE] Updating with:', safeUpdates);
-      
-      // Update directly via Supabase client
-      const { data, error } = await supabase
+      // Whitelist of allowed profile columns - prevents sending unknown fields
+      const allowedFields = [
+        'username',
+        'display_name',
+        'bio',
+        'avatar_url',
+        'cover_url',
+        'location',
+        'website',
+        'birth_date',
+        'gender',
+        'phone',
+        'relationship_status',
+        'theme_color',
+        'is_private'
+      ];
+
+      // Filter updates to only include allowed fields
+      const filteredUpdates: Partial<Profile> = {};
+      for (const key of allowedFields) {
+        if (key in updates && updates[key as keyof Profile] !== undefined) {
+          (filteredUpdates as any)[key] = updates[key as keyof Profile];
+        }
+      }
+
+      // Add updated_at timestamp
+      const updateData = {
+        ...filteredUpdates,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          ...safeUpdates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
+        .update(updateData)
+        .eq('id', user.id);
 
-      if (error) {
-        console.error('[PROFILE] Update error:', error);
-        throw error;
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        toast({ title: 'Error', description: updateError.message || 'Failed to update profile', variant: 'destructive' });
+        return false;
       }
 
-      console.log('[PROFILE] Update successful:', data);
+      // Update local state
+      setProfile(prev => prev ? { ...prev, ...filteredUpdates } : null);
 
-      // Update local state with the returned data
-      setProfile(data as Profile);
-      
       // Update cache
-      if (data) {
-        await CacheHelper.saveProfile(user.id, data as Profile);
+      const cached = await CacheHelper.getProfile(user.id);
+      if (cached) {
+        await CacheHelper.saveProfile(user.id, { ...cached, ...filteredUpdates });
       }
-      
-      toast({
-        title: 'Profile Updated',
-        description: 'Your changes have been saved successfully'
-      });
-      
-      return data;
+
+      toast({ title: 'Success', description: 'Profile updated successfully' });
+      return true;
     } catch (err: any) {
-      console.error('[PROFILE] Update failed:', err);
-      toast({
-        title: 'Update Failed',
-        description: err.message || 'Could not update your profile. Please try again.',
-        variant: 'destructive'
-      });
-      throw err;
+      console.error('Error updating profile:', err);
+      toast({ title: 'Error', description: err.message || 'Failed to update profile', variant: 'destructive' });
+      return false;
     }
   };
 
@@ -186,9 +184,9 @@ export const useProfile = (userId?: string) => {
     }
 
     try {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('UPLOAD_004: File size must be less than 5MB');
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('UPLOAD_004: File size must be less than 10MB');
       }
 
       // Validate file type

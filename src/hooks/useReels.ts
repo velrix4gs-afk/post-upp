@@ -49,15 +49,22 @@ export const useReels = () => {
       setLoading(true);
       const currentPage = reset ? 0 : page;
 
-      // Try cache first
-      const cacheKey = `reels_${currentPage}`;
-      const cachedData = await cache.get(STORES.REELS, cacheKey);
-      
-      if (cachedData && !reset) {
-        setReels([...reels, ...(cachedData as Reel[])]);
-        setPage(prev => prev + 1);
-        setLoading(false);
-        return;
+      // Skip cache for fresh data on reset (counters change frequently)
+      if (!reset) {
+        const cacheKey = `reels_${currentPage}`;
+        const cachedData = await cache.get(STORES.REELS, cacheKey);
+        
+        if (cachedData) {
+          // Merge with existing reels, keeping higher counts for duplicates
+          setReels(prev => {
+            const existingIds = new Set(prev.map(r => r.id));
+            const newReels = (cachedData as Reel[]).filter(r => !existingIds.has(r.id));
+            return [...prev, ...newReels];
+          });
+          setPage(prev => prev + 1);
+          setLoading(false);
+          return;
+        }
       }
 
       const { data, error } = await supabase.rpc('get_recommended_reels', {
@@ -85,13 +92,33 @@ export const useReels = () => {
         }));
 
         // Cache the results
+        const cacheKey = `reels_${currentPage}`;
         await cache.set(STORES.REELS, cacheKey, reelsWithLikes);
 
         if (reset) {
           setReels(reelsWithLikes);
           setPage(1);
         } else {
-          setReels(prev => [...prev, ...reelsWithLikes]);
+          // Merge: use functional update to avoid stale closure
+          setReels(prev => {
+            const existingMap = new Map(prev.map(r => [r.id, r]));
+            reelsWithLikes.forEach((r: Reel) => {
+              const existing = existingMap.get(r.id);
+              if (existing) {
+                // Keep highest counts to avoid regression
+                existingMap.set(r.id, {
+                  ...r,
+                  views_count: Math.max(existing.views_count, r.views_count),
+                  likes_count: Math.max(existing.likes_count, r.likes_count),
+                  comments_count: Math.max(existing.comments_count, r.comments_count),
+                  is_liked: existing.is_liked || r.is_liked
+                });
+              } else {
+                existingMap.set(r.id, r);
+              }
+            });
+            return Array.from(existingMap.values());
+          });
           setPage(prev => prev + 1);
         }
 
