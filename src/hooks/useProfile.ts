@@ -106,71 +106,72 @@ export const useProfile = (userId?: string) => {
     }
   };
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const updateProfile = async (updates: Partial<Profile>): Promise<boolean> => {
     if (!user?.id) {
       toast({ title: 'Error', description: 'You must be logged in to update your profile', variant: 'destructive' });
       return false;
     }
 
-    try {
-      // Whitelist of allowed profile columns - prevents sending unknown fields
-      const allowedFields = [
-        'username',
-        'display_name',
-        'bio',
-        'avatar_url',
-        'cover_url',
-        'location',
-        'website',
-        'birth_date',
-        'gender',
-        'phone',
-        'relationship_status',
-        'theme_color',
-        'is_private'
-      ];
+    // Whitelist of allowed profile columns - prevents sending unknown fields
+    const allowedFields = [
+      'username',
+      'display_name',
+      'bio',
+      'avatar_url',
+      'cover_url',
+      'location',
+      'website',
+      'birth_date',
+      'gender',
+      'phone',
+      'relationship_status',
+      'theme_color',
+      'is_private'
+    ];
 
-      // Filter updates to only include allowed fields
-      const filteredUpdates: Partial<Profile> = {};
-      for (const key of allowedFields) {
-        if (key in updates && updates[key as keyof Profile] !== undefined) {
-          (filteredUpdates as any)[key] = updates[key as keyof Profile];
-        }
+    // Filter updates to only include allowed fields
+    const filteredUpdates: Partial<Profile> = {};
+    for (const key of allowedFields) {
+      if (key in updates && updates[key as keyof Profile] !== undefined) {
+        (filteredUpdates as any)[key] = updates[key as keyof Profile];
       }
+    }
 
-      // Add updated_at timestamp
-      const updateData = {
-        ...filteredUpdates,
-        updated_at: new Date().toISOString()
-      };
+    // Add updated_at timestamp
+    const updateData = {
+      ...filteredUpdates,
+      updated_at: new Date().toISOString()
+    };
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id);
+    const { data, error: updateError } = await supabase
+      .from('profiles')
+      .update(updateData)
+      .eq('id', user.id)
+      .select('id')
+      .single();
 
-      if (updateError) {
-        console.error('Profile update error:', updateError);
-        toast({ title: 'Error', description: updateError.message || 'Failed to update profile', variant: 'destructive' });
-        return false;
-      }
-
-      // Update local state
-      setProfile(prev => prev ? { ...prev, ...filteredUpdates } : null);
-
-      // Update cache
-      const cached = await CacheHelper.getProfile(user.id);
-      if (cached) {
-        await CacheHelper.saveProfile(user.id, { ...cached, ...filteredUpdates });
-      }
-
-      toast({ title: 'Success', description: 'Profile updated successfully' });
-      return true;
-    } catch (err: any) {
-      console.error('Error updating profile:', err);
-      toast({ title: 'Error', description: err.message || 'Failed to update profile', variant: 'destructive' });
+    if (updateError) {
+      console.error('Profile update error:', updateError);
+      toast({ title: 'Error', description: updateError.message || 'Failed to update profile', variant: 'destructive' });
       return false;
     }
+
+    if (!data) {
+      toast({ title: 'Error', description: 'Profile update failed - no rows updated', variant: 'destructive' });
+      return false;
+    }
+
+    // Update local state
+    setProfile(prev => prev ? { ...prev, ...filteredUpdates } : null);
+
+    // Update cache
+    const cached = await CacheHelper.getProfile(user.id);
+    if (cached) {
+      await CacheHelper.saveProfile(user.id, { ...cached, ...filteredUpdates });
+    }
+
+    toast({ title: 'Success', description: 'Profile updated successfully' });
+    return true;
   };
 
   const uploadCover = async (file: File) => {

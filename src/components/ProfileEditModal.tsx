@@ -163,19 +163,13 @@ export const ProfileEditModal = ({ open, onOpenChange }: ProfileEditModalProps) 
     }
 
     setIsSaving(true);
-    try {
-      await updateProfile(changes);
-      toast({ title: 'Profile updated!', duration: 1500 });
+    const success = await updateProfile(changes);
+    setIsSaving(false);
+    
+    if (success) {
       onOpenChange(false);
-    } catch (error: any) {
-      toast({ 
-        title: error.message?.includes('username') ? 'Username taken' : 'Update failed',
-        variant: 'destructive',
-        duration: 1500
-      });
-    } finally {
-      setIsSaving(false);
     }
+    // Error toast is shown by updateProfile, so we don't need to handle it here
   };
 
   const bioLength = formData.bio.length;
