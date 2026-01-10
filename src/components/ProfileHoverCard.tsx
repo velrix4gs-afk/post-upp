@@ -1,8 +1,6 @@
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MiniProfilePopup } from "./MiniProfilePopup";
 import { useState, useCallback, useRef } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProfileHoverCardProps {
   userId: string;
@@ -12,28 +10,46 @@ interface ProfileHoverCardProps {
 
 export const ProfileHoverCard = ({ userId, children, disabled }: ProfileHoverCardProps) => {
   const [open, setOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const isMobile = useIsMobile();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const isLongPress = useRef(false);
+  const didLongPressOpen = useRef(false);
 
-  const handleTouchStart = useCallback(() => {
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      setDrawerOpen(true);
-    }, 500);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
+  const clearTimer = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
   }, []);
 
-  const handleTouchMove = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
+  const handleStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    // Only handle left mouse button for mouse events
+    if ('button' in e && e.button !== 0) return;
+    
+    didLongPressOpen.current = false;
+    longPressTimer.current = setTimeout(() => {
+      didLongPressOpen.current = true;
+      setOpen(true);
+    }, 500);
+  }, []);
+
+  const handleEnd = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    clearTimer();
+    // If we opened via long press, prevent the click from navigating
+    if (didLongPressOpen.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, [clearTimer]);
+
+  const handleMove = useCallback(() => {
+    clearTimer();
+  }, [clearTimer]);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    // If we just opened via long press, prevent click
+    if (didLongPressOpen.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      didLongPressOpen.current = false;
     }
   }, []);
 
@@ -41,42 +57,29 @@ export const ProfileHoverCard = ({ userId, children, disabled }: ProfileHoverCar
     return <>{children}</>;
   }
 
-  // Mobile: Use Drawer with long-press
-  if (isMobile) {
-    return (
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DrawerTrigger asChild>
-          <div 
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchMove}
-            className="touch-none"
-          >
-            {children}
-          </div>
-        </DrawerTrigger>
-        <DrawerContent className="px-4 pb-8">
-          <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted my-4" />
-          <MiniProfilePopup userId={userId} onClose={() => setDrawerOpen(false)} />
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  // Desktop: Use HoverCard
   return (
-    <HoverCard open={open} onOpenChange={setOpen} openDelay={400} closeDelay={200}>
-      <HoverCardTrigger asChild>
-        {children}
-      </HoverCardTrigger>
-      <HoverCardContent 
-        side="bottom" 
-        align="start" 
-        className="p-0 w-auto border-none shadow-2xl bg-transparent"
-        sideOffset={8}
+    <>
+      <div 
+        onTouchStart={handleStart}
+        onTouchEnd={handleEnd}
+        onTouchMove={handleMove}
+        onMouseDown={handleStart}
+        onMouseUp={handleEnd}
+        onMouseLeave={handleMove}
+        onClick={handleClick}
+        className="touch-none select-none"
       >
-        <MiniProfilePopup userId={userId} onClose={() => setOpen(false)} />
-      </HoverCardContent>
-    </HoverCard>
+        {children}
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent 
+          className="p-0 border-none bg-transparent shadow-none max-w-fit w-auto flex items-center justify-center"
+          hideCloseButton
+        >
+          <MiniProfilePopup userId={userId} onClose={() => setOpen(false)} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

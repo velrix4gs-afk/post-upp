@@ -268,23 +268,15 @@ const ProfileEdit = ({ onClose }: ProfileEditProps) => {
     }
 
     setIsSaving(true);
-    try {
-      await updateProfile(formData);
-      toast({ 
-        title: 'Profile saved!',
-        description: 'Your changes have been saved successfully.',
-      });
+    const success = await updateProfile(formData);
+    setIsSaving(false);
+    
+    if (success) {
       originalFormData.current = { ...formData };
       setHasChanges(false);
       onClose();
-    } catch (error: any) {
-      const message = error.message?.includes('username') 
-        ? 'Username is already taken' 
-        : 'Failed to update profile';
-      toast({ title: message, variant: 'destructive' });
-    } finally {
-      setIsSaving(false);
     }
+    // Error toast is shown by updateProfile, so we don't need to handle it here
   };
 
   const bioLength = formData.bio.length;
