@@ -37,6 +37,8 @@ import { EncryptionBadge } from '@/components/messaging/EncryptionBadge';
 import { FileUpload } from '@/components/messaging/FileUpload';
 import { ChatMenu } from '@/components/ChatMenu';
 import { DisappearingMessagesDialog } from '@/components/messaging/DisappearingMessagesDialog';
+import { ChatAttachmentsSheet } from '@/components/messaging/ChatAttachmentsSheet';
+import { ScheduleMessageDialog } from '@/components/messaging/ScheduleMessageDialog';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -114,9 +116,12 @@ const MessagesPage = () => {
   const [encryptionEnabled, setEncryptionEnabled] = useState(true);
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [showDisappearingDialog, setShowDisappearingDialog] = useState(false);
+  const [showAttachmentsSheet, setShowAttachmentsSheet] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [activeCall, setActiveCall] = useState<'voice' | 'video' | null>(null);
   const [isCallInitiator, setIsCallInitiator] = useState(false);
   const { settings: chatSettings } = useChatSettings(selectedChatId || undefined);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const unreadMessageRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -850,38 +855,29 @@ const MessagesPage = () => {
                       {/* Message Input */}
                       <form onSubmit={handleSendMessage} className="p-3">
                         <div className="flex items-end gap-2">
-                          {/* Attachments Menu */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="h-10 w-10 rounded-full hover:bg-primary/10 flex-shrink-0"
-                              >
-                                <Plus className="h-5 w-5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-48">
-                              <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                                <ImageIcon className="h-4 w-4 mr-2" />
-                                Photo & Video
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setShowLocationDialog(true)}>
-                                <MapPin className="h-4 w-4 mr-2" />
-                                Location
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setShowContactDialog(true)}>
-                                <UsersIcon className="h-4 w-4 mr-2" />
-                                Contact
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          {/* Attachments Menu Button */}
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-10 w-10 rounded-full hover:bg-primary/10 flex-shrink-0"
+                            onClick={() => setShowAttachmentsSheet(true)}
+                          >
+                            <Plus className="h-5 w-5" />
+                          </Button>
                           <input
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
                             accept="image/*,video/*"
+                            onChange={handleImageSelect}
+                          />
+                          <input
+                            type="file"
+                            ref={cameraInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            capture="environment"
                             onChange={handleImageSelect}
                           />
                           
@@ -1161,6 +1157,40 @@ const MessagesPage = () => {
             reactToMessage(reactingToMessageId, reaction);
             setShowReactionPicker(false);
             setReactingToMessageId(null);
+          }}
+        />
+      )}
+
+      {/* Attachments Sheet */}
+      <ChatAttachmentsSheet
+        open={showAttachmentsSheet}
+        onOpenChange={setShowAttachmentsSheet}
+        onGalleryClick={() => fileInputRef.current?.click()}
+        onCameraClick={() => cameraInputRef.current?.click()}
+        onGifsClick={() => toast({ title: 'GIFs coming soon!' })}
+        onStickersClick={() => toast({ title: 'Stickers coming soon!' })}
+        onFilesClick={() => fileInputRef.current?.click()}
+        onLocationClick={() => setShowLocationDialog(true)}
+        onContactsClick={() => setShowContactDialog(true)}
+        onScheduleClick={() => {
+          if (messageText.trim()) {
+            setShowScheduleDialog(true);
+          } else {
+            toast({ title: 'Type a message first to schedule', variant: 'destructive' });
+          }
+        }}
+      />
+
+      {/* Schedule Message Dialog */}
+      {showScheduleDialog && selectedChatId && (
+        <ScheduleMessageDialog
+          chatId={selectedChatId}
+          content={messageText}
+          open={showScheduleDialog}
+          onOpenChange={setShowScheduleDialog}
+          onScheduled={() => {
+            setMessageText('');
+            setShowScheduleDialog(false);
           }}
         />
       )}
