@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { VerificationBadge } from "@/components/premium/VerificationBadge";
-import { UserPlus, UserCheck, MessageCircle, MapPin, Link2 } from "lucide-react";
+import { UserPlus, UserCheck, MessageCircle, MapPin, Link2, Lock } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useFollowers } from "@/hooks/useFollowers";
 import { usePosts } from "@/hooks/usePosts";
@@ -52,9 +52,31 @@ export const MiniProfilePopup = ({ userId, onClose }: MiniProfilePopupProps) => 
     }
   };
 
+  // Check if users are mutual followers
+  const isMutualFollower = useMemo(() => {
+    if (!user || isOwnProfile) return false;
+    
+    // Check if current user follows target
+    const currentUserFollowsTarget = viewerFollowing.some(f => f.following_id === userId);
+    // Check if target follows current user (target's followers include current user)
+    const targetFollowsCurrentUser = targetFollowers.some(f => f.follower_id === user.id);
+    
+    return currentUserFollowsTarget && targetFollowsCurrentUser;
+  }, [user, userId, viewerFollowing, targetFollowers, isOwnProfile]);
+
   const handleMessage = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return;
+    
+    // Check mutual follow status before allowing message
+    if (!isMutualFollower) {
+      toast({
+        title: 'Cannot message',
+        description: 'You can only message people who follow you back',
+        variant: 'destructive'
+      });
+      return;
+    }
     
     try {
       const { data: chatId, error } = await supabase.rpc('create_private_chat', {
@@ -265,14 +287,26 @@ export const MiniProfilePopup = ({ userId, onClose }: MiniProfilePopupProps) => 
                   </>
                 )}
               </Button>
-              <Button
-                onClick={handleMessage}
-                variant="outline"
-                className="flex-1 h-10 font-semibold rounded-full"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Message
-              </Button>
+              {isMutualFollower ? (
+                <Button
+                  onClick={handleMessage}
+                  variant="outline"
+                  className="flex-1 h-10 font-semibold rounded-full"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Message
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="flex-1 h-10 font-semibold rounded-full opacity-50 cursor-not-allowed"
+                  disabled
+                  title="Follow each other to message"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Message
+                </Button>
+              )}
             </div>
           )}
 

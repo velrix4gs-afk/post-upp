@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { toast } from './use-toast';
 
 export interface Chat {
   id: string;
@@ -97,7 +98,7 @@ export const useChats = () => {
     }
   };
 
-  const createChat = async (participantUuid: string) => {
+  const createChat = async (participantUuid: string, skipMutualCheck: boolean = false) => {
     if (!user) {
       console.error('[CHAT] User not authenticated');
       return null;
@@ -108,6 +109,36 @@ export const useChats = () => {
     if (!uuidRegex.test(participantUuid)) {
       console.error('[CHAT] Invalid UUID format:', participantUuid);
       return null;
+    }
+
+    // Check mutual follow status before creating chat (unless skipped)
+    if (!skipMutualCheck) {
+      // Check if current user follows the target
+      const { data: userFollowsTarget } = await supabase
+        .from('followers')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', participantUuid)
+        .eq('status', 'accepted')
+        .maybeSingle();
+
+      // Check if target follows current user
+      const { data: targetFollowsUser } = await supabase
+        .from('followers')
+        .select('id')
+        .eq('follower_id', participantUuid)
+        .eq('following_id', user.id)
+        .eq('status', 'accepted')
+        .maybeSingle();
+
+      if (!userFollowsTarget || !targetFollowsUser) {
+        toast({
+          title: 'Cannot message',
+          description: 'You can only message people who follow you back',
+          variant: 'destructive'
+        });
+        return null;
+      }
     }
 
     try {
