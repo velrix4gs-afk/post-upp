@@ -1,11 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, MessageCircle } from 'lucide-react';
-import { useState } from 'react';
+import { Search, MessageCircle, Users } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { useFollowers } from '@/hooks/useFollowers';
+import { useAuth } from '@/hooks/useAuth';
 import { VerificationBadge } from './premium/VerificationBadge';
 
 interface NewChatDialogProps {
@@ -15,14 +15,25 @@ interface NewChatDialogProps {
 }
 
 export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogProps) => {
-  const { following, loading } = useFollowers();
+  const { user } = useAuth();
+  const { followers, following, loading } = useFollowers(user?.id);
   const [searchQuery, setSearchQuery] = useState('');
   const [creating, setCreating] = useState(false);
 
-  // Get the list of people we're following (our friends)
-  const friends = following.map(f => f.following).filter(Boolean);
+  // Get mutual followers only (people who follow you AND you follow them)
+  const mutualFollowers = useMemo(() => {
+    if (!user) return [];
+    
+    const followerIds = new Set(followers.map(f => f.follower_id));
+    
+    // Get people we follow who also follow us back
+    return following
+      .filter(f => f.following && followerIds.has(f.following_id))
+      .map(f => f.following!)
+      .filter(Boolean);
+  }, [followers, following, user]);
 
-  const filteredFriends = friends.filter(friend =>
+  const filteredFriends = mutualFollowers.filter(friend =>
     !searchQuery.trim() ||
     friend.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     friend.username.toLowerCase().includes(searchQuery.toLowerCase())
@@ -39,14 +50,20 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search friends..."
+              placeholder="Search mutual friends..."
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <ScrollArea className="h-[400px] pr-4">
+          {/* Info banner */}
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+            <Users className="h-4 w-4 flex-shrink-0" />
+            <span>You can only message people who follow you back</span>
+          </div>
+
+          <ScrollArea className="h-[350px] pr-4">
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map(i => (
@@ -62,9 +79,11 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
             ) : filteredFriends.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="font-medium mb-2">No friends found</p>
+                <p className="font-medium mb-2">No mutual friends found</p>
                 <p className="text-sm">
-                  {searchQuery ? 'Try a different search term' : 'Follow some people to start messaging'}
+                  {searchQuery 
+                    ? 'Try a different search term' 
+                    : 'Follow people who follow you back to message them'}
                 </p>
               </div>
             ) : (
@@ -72,19 +91,17 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
                 {filteredFriends.map(friend => (
                   <div
                     key={friend.id}
-                    className="flex items-center gap-3 p-3 rounded hover:bg-muted cursor-pointer transition-colors disabled:opacity-50"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors disabled:opacity-50"
                     onClick={async () => {
                       if (creating) return;
                       setCreating(true);
                       try {
-                        // Validate UUID format before passing
                         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                         if (!uuidRegex.test(friend.id)) {
                           console.error('[NewChatDialog] Invalid UUID:', friend.id);
                           throw new Error('Invalid user ID format');
                         }
                         
-                        console.log('[NewChatDialog] Creating chat with UUID:', friend.id);
                         await onSelectFriend(friend.id);
                         setSearchQuery('');
                         onClose();
@@ -102,10 +119,10 @@ export const NewChatDialog = ({ open, onClose, onSelectFriend }: NewChatDialogPr
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
                         <p className="font-medium truncate">{friend.display_name}</p>
-                  <VerificationBadge
-                    isVerified={friend.is_verified}
-                    verificationType={friend.verification_type}
-                  />
+                        <VerificationBadge
+                          isVerified={friend.is_verified}
+                          verificationType={friend.verification_type}
+                        />
                       </div>
                       <p className="text-sm text-muted-foreground truncate">@{friend.username}</p>
                     </div>

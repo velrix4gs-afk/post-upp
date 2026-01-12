@@ -1,18 +1,15 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import { Home, Film, Plus, Search, User } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import CreatePost from './CreatePost';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import CreatePostSimple from './CreatePostSimple';
 import { cn } from '@/lib/utils';
 
 export const BottomNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { unreadCount } = useUnreadMessages();
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastInteraction, setLastInteraction] = useState(Date.now());
@@ -166,15 +163,17 @@ export const BottomNavigation = () => {
         </div>
       </nav>
 
-      {/* Create Post Dialog */}
-      <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create a Post</DialogTitle>
-          </DialogHeader>
-          <CreatePost />
-        </DialogContent>
-      </Dialog>
+      {/* Create Post Drawer (Bottom Sheet) */}
+      <Drawer open={showCreatePost} onOpenChange={setShowCreatePost}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="border-b border-border/50">
+            <DrawerTitle className="text-center">Create Post</DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto">
+            <CreatePostSimple onSuccess={() => setShowCreatePost(false)} />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 };

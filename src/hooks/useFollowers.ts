@@ -260,6 +260,28 @@ export const useFollowers = (userId?: string) => {
     }
   };
 
+  // Check if current user and target user mutually follow each other
+  const areMutualFollowers = (targetUserId: string): boolean => {
+    if (!user) return false;
+    
+    // Check if current user follows target
+    const currentUserFollowsTarget = following.some(f => f.following_id === targetUserId);
+    // Check if target follows current user
+    const targetFollowsCurrentUser = followers.some(f => f.follower_id === targetUserId);
+    
+    return currentUserFollowsTarget && targetFollowsCurrentUser;
+  };
+
+  // Get list of mutual followers (people who follow each other)
+  const getMutualFollowers = (): string[] => {
+    if (!user) return [];
+    
+    const followerIds = followers.map(f => f.follower_id);
+    const followingIds = following.map(f => f.following_id);
+    
+    return followingIds.filter(id => followerIds.includes(id));
+  };
+
   return {
     followers,
     following,
@@ -268,6 +290,8 @@ export const useFollowers = (userId?: string) => {
     unfollowUser,
     acceptFollowRequest,
     rejectFollowRequest,
+    areMutualFollowers,
+    getMutualFollowers,
     refetch: fetchFollowers
   };
 };
