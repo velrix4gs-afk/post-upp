@@ -5,13 +5,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import ThemeToggle from './ThemeToggle';
 import { Home, User, Bell, Menu, Search, MessageCircle, Users, Compass, Bookmark, BarChart3, Settings, Star, Crown, BadgeCheck, FileText, Shield } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/hooks/useProfile';
 import { useAdmin } from '@/hooks/useAdmin';
 import NotificationCenter from './NotificationCenter';
 import { MenuPanel } from './MenuPanel';
+import { cn } from '@/lib/utils';
 
 const Navigation = () => {
   const { user, signOut } = useAuth();
@@ -22,6 +23,8 @@ const Navigation = () => {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastInteraction, setLastInteraction] = useState(Date.now());
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -29,6 +32,45 @@ const Navigation = () => {
   const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
   const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
   const isMessagesPage = location.pathname === '/messages';
+
+  // Pages where auto-hide should be enabled
+  const isFeedPage = location.pathname === '/feed' || location.pathname === '/';
+
+  // Auto-hide after 3 seconds of no interaction (only on feed pages)
+  useEffect(() => {
+    if (!isFeedPage) {
+      setIsVisible(true);
+      return;
+    }
+
+    const hideTimer = setTimeout(() => {
+      setIsVisible(false);
+    }, 3000);
+
+    return () => clearTimeout(hideTimer);
+  }, [lastInteraction, isFeedPage]);
+
+  // Show nav on any user interaction
+  const handleInteraction = useCallback(() => {
+    setIsVisible(true);
+    setLastInteraction(Date.now());
+  }, []);
+
+  // Listen for scroll, touch, and mouse events
+  useEffect(() => {
+    if (!isFeedPage) return;
+
+    const events = ['scroll', 'touchstart', 'touchmove', 'mousemove', 'click'];
+    events.forEach(event => {
+      window.addEventListener(event, handleInteraction, { passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleInteraction);
+      });
+    };
+  }, [handleInteraction, isFeedPage]);
   
   if (isAuthPage || isMessagesPage) {
     return null;
@@ -39,9 +81,11 @@ const Navigation = () => {
   const isCompactMode = !isHomePage;
 
   return (
-    <nav className={`border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50 transition-all duration-300 ${
-      isCompactMode ? 'py-1' : 'py-1.5'
-    }`}>
+    <nav className={cn(
+      "border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky z-50 transition-all duration-300",
+      isCompactMode ? 'py-1' : 'py-1.5',
+      isFeedPage && !isVisible ? "-top-20 opacity-0" : "top-0 opacity-100"
+    )}>
       <div className="container mx-auto px-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
