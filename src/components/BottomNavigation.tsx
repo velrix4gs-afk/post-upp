@@ -24,13 +24,13 @@ export const BottomNavigation = () => {
   const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
   const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
 
-  // Auto-hide after 2 seconds of no interaction
+  // Auto-hide after 3 seconds of no interaction
   useEffect(() => {
     if (!isAllowedPage) return;
 
     const hideTimer = setTimeout(() => {
       setIsVisible(false);
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(hideTimer);
   }, [lastInteraction, isAllowedPage]);

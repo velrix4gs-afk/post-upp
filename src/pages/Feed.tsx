@@ -15,6 +15,7 @@ import { FeedTabs } from '@/components/feed/FeedTabs';
 import { FeedSidebar } from '@/components/feed/FeedSidebar';
 import CreatePostCard from '@/components/feed/CreatePostCard';
 import { PostCardModern } from '@/components/PostCard/PostCardModern';
+import { FixedPostBar } from '@/components/FixedPostBar';
 const Feed = () => {
   const {
     user
@@ -74,22 +75,8 @@ const Feed = () => {
             <CreatePostCard />
           </div>
           
-          {/* Mobile Create Post Button - Opens modal */}
-          <div className="p-3 border-b border-border md:hidden">
-            <button 
-              onClick={() => {
-                // Trigger the bottom nav create dialog
-                const createBtn = document.querySelector('[data-create-post]') as HTMLButtonElement;
-                if (createBtn) createBtn.click();
-              }}
-              className="w-full flex items-center gap-3 p-3 bg-muted/50 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
-            >
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-primary" />
-              </div>
-              <span className="text-sm">What's on your mind?</span>
-            </button>
-          </div>
+          {/* Fixed Post Bar for Mobile */}
+          <FixedPostBar />
 
           {/* Feed Content */}
           {activeTab === 'trending' ? <TrendingFeed /> : loading ? <div className="space-y-4 p-4">
