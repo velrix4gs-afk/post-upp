@@ -25,11 +25,12 @@ const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Hide navigation on auth pages
+  // Hide navigation on auth pages and messages page
   const authPages = ['/auth', '/signin', '/signup', '/forgot-password'];
   const isAuthPage = authPages.some(page => location.pathname.startsWith(page));
+  const isMessagesPage = location.pathname === '/messages';
   
-  if (isAuthPage) {
+  if (isAuthPage || isMessagesPage) {
     return null;
   }
 
