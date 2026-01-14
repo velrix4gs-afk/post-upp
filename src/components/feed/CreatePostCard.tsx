@@ -280,7 +280,7 @@ const CreatePostCard = () => {
         return <Lock className="h-4 w-4" />;
     }
   };
-  return <Card className="bg-card rounded-xl border border-border shadow-sm w-full max-w-full overflow-hidden">
+  return <Card className="bg-card border-border shadow-sm w-full max-w-full overflow-hidden rounded-md border-0">
       <div className="p-4 w-full max-w-full overflow-hidden">
         {/* Header with Avatar */}
         <div className="flex items-start gap-3 w-full max-w-full">
@@ -292,23 +292,13 @@ const CreatePostCard = () => {
           </Avatar>
           
           <div className="flex-1 min-w-0 max-w-full overflow-hidden">
-            <Textarea 
-              placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`} 
-              value={postContent} 
-              onChange={e => {
-                if (e.target.value.length <= MAX_CHARS) {
-                  setPostContent(e.target.value);
-                }
-              }} 
-              onFocus={() => setIsExpanded(true)} 
-              className={cn(
-                "border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary rounded-xl text-[16px] placeholder:text-muted-foreground w-full max-w-full box-border transition-[height] duration-200 ease-out",
-                isExpanded ? "h-[120px] overflow-y-auto" : "h-11 overflow-hidden"
-              )}
-              style={{
-                maxHeight: '120px'
-              }} 
-            />
+            <Textarea placeholder={`What's on your mind, ${profile?.display_name?.split(' ')[0] || 'there'}?`} value={postContent} onChange={e => {
+            if (e.target.value.length <= MAX_CHARS) {
+              setPostContent(e.target.value);
+            }
+          }} onFocus={() => setIsExpanded(true)} className={cn("border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary rounded-xl text-[16px] placeholder:text-muted-foreground w-full max-w-full box-border transition-[height] duration-200 ease-out", isExpanded ? "h-[120px] overflow-y-auto" : "h-11 overflow-hidden")} style={{
+            maxHeight: '120px'
+          }} />
             
             {/* Character counter */}
             {isExpanded && postContent.length > 0 && <div className="flex items-center justify-end mt-2 gap-2">
