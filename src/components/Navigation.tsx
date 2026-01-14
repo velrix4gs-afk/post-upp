@@ -81,12 +81,17 @@ const Navigation = () => {
   const isCompactMode = !isHomePage;
 
   return (
-    <nav className={cn(
-      "border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 z-50 transition-all duration-300",
-      isCompactMode ? 'py-1' : 'py-1.5',
-      // On feed pages, nav scrolls with page (not sticky). On other pages, it's sticky.
-      isFeedPage ? "" : "sticky top-0"
-    )}>
+    <nav
+      style={{ position: 'static' }}
+      className={cn(
+        "border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 z-50 transition-all duration-300",
+        isCompactMode ? 'py-1' : 'py-1.5',
+        // On feed pages, nav scrolls with page (not sticky). On other pages, it's sticky.
+        isFeedPage ? "" : "sticky top-0",
+        // Force non-sticky everywhere (requested)
+        "static"
+      )}
+    >
       <div className="container mx-auto px-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
