@@ -63,6 +63,8 @@ export const BottomNavigation = () => {
   }
 
   const isActive = (path: string) => location.pathname === path;
+  const isReelsPage = location.pathname === '/reels';
+  const composerOffsetClass = isReelsPage ? '' : 'bottom-24';
 
   // Instagram-like bottom nav: Home, Search, Reels, Profile
   const navItems = [
@@ -105,7 +107,8 @@ export const BottomNavigation = () => {
           "md:hidden fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-in-out",
           isVisible 
             ? "bottom-6 opacity-100 translate-y-0" 
-            : "bottom-6 opacity-0 translate-y-4 pointer-events-none"
+            : "bottom-6 opacity-0 translate-y-4 pointer-events-none",
+          composerOffsetClass
         )}
       >
         {/* Floating icons without background */}

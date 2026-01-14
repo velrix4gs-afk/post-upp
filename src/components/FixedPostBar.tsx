@@ -39,7 +39,7 @@ export const FixedPostBar = () => {
   };
 
   return (
-    <div className="fixed left-0 right-0 bottom-20 z-40 bg-background/95 backdrop-blur-md border-t border-border md:hidden">
+    <div style={{ bottom: 0 }} className="fixed left-0 right-0 bottom-20 bottom-0 z-40 bg-background/95 backdrop-blur-md border-t border-border md:hidden">
       <div className="flex items-end gap-2 px-3 py-2">
         {/* Text area */}
         <Textarea
