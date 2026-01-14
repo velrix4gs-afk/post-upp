@@ -62,11 +62,11 @@ const Feed = () => {
         <FeedSidebar />
 
         {/* Main Feed */}
-        <main className="flex-1 max-w-2xl mx-auto lg:mx-0 min-h-screen pb-20">
+        <main className="flex-1 max-w-2xl mx-auto lg:mx-0 min-h-screen pb-32 md:pb-20">
           <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-          {/* Stories - Floating at top, no background */}
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
+          {/* Stories - scrolls with feed */}
+          <div>
             <Stories />
           </div>
 
@@ -74,9 +74,6 @@ const Feed = () => {
           <div className="p-4 border-b border-border hidden md:block">
             <CreatePostCard />
           </div>
-          
-          {/* Fixed Post Bar for Mobile */}
-          <FixedPostBar />
 
           {/* Feed Content */}
           {activeTab === 'trending' ? <TrendingFeed /> : loading ? <div className="space-y-4 p-4">
@@ -117,6 +114,9 @@ const Feed = () => {
             </div>}
         </main>
       </div>
+      
+      {/* Fixed Post Bar for Mobile - always at bottom */}
+      <FixedPostBar />
     </div>;
 };
 export default Feed;

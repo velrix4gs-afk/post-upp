@@ -82,9 +82,10 @@ const Navigation = () => {
 
   return (
     <nav className={cn(
-      "border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky z-50 transition-all duration-300",
+      "border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 z-50 transition-all duration-300",
       isCompactMode ? 'py-1' : 'py-1.5',
-      isFeedPage && !isVisible ? "-top-20 opacity-0" : "top-0 opacity-100"
+      // On feed pages, nav scrolls with page (not sticky). On other pages, it's sticky.
+      isFeedPage ? "" : "sticky top-0"
     )}>
       <div className="container mx-auto px-3">
         <div className="flex items-center justify-between gap-4">
