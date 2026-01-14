@@ -296,7 +296,7 @@ const CreatePostCard = () => {
             if (e.target.value.length <= MAX_CHARS) {
               setPostContent(e.target.value);
             }
-          }} onFocus={() => setIsExpanded(true)} className={cn("border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary rounded-xl text-[16px] placeholder:text-muted-foreground w-full max-w-full box-border transition-[height] duration-200 ease-out max-h-[40vh]", isExpanded ? "h-[120px] overflow-y-auto" : "h-11 overflow-hidden")} style={{
+          }} onFocus={() => setIsExpanded(true)} className={cn("border-0 bg-muted/50 resize-none focus-visible:ring-1 focus-visible:ring-primary rounded-xl text-[16px] placeholder:text-muted-foreground w-500 max-w-full box-border transition-[height] duration-200 ease-out max-h-[20vh]", isExpanded ? "h-[120px] overflow-y-auto" : "h-11 overflow-hidden")} style={{
             maxHeight: '120px'
           }} />
             
