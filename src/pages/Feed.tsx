@@ -15,7 +15,7 @@ import { FeedTabs } from '@/components/feed/FeedTabs';
 import { FeedSidebar } from '@/components/feed/FeedSidebar';
 import CreatePostCard from '@/components/feed/CreatePostCard';
 import { PostCardModern } from '@/components/PostCard/PostCardModern';
-import { FixedPostBar } from '@/components/FixedPostBar';
+
 const Feed = () => {
   const {
     user
@@ -71,7 +71,7 @@ const Feed = () => {
           </div>
 
           {/* Create Post - Compact on mobile */}
-          <div className="p-4 border-b border-border hidden md:block">
+          <div className="p-4 border-b border-border hidden md:block !block">
             <CreatePostCard />
           </div>
 
@@ -115,8 +115,6 @@ const Feed = () => {
         </main>
       </div>
       
-      {/* Fixed Post Bar for Mobile - always at bottom */}
-      <FixedPostBar />
     </div>;
 };
 export default Feed;
