@@ -15,7 +15,6 @@ import { FeedTabs } from '@/components/feed/FeedTabs';
 import { FeedSidebar } from '@/components/feed/FeedSidebar';
 import CreatePostCard from '@/components/feed/CreatePostCard';
 import { PostCardModern } from '@/components/PostCard/PostCardModern';
-
 const Feed = () => {
   const {
     user
@@ -71,7 +70,7 @@ const Feed = () => {
           </div>
 
           {/* Create Post - Compact on mobile */}
-          <div className="p-4 border-b border-border hidden md:block !block">
+          <div className="p-4 border-b border-border hidden md:block !block min-w-0\n">
             <CreatePostCard />
           </div>
 
