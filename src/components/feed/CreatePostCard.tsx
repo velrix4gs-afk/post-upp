@@ -281,7 +281,7 @@ const CreatePostCard = () => {
     }
   };
   return <Card className="bg-card border-border shadow-sm w-full max-w-full overflow-hidden rounded-md border-0">
-      <div className="p-4 w-full max-w-full overflow-hidden">
+      <div className="min-w-0 overflow-x-hidden\n">
         {/* Header with Avatar */}
         <div className="flex items-start gap-3 w-full max-w-full">
           <Avatar className="h-10 w-10 ring-2 ring-border flex-shrink-0">
