@@ -296,7 +296,7 @@ const CreatePostCard = () => {
             if (e.target.value.length <= MAX_CHARS) {
               setPostContent(e.target.value);
             }
-          }} onFocus={() => setIsExpanded(true)} className="border-0 bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl text-[16px] placeholder:text-muted-foreground w-full max-w-full box-border h-10 min-h-10 overflow-hidden p-0" />
+          }} onFocus={() => setIsExpanded(true)} className="border-0 bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0\nrounded-xl text-base leading-normal\nplaceholder:text-muted-foreground\nw-full max-w-full box-border\nh-10 min-h-10\noverflow-y-auto break-words whitespace-pre-wrap\np-0\n" />
             
             {/* Character counter */}
             {isExpanded && postContent.length > 0 && <div className="flex items-center justify-end mt-2 gap-2">
