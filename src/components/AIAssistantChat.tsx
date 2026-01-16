@@ -52,7 +52,7 @@ export const AIAssistantChat = ({ isAdmin = false, onBack }: AIAssistantChatProp
       >
         {!isUser && (
           <Avatar className="h-8 w-8 shrink-0">
-            <AvatarImage src="/placeholder.svg" />
+            <AvatarImage src="https://ccyyxkjpgebjnstevgkw.supabase.co/storage/v1/object/public/avatars/IMG-20250412-WA0017.jpg" />
             <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60">
               <Bot className="h-4 w-4 text-primary-foreground" />
             </AvatarFallback>
