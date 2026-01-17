@@ -283,7 +283,7 @@ const CreatePostCard = () => {
   return <Card className="bg-card border-border shadow-sm w-full max-w-full overflow-hidden rounded-md border-0">
       <div className="min-w-0 overflow-x-hidden\n">
         {/* Header with Avatar */}
-        <div className="flex items-center space-x-3 mb-4">
+        <div className="flex items-center space-x-3 mb-4 pt-[10px] pr-[9px]">
           <Avatar className="h-10 w-10 ring-2 ring-border flex-shrink-0">
             <AvatarImage src={profile?.avatar_url} />
             <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
@@ -296,7 +296,7 @@ const CreatePostCard = () => {
             if (e.target.value.length <= MAX_CHARS) {
               setPostContent(e.target.value);
             }
-          }} onFocus={() => setIsExpanded(true)} className="border-0 bg-muted/50 resize-none focus-visible:ring-primary min-h-[60px] max-h-[40vh] overflow-y-auto" />
+          }} onFocus={() => setIsExpanded(true)} className="border-0 bg-muted/50 resize-none focus-visible:ring-primary min-h-[60px] max-h-[40vh] overflow-y-auto pr-[5px]" />
             
             {/* Character counter */}
             {isExpanded && postContent.length > 0 && <div className="flex items-center justify-end mt-2 gap-2">
