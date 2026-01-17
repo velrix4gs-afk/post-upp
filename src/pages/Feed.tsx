@@ -70,7 +70,7 @@ const Feed = () => {
           </div>
 
           {/* Create Post - Compact on mobile */}
-          <div className="p-4 border-b border-border hidden md:block !block min-w-0\n">
+          <div className="p-4 ">
             <CreatePostCard />
           </div>
 
