@@ -434,7 +434,7 @@ export const PostCardModern = ({
               setGalleryStartIndex(0);
               setShowImageGallery(true);
             }}>
-                    <img src={post.media_url} alt="Post media" className="w-full h-auto object-cover max-h-[400px]" loading="lazy" />
+                    <img src={post.media_url} alt="Post media" className="w-full h-auto object-cover max-h-[250px]" loading="lazy" />
                   </div>}
               </>}
 
