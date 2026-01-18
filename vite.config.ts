@@ -82,11 +82,35 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-avatar'],
-          'supabase-vendor': ['@supabase/supabase-js'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+        manualChunks: (id) => {
+          // React core - load immediately
+          if (id.includes('react-dom') || id.includes('node_modules/react/')) {
+            return 'react-vendor';
+          }
+          // Router - needed for navigation
+          if (id.includes('react-router')) {
+            return 'router-vendor';
+          }
+          // Supabase - defer until auth needed
+          if (id.includes('@supabase')) {
+            return 'supabase-vendor';
+          }
+          // UI components - split into smaller chunks
+          if (id.includes('@radix-ui')) {
+            return 'ui-vendor';
+          }
+          // Form handling - only for forms
+          if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
+            return 'form-vendor';
+          }
+          // Query client
+          if (id.includes('@tanstack/react-query')) {
+            return 'query-vendor';
+          }
+          // Icons - frequently used
+          if (id.includes('lucide-react')) {
+            return 'icons-vendor';
+          }
         },
       },
     },

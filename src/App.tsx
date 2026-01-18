@@ -4,15 +4,17 @@ import { ToasterMobile } from "@/components/ui/sonner-mobile";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { RealtimeNotifications } from "@/components/RealtimeNotifications";
-import { IncomingCallOverlay } from "@/components/IncomingCallOverlay";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { lazy, Suspense, Component, ReactNode, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { initNetworkMonitor } from "@/lib/networkMonitor";
+
+// Lazy load components that are only needed when authenticated
+const RealtimeNotifications = lazy(() => import("@/components/RealtimeNotifications").then(m => ({ default: m.RealtimeNotifications })));
+const IncomingCallOverlay = lazy(() => import("@/components/IncomingCallOverlay").then(m => ({ default: m.IncomingCallOverlay })));
+const BottomNavigation = lazy(() => import("@/components/BottomNavigation").then(m => ({ default: m.BottomNavigation })));
 
 // Lazy load pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -125,17 +127,30 @@ class ErrorBoundary extends Component<
   }
 }
 
+// Component that only renders authenticated-only features
+const AuthenticatedFeatures = () => {
+  const { user } = useAuth();
+  
+  if (!user) return null;
+  
+  return (
+    <Suspense fallback={null}>
+      <RealtimeNotifications />
+      <IncomingCallOverlay />
+      <BottomNavigation />
+    </Suspense>
+  );
+};
+
 const App = () => (
   <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <RealtimeNotifications />
         <Toaster />
         <ToasterMobile />
         <BrowserRouter>
-          <IncomingCallOverlay />
-          <BottomNavigation />
+          <AuthenticatedFeatures />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Index />} />
