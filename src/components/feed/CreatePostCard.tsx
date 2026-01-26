@@ -335,7 +335,7 @@ const CreatePostCard = () => {
         {/* Divider */}
         <div className="border-t mt-4 pt-3 border-black/0">
           {/* Action Buttons */}
-          <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center justify-between flex-wrap gap-2 pb-[7px] pr-[5px] pl-[3px]">
             <div className="flex items-center gap-1 flex-wrap">
               {/* Photo/Video */}
               <div className="relative">
