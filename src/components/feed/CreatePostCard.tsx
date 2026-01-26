@@ -283,7 +283,7 @@ const CreatePostCard = () => {
   return <Card className="bg-card border-border shadow-sm w-full max-w-full overflow-hidden rounded-md border-0">
       <div className="min-w-0 overflow-x-hidden\n">
         {/* Header with Avatar */}
-        <div className="flex items-center space-x-3 mb-4 pt-[10px] pr-[9px]">
+        <div className="flex items-center space-x-3 mb-4 pt-[10px] pr-[9px] pl-[5px]">
           <Avatar className="h-10 w-10 ring-2 ring-border flex-shrink-0">
             <AvatarImage src={profile?.avatar_url} />
             <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
