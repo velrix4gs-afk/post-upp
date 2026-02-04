@@ -37,6 +37,7 @@ const BookmarksPage = lazy(() => import("./pages/BookmarksPage"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const VerificationPage = lazy(() => import("./pages/VerificationPage"));
 const EmailVerification = lazy(() => import("./pages/EmailVerification"));
+const LoginVerification = lazy(() => import("./pages/LoginVerification"));
 const HashtagPage = lazy(() => import("./pages/HashtagPage"));
 const AdminSetup = lazy(() => import("./pages/AdminSetup"));
 const AnalyticsDashboard = lazy(() => import("./pages/AnalyticsDashboard"));
@@ -160,9 +161,10 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth/verify" element={<EmailVerification />} />
+              <Route path="/auth/login-verify" element={<LoginVerification />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/magic-link-sent" element={<MagicLinkSent />} />
-              <Route 
+              <Route
                 path="/dashboard" 
                 element={
                   <ProtectedRoute>

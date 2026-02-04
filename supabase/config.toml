@@ -39,6 +39,12 @@ verify_jwt = false
 [functions.verify-signup-otp]
 verify_jwt = false
 
+[functions.send-login-otp]
+verify_jwt = false
+
+[functions.verify-login-otp]
+verify_jwt = false
+
 [functions.create-official-account]
 verify_jwt = true
 
