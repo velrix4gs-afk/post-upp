@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Mail, Lock, Chrome, Twitter, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Chrome, Twitter } from 'lucide-react';
 import { z } from 'zod';
 
 const signInSchema = z.object({
@@ -16,7 +16,7 @@ const signInSchema = z.object({
 });
 
 const SignIn = () => {
-  const [authMode, setAuthMode] = useState<'email' | 'magic'>('email');
+  const [authMode, setAuthMode] = useState<'email' | 'code'>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [magicLinkEmail, setMagicLinkEmail] = useState('');
@@ -115,7 +115,7 @@ const SignIn = () => {
     }
   };
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleCodeSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -130,33 +130,31 @@ const SignIn = () => {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithOtp({
-        email: magicLinkEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          shouldCreateUser: false,
-        }
+      // Send OTP via edge function
+      const { data, error } = await supabase.functions.invoke('send-login-otp', {
+        body: { email: magicLinkEmail }
       });
 
       if (error) {
-        if (error.message.includes('User not found') || error.message.includes('no user')) {
-          toast({
-            title: 'Account not found',
-            description: 'No account exists with this email. Please sign up first.',
-            variant: 'destructive'
-          });
-          return;
-        }
         throw error;
       }
 
-      // Navigate to magic link sent page
-      navigate('/auth/magic-link-sent', { state: { email: magicLinkEmail } });
+      if (data?.error) {
+        toast({
+          title: 'Error',
+          description: data.error,
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Navigate to login verification page
+      navigate('/auth/login-verify', { state: { email: magicLinkEmail } });
       
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to send magic link',
+        description: error.message || 'Failed to send verification code',
         variant: 'destructive'
       });
     } finally {
@@ -186,8 +184,8 @@ const SignIn = () => {
             </div>
           </div>
 
-          {/* Magic Link View */}
-          {authMode === 'magic' ? (
+          {/* Sign In with Code View */}
+          {authMode === 'code' ? (
             <div className="space-y-5">
               <Button
                 variant="ghost"
@@ -200,21 +198,21 @@ const SignIn = () => {
               
               <div className="text-center space-y-2">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 mb-2">
-                  <Sparkles className="h-5 w-5 text-accent" />
+                  <Mail className="h-5 w-5 text-accent" />
                 </div>
-                <h3 className="text-lg font-semibold">Magic Link</h3>
+                <h3 className="text-lg font-semibold">Sign In with Code</h3>
                 <p className="text-sm text-muted-foreground">
-                  We'll email you a secure sign-in link
+                  We'll email you a 6-digit sign-in code
                 </p>
               </div>
               
-              <form onSubmit={handleMagicLink} className="space-y-4">
+              <form onSubmit={handleCodeSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="magic-email">Email address</Label>
+                  <Label htmlFor="code-email">Email address</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="magic-email"
+                      id="code-email"
                       type="email"
                       placeholder="you@example.com"
                       className="pl-10 h-11"
@@ -231,7 +229,7 @@ const SignIn = () => {
                   className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:shadow-glow transition-all" 
                   disabled={loading}
                 >
-                  {loading ? 'Sending...' : 'Send magic link'}
+                  {loading ? 'Sending code...' : 'Send sign-in code'}
                 </Button>
               </form>
             </div>
@@ -343,11 +341,11 @@ const SignIn = () => {
                   type="button"
                   variant="outline"
                   className="w-full h-11 gap-2 hover:bg-muted/50 transition-colors"
-                  onClick={() => setAuthMode('magic')}
+                  onClick={() => setAuthMode('code')}
                   disabled={loading}
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Magic link
+                  <Mail className="h-4 w-4" />
+                  Sign in with code
                 </Button>
               </div>
 
