@@ -1,117 +1,159 @@
 
-# Plan: Enhanced Magic Link Flow with Login Confirmation
+
+# Plan: Replace Magic Link with OTP Code-Based Login
 
 ## Overview
-Improve the magic link authentication flow to give users a choice after clicking the link: either continue directly to the app OR change their password first. Also add a proper password reset page for the forgot password flow.
+Replace the magic link authentication system with a **6-digit code verification system** for login. When a user wants to log in without a password, they enter their email, receive a code via email, enter the code on the website, and get logged in automatically.
 
-## Current Issues
-1. **Missing Reset Password Page**: `/reset-password` route doesn't exist, but `ForgotPassword.tsx` redirects there
-2. **No User Choice After Magic Link**: Currently auto-redirects to `/feed` without options
-3. **Password Recovery Not Handled**: Supabase `PASSWORD_RECOVERY` event isn't distinguished from regular magic link
+## Current Problem
+- Magic links redirect to Lovable's domain instead of your app
+- Links don't work properly for logging users in
+
+## Proposed Solution
+Use the same OTP approach that already works for **signup** and apply it to **login**. The user enters their email, receives a 6-digit code, enters it on the website, and gets logged in directly.
+
+## User Flow
+
+```text
+┌─────────────────────────────────────────┐
+│           Sign In Page                  │
+│                                         │
+│  Email: [user@example.com]              │
+│                                         │
+│  [ Sign In with Code ] (replaces magic) │
+│                                         │
+└───────────────┬─────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────────┐
+│        Edge Function                    │
+│   send-login-otp                        │
+│                                         │
+│  - Check if user exists                 │
+│  - Generate 6-digit code                │
+│  - Store in email_otps table            │
+│  - Send email via Resend                │
+└───────────────┬─────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────────┐
+│      Enter Code Page                    │
+│   /auth/login-verify                    │
+│                                         │
+│  Enter the code we sent to your email   │
+│                                         │
+│      [ 1 ][ 2 ][ 3 ][ 4 ][ 5 ][ 6 ]     │
+│                                         │
+│  [ Verify and Sign In ]                 │
+└───────────────┬─────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────────┐
+│        Edge Function                    │
+│   verify-login-otp                      │
+│                                         │
+│  - Validate code                        │
+│  - Generate magic link token            │
+│  - Return token for auto-login          │
+└───────────────┬─────────────────────────┘
+                │
+                ▼
+┌─────────────────────────────────────────┐
+│           Feed Page                     │
+│        (User logged in!)                │
+└─────────────────────────────────────────┘
+```
 
 ## Implementation Steps
 
-### Step 1: Create Reset Password Page
-Create a new page `src/pages/ResetPassword.tsx` that:
-- Detects if user came from a password reset link (via Supabase session event)
-- Shows password reset form with new password + confirm password fields
-- Validates password strength
-- Updates password via `supabase.auth.updateUser({ password })`
-- Redirects to feed after success
+### Step 1: Create Edge Function for Login OTP
+Create `supabase/functions/send-login-otp/index.ts`:
+- Accept email parameter
+- Check if user exists in auth.users (login only for existing accounts)
+- Generate 6-digit OTP code
+- Store in `email_otps` table with expiry
+- Send email via Resend
 
-### Step 2: Update AuthCallback with Login Confirmation
-Modify `src/pages/AuthCallback.tsx` to:
-- Add a new status: `'confirmation'` 
-- After successful token verification, show a confirmation dialog instead of auto-redirect
-- Dialog offers two buttons:
-  - **"Continue to POST UP"** → Navigate to `/feed`
-  - **"Change Password"** → Navigate to `/reset-password` with session intact
-- Detect `PASSWORD_RECOVERY` type and auto-redirect to password change
+### Step 2: Create Edge Function to Verify Login OTP
+Create `supabase/functions/verify-login-otp/index.ts`:
+- Accept email and code
+- Validate OTP from database
+- Generate a one-time login link using `supabase.auth.admin.generateLink()`
+- Return the login URL/token to the frontend
 
-### Step 3: Add Route for Reset Password
-Update `src/App.tsx` to:
-- Import and lazy-load the new `ResetPassword` component
-- Add route: `<Route path="/reset-password" element={<ResetPassword />} />`
+### Step 3: Create Login Verification Page
+Create `src/pages/LoginVerification.tsx`:
+- Similar to EmailVerification.tsx but for login
+- 6-digit OTP input
+- Auto-submit when 6 digits entered
+- Resend code option
+- Call verify-login-otp edge function
+- Use the returned token to complete login
 
-## File Changes
+### Step 4: Update Sign In Page
+Modify `src/pages/SignIn.tsx`:
+- Replace "Magic Link" section with "Sign In with Code"
+- When form submitted, call `send-login-otp` edge function
+- Navigate to `/auth/login-verify` with email in state
+- Remove magic link logic
 
-### New Files:
+### Step 5: Add New Route
+Update `src/App.tsx`:
+- Add route for `/auth/login-verify` -> LoginVerification component
+
+## File Changes Summary
+
+### New Files
 | File | Description |
 |------|-------------|
-| `src/pages/ResetPassword.tsx` | Password reset form page |
+| `supabase/functions/send-login-otp/index.ts` | Edge function to send login code |
+| `supabase/functions/verify-login-otp/index.ts` | Edge function to verify code and generate session |
+| `src/pages/LoginVerification.tsx` | OTP entry page for login |
 
-### Modified Files:
+### Modified Files
 | File | Changes |
 |------|---------|
-| `src/pages/AuthCallback.tsx` | Add confirmation dialog with "Continue" and "Change Password" options |
-| `src/App.tsx` | Add `/reset-password` route |
+| `src/pages/SignIn.tsx` | Replace magic link with "Sign in with code" flow |
+| `src/App.tsx` | Add `/auth/login-verify` route |
 
 ## Technical Details
 
-### ResetPassword.tsx
+### send-login-otp Edge Function
+- Uses service role to check if email exists in `auth.users`
+- Returns generic message whether user exists or not (prevent enumeration)
+- Same OTP generation logic as send-signup-otp
+- Sends email via Resend API
+
+### verify-login-otp Edge Function
+- Validates OTP from `email_otps` table
+- Uses `supabase.auth.admin.generateLink({ type: 'magiclink', email })` to create a one-time login token
+- Extracts and returns the access token for frontend to use
+- Frontend calls `supabase.auth.verifyOtp()` with the token
+
+### LoginVerification Page UI
 ```text
 ┌─────────────────────────────────────────┐
-│            Reset Password               │
+│         Enter Your Code                 │
 ├─────────────────────────────────────────┤
 │                                         │
-│  [Lock Icon]                            │
+│  [Mail Icon]                            │
 │                                         │
-│  Create a new password                  │
+│  We sent a code to                      │
+│  user@example.com                       │
 │                                         │
-│  New Password:      [••••••••••]        │
-│  Confirm Password:  [••••••••••]        │
+│      [ _ ][ _ ][ _ ][ _ ][ _ ][ _ ]     │
 │                                         │
-│  Password requirements:                 │
-│  ✓ At least 8 characters               │
-│  ✓ Contains number or symbol           │
+│  [      Sign In      ]                  │
 │                                         │
-│  [    Update Password    ]              │
-│                                         │
-│  Skip for now                           │
+│  Didn't receive it? Resend code         │
 │                                         │
 └─────────────────────────────────────────┘
 ```
 
-### AuthCallback Confirmation Dialog
-```text
-┌─────────────────────────────────────────┐
-│         ✓ Successfully Signed In        │
-├─────────────────────────────────────────┤
-│                                         │
-│  Welcome back! What would you like      │
-│  to do?                                 │
-│                                         │
-│  [  Continue to POST UP  ]  (primary)   │
-│                                         │
-│  [  Change Password      ]  (outline)   │
-│                                         │
-└─────────────────────────────────────────┘
-```
+## Benefits
+- No broken redirect links
+- Works entirely within your app
+- Same flow as signup (consistent UX)
+- User stays on post-upp.lovable.app the entire time
+- Auto-login after code verification
 
-### Auth Flow Diagram
-```text
-User clicks magic link in email
-         │
-         ▼
-   /auth/callback
-         │
-         ├─── Token invalid/expired? ──► Show error + retry option
-         │
-         ├─── Password recovery type? ──► Redirect to /reset-password
-         │
-         ▼
-   Show confirmation dialog
-         │
-         ├─── "Continue to POST UP" ──► /feed
-         │
-         └─── "Change Password" ──► /reset-password
-```
-
-## Validation
-After implementation:
-1. Test magic link flow end-to-end
-2. Verify confirmation dialog appears after clicking magic link
-3. Test "Continue" button goes to feed
-4. Test "Change Password" button goes to reset form
-5. Test password reset form updates password successfully
-6. Test forgot password flow redirects to reset page correctly
