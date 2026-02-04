@@ -22,6 +22,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const SignIn = lazy(() => import("./pages/SignIn"));
 const SignUp = lazy(() => import("./pages/SignUp"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const MagicLinkSent = lazy(() => import("./pages/MagicLinkSent"));
 const Feed = lazy(() => import("./pages/Feed"));
@@ -157,6 +158,7 @@ const App = () => (
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth/verify" element={<EmailVerification />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/magic-link-sent" element={<MagicLinkSent />} />

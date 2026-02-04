@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle, Mail, RefreshCw } from 'lucide-react';
 
-type AuthStatus = 'verifying' | 'success' | 'error' | 'expired';
+type AuthStatus = 'verifying' | 'success' | 'confirmation' | 'error' | 'expired';
 
 const AuthCallback = () => {
   const [status, setStatus] = useState<AuthStatus>('verifying');
@@ -53,16 +53,20 @@ const AuthCallback = () => {
           }
 
           if (data.session) {
-            setStatus('success');
-            toast({
-              title: 'Welcome back!',
-              description: 'Successfully signed in via magic link.'
-            });
+            // Check if this is a password recovery flow
+            const type = hashParams.get('type');
+            if (type === 'recovery') {
+              // Password recovery - redirect directly to reset password
+              toast({
+                title: 'Reset your password',
+                description: 'Please create a new password for your account.'
+              });
+              navigate('/reset-password', { replace: true });
+              return;
+            }
 
-            // Redirect after a brief delay to show success
-            setTimeout(() => {
-              navigate('/feed', { replace: true });
-            }, 1500);
+            // Regular magic link - show confirmation dialog
+            setStatus('confirmation');
             return;
           }
         }
@@ -70,14 +74,14 @@ const AuthCallback = () => {
         // Check if we already have a session (redirect from email)
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          setStatus('success');
-          toast({
-            title: 'Welcome back!',
-            description: 'Successfully signed in.'
-          });
-          setTimeout(() => {
-            navigate('/feed', { replace: true });
-          }, 1500);
+          // Check for recovery event type
+          const type = hashParams.get('type');
+          if (type === 'recovery') {
+            navigate('/reset-password', { replace: true });
+            return;
+          }
+          
+          setStatus('confirmation');
           return;
         }
 
@@ -151,6 +155,35 @@ const AuthCallback = () => {
               <div>
                 <h2 className="text-xl font-semibold">Verifying your magic link...</h2>
                 <p className="text-muted-foreground mt-2">Please wait while we sign you in</p>
+              </div>
+            </div>
+          )}
+
+          {status === 'confirmation' && (
+            <div className="space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/10">
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-green-600">Successfully Signed In!</h2>
+                <p className="text-muted-foreground mt-2">
+                  Welcome back! What would you like to do?
+                </p>
+              </div>
+              <div className="space-y-3 pt-2">
+                <Button
+                  onClick={() => navigate('/feed', { replace: true })}
+                  className="w-full"
+                >
+                  Continue to POST UP
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/reset-password', { replace: true })}
+                  className="w-full"
+                >
+                  Change Password
+                </Button>
               </div>
             </div>
           )}
