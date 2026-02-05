@@ -1,16 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = [
-  'https://post-upp.lovable.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
-];
-
-const getCorsHeaders = (origin: string | null) => ({
-  'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin || '') ? origin! : ALLOWED_ORIGINS[0],
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-});
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
 
 // Simple rate limiting using in-memory cache
 const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
@@ -33,14 +27,31 @@ const checkRateLimit = (identifier: string, maxRequests = 5, windowMs = 60000): 
 };
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req.headers.get('origin'));
-  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email } = await req.json();
+    // Parse request body with validation
+    let body;
+    try {
+      const text = await req.text();
+      if (!text) {
+        return new Response(
+          JSON.stringify({ error: 'Request body is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      body = JSON.parse(text);
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { email } = body;
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
