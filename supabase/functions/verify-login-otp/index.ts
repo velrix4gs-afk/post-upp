@@ -12,7 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body with validation
     let body;
     try {
       const text = await req.text();
@@ -33,7 +32,6 @@ serve(async (req) => {
 
     const { email, code } = body;
 
-    // Validate inputs
     if (!email || !code) {
       return new Response(
         JSON.stringify({ error: 'Email and code are required' }),
@@ -44,7 +42,6 @@ serve(async (req) => {
     const sanitizedEmail = email.toLowerCase().trim();
     const sanitizedCode = code.trim();
 
-    // Validate code format
     if (!/^\d{6}$/.test(sanitizedCode)) {
       return new Response(
         JSON.stringify({ error: 'Invalid code format' }),
@@ -52,7 +49,6 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -64,7 +60,7 @@ serve(async (req) => {
       .eq('email', sanitizedEmail)
       .eq('code', sanitizedCode)
       .gte('expires_at', new Date().toISOString())
-      .single();
+      .maybeSingle();
 
     if (otpError || !otpData) {
       return new Response(
@@ -79,7 +75,7 @@ serve(async (req) => {
       .delete()
       .eq('id', otpData.id);
 
-    // Generate a magic link for the user to sign in
+    // Generate a magic link to get token_hash
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: sanitizedEmail,
@@ -93,15 +89,27 @@ serve(async (req) => {
       );
     }
 
-    // Extract the token from the magic link
-    // The link format is like: https://xxx.supabase.co/auth/v1/verify?token=xxx&type=magiclink&redirect_to=xxx
+    // Extract token_hash from the action link
     const url = new URL(linkData.properties.action_link);
-    const token = url.searchParams.get('token');
-    const type = url.searchParams.get('type');
+    const token_hash = url.searchParams.get('token');
 
-    if (!token) {
+    if (!token_hash) {
       return new Response(
         JSON.stringify({ error: 'Failed to extract authentication token' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify OTP server-side to get a full session
+    const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: 'magiclink',
+    });
+
+    if (sessionError || !sessionData?.session) {
+      console.error('Session verification error:', sessionError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create session' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -109,9 +117,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        token,
-        type: type || 'magiclink',
-        email: sanitizedEmail
+        session: {
+          access_token: sessionData.session.access_token,
+          refresh_token: sessionData.session.refresh_token,
+        },
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

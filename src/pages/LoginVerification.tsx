@@ -46,7 +46,6 @@ const LoginVerification = () => {
 
     setLoading(true);
     try {
-      // Verify OTP via edge function
       const { data, error } = await supabase.functions.invoke('verify-login-otp', {
         body: { email, code: otp }
       });
@@ -58,19 +57,28 @@ const LoginVerification = () => {
           description: errorMessage,
           variant: 'destructive'
         });
-        setOtp(''); // Clear OTP on error
+        setOtp('');
         return;
       }
 
-      // Use the token to verify OTP with Supabase
-      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-        email: data.email,
-        token: data.token,
-        type: 'magiclink'
+      if (!data?.session?.access_token || !data?.session?.refresh_token) {
+        toast({
+          title: 'Sign in failed',
+          description: 'Invalid session received. Please try again.',
+          variant: 'destructive'
+        });
+        setOtp('');
+        return;
+      }
+
+      // Set the session directly — user is now logged in
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
       });
 
-      if (verifyError) {
-        console.error('Supabase verify error:', verifyError);
+      if (sessionError) {
+        console.error('Set session error:', sessionError);
         toast({
           title: 'Sign in failed',
           description: 'Failed to complete sign in. Please try again.',
