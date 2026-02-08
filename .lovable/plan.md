@@ -1,30 +1,54 @@
 
 
-# Fix: OTP Code Verification Not Logging User In
+# Fix: OTP Login Redirecting to AuthCallback Instead of Auto-Login
 
 ## Root Cause
 
-The `verify-login-otp` edge function generates a magic link, extracts the `token` from the URL, and sends it to the client. The client then calls `supabase.auth.verifyOtp({ email, token, type: 'magiclink' })`.
+When the edge function calls `supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })`, the Supabase Auth server consumes the token and creates a session. However, the **Site URL** configured in your Supabase dashboard is causing an automatic redirect to `/auth/callback`.
 
-The problem: the token extracted from the URL is actually a `token_hash`, but the client passes it as `token`. This parameter mismatch causes Supabase auth to reject the verification, so the user never gets logged in.
+When you arrive at `/auth/callback`, the token has already been used by the edge function, so you see "Invalid or expired authentication link."
 
 ## Solution
 
-Instead of the fragile magic link token extraction, the edge function will **sign the user in directly** using `supabase.auth.admin.generateLink()` and return the full session to the client. The client then sets the session directly -- no second auth call needed.
+Instead of using `generateLink` + `verifyOtp` (which involves magic link tokens that trigger redirects), we should use a different approach that doesn't involve magic links at all.
 
-## Changes
+We'll use the **Admin API** to create a session directly for the user after validating the OTP code.
+
+### The New Flow
+
+```text
++------------------+      +-------------------+      +------------------+
+|   User enters    | ---> |  Edge function    | ---> |   Frontend gets  |
+|   6-digit code   |      |  validates code   |      |   session tokens |
++------------------+      |  Creates session  |      |   Sets session   |
+                          |  via Admin API    |      |   Navigates to   |
+                          +-------------------+      |   /feed          |
+                                                     +------------------+
+```
+
+## Implementation
 
 ### 1. Update `supabase/functions/verify-login-otp/index.ts`
 
-After validating the OTP code from the database:
-- Use `supabase.auth.admin.generateLink({ type: 'magiclink', email })` to get the action link
-- Extract the `token_hash` (not `token`) from the URL
-- Call `supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })` **server-side** to get a full session
-- Return the session (`access_token`, `refresh_token`) to the client
+Instead of `generateLink` + `verifyOtp`, we'll:
+
+1. Validate the OTP code from the `email_otps` table
+2. Look up the user by email using Admin API
+3. Generate a new session using Admin API `createUser` with `shouldCreateUser: false` or use `generateLink` with `newEmail` option that doesn't trigger redirects
+
+Actually, the cleanest solution is to use `supabase.auth.admin.generateLink()` but pass `{ redirectTo: 'NONE' }` - but that's not supported.
+
+**Better approach**: Use the magic link but DON'T call `verifyOtp` in the edge function. Instead:
+- Generate the link
+- Extract the `token_hash`
+- Return the `token_hash` to the frontend
+- The frontend calls `verifyOtp` with the `token_hash` directly
+
+This way, no redirect happens because the frontend controls the flow.
 
 ```typescript
-// After OTP validation...
-const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+// Edge function - just validate OTP and return the token_hash
+const { data: linkData } = await supabase.auth.admin.generateLink({
   type: 'magiclink',
   email: sanitizedEmail,
 });
@@ -32,55 +56,51 @@ const { data: linkData, error: linkError } = await supabase.auth.admin.generateL
 const url = new URL(linkData.properties.action_link);
 const token_hash = url.searchParams.get('token');
 
-// Verify server-side to get session
-const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-  token_hash,
-  type: 'magiclink',
-});
-
-// Return session to client
-return new Response(JSON.stringify({
+return new Response(JSON.stringify({ 
   success: true,
-  session: sessionData.session,
-}), ...);
+  token_hash,
+}));
 ```
 
-### 2. Update `src/pages/LoginVerification.tsx`
-
-Simplify the `handleVerify` function:
-- Call `verify-login-otp` edge function
-- Receive the session directly from the response
-- Use `supabase.auth.setSession()` to log the user in immediately
-- Navigate to `/feed`
-
 ```typescript
+// Frontend - verify the token_hash to get a session
 const { data } = await supabase.functions.invoke('verify-login-otp', {
   body: { email, code: otp }
 });
 
-// Set session directly - user is now logged in
-await supabase.auth.setSession({
-  access_token: data.session.access_token,
-  refresh_token: data.session.refresh_token,
+// Verify the token_hash to get a session
+const { data: sessionData, error } = await supabase.auth.verifyOtp({
+  token_hash: data.token_hash,
+  type: 'magiclink',
 });
 
-navigate('/feed', { replace: true });
+// User is now logged in
+if (sessionData.session) {
+  navigate('/feed', { replace: true });
+}
 ```
 
-## Why This Is Better
-
-- No fragile token/token_hash confusion
-- Single round-trip: edge function handles everything server-side
-- The session is created on the server with service role privileges, so it always works
-- User is logged in instantly after entering the correct code
-
-## Files Changed
+## Files to Change
 
 | File | Change |
 |------|--------|
-| `supabase/functions/verify-login-otp/index.ts` | Verify OTP server-side, return full session |
-| `src/pages/LoginVerification.tsx` | Use `setSession()` instead of `verifyOtp()` |
+| `supabase/functions/verify-login-otp/index.ts` | Remove server-side `verifyOtp` call, return `token_hash` instead |
+| `src/pages/LoginVerification.tsx` | Call `supabase.auth.verifyOtp({ token_hash })` on the client side |
+
+## Why This Works
+
+- The edge function validates your custom 6-digit OTP code
+- It generates a magic link token (but doesn't verify it)
+- The token is sent to the frontend
+- The frontend calls `verifyOtp` which creates the session locally
+- No redirect happens because everything stays in the same browser context
 
 ## After Implementation
-- Redeploy `verify-login-otp` edge function
-- Test the full flow: enter email, receive code, enter code, auto-login
+
+1. Redeploy the `verify-login-otp` edge function
+2. Test the full flow:
+   - Enter email on sign-in page
+   - Receive 6-digit code via email
+   - Enter code on verification page
+   - Get logged in immediately and redirected to `/feed`
+
