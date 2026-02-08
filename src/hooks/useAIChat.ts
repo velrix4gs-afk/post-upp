@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AIMessage {
   id: string;
@@ -10,7 +11,7 @@ export interface AIMessage {
 
 const AI_CHAT_URL = `https://ccyyxkjpgebjnstevgkw.supabase.co/functions/v1/ai-chat`;
 
-export const useAIChat = (isAdmin: boolean = false) => {
+export const useAIChat = () => {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
@@ -30,6 +31,13 @@ export const useAIChat = (isAdmin: boolean = false) => {
     setStreamingContent('');
 
     try {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('Please sign in to use AI chat');
+      }
+
       const chatHistory = messages.map(m => ({
         role: m.role,
         content: m.content,
@@ -39,11 +47,10 @@ export const useAIChat = (isAdmin: boolean = false) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjeXl4a2pwZ2Viam5zdGV2Z2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3ODk0ODMsImV4cCI6MjA3NDM2NTQ4M30.u1lTe8ZgbRj6R2TJ1_gvEGvG1EHKD4ytId8IDjojbVI`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           messages: [...chatHistory, { role: 'user', content: userMessage.trim() }],
-          isAdmin,
         }),
       });
 
@@ -113,7 +120,7 @@ export const useAIChat = (isAdmin: boolean = false) => {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isAdmin]);
+  }, [messages]);
 
   const clearHistory = useCallback(() => {
     setMessages([]);

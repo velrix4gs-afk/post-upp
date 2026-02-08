@@ -15,7 +15,8 @@ interface AIAssistantChatProps {
 
 export const AIAssistantChat = ({ isAdmin = false, onBack }: AIAssistantChatProps) => {
   const [inputValue, setInputValue] = useState('');
-  const { messages, isLoading, streamingContent, sendMessage, clearHistory } = useAIChat(isAdmin);
+  // isAdmin is now validated server-side - client just uses it for UI display
+  const { messages, isLoading, streamingContent, sendMessage, clearHistory } = useAIChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 

@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface AISettings {
@@ -139,18 +139,80 @@ async function callGoogleAI(messages: any[], model: string, apiKey: string, syst
   return response;
 }
 
+/**
+ * Validates JWT and checks if user has admin role
+ * Returns { userId, isAdmin } or null if unauthorized
+ */
+async function validateAuthAndGetRole(authHeader: string | null): Promise<{ userId: string; isAdmin: boolean } | null> {
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  // Validate the JWT and get user claims
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+  
+  if (claimsError || !claimsData?.claims?.sub) {
+    console.error('JWT validation failed:', claimsError);
+    return null;
+  }
+
+  const userId = claimsData.claims.sub;
+
+  // Check admin role from database using service role client
+  const serviceClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  const { data: roleData } = await serviceClient
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  return {
+    userId,
+    isAdmin: roleData !== null
+  };
+}
+
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, isAdmin, testConnection } = await req.json();
+    // Validate authentication
+    const authHeader = req.headers.get('Authorization');
+    const authResult = await validateAuthAndGetRole(authHeader);
+    
+    if (!authResult) {
+      console.log('Unauthorized access attempt to ai-chat');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized. Please sign in to use AI chat.' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { userId, isAdmin } = authResult;
+    console.log(`AI chat request from user ${userId}, isAdmin: ${isAdmin}`);
+
+    const { messages, testConnection } = await req.json();
     
     // Fetch admin-configured settings
     const settings = await getAISettings();
     
-    // Use appropriate system prompt based on user type
+    // Use appropriate system prompt based on SERVER-VALIDATED admin status
     const systemPrompt = isAdmin ? settings.system_prompt_admin : settings.system_prompt_user;
 
     // For connection test, just return success
