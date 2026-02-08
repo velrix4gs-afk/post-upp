@@ -1,106 +1,51 @@
 
 
-# Fix: OTP Login Redirecting to AuthCallback Instead of Auto-Login
+# Redesign Bottom Navigation Bar (Matching Reference Image)
 
-## Root Cause
+## What Changes
 
-When the edge function calls `supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })`, the Supabase Auth server consumes the token and creates a session. However, the **Site URL** configured in your Supabase dashboard is causing an automatic redirect to `/auth/callback`.
+### 1. Full-width translucent bar pinned 5px from the bottom
+- Change from centered floating icons to a full-width rounded bar sitting 5px above the bottom edge of the screen
+- Add a translucent background using `bg-background/80 backdrop-blur-lg` so content behind it shows through slightly
+- Add rounded corners (`rounded-2xl`) and slight horizontal margin (`mx-3`) to give the pill/capsule shape from the reference image
 
-When you arrive at `/auth/callback`, the token has already been used by the edge function, so you see "Invalid or expired authentication link."
+### 2. Add text labels under each icon
+- Each nav item becomes a vertical stack: icon on top, small label text ("Home", "Search", "Create", "Reels", "Profile") below
+- Labels use `text-[10px]` for a clean, compact look
 
-## Solution
+### 3. Active tab pill highlight
+- The active tab gets a subtle rounded pill background highlight (e.g., `bg-primary/15 rounded-xl`) wrapping the icon and label together, similar to the green highlight in the reference image
+- Active icon and label use the primary color
 
-Instead of using `generateLink` + `verifyOtp` (which involves magic link tokens that trigger redirects), we should use a different approach that doesn't involve magic links at all.
+### 4. Create button styling
+- Keep the circular primary-colored icon but sized to match the row, with a "Create" label underneath like the other items
 
-We'll use the **Admin API** to create a session directly for the user after validating the OTP code.
+### 5. Keep auto-hide behavior
+- All auto-hide logic (3-second timer, scroll/touch listeners, fade animation) stays exactly as-is
+- The bar fades in/out the same way it does now
 
-### The New Flow
+### 6. Keep all existing functionality
+- Same 5 nav items, same paths, same Create drawer, same page visibility rules, same auth checks
 
-```text
-+------------------+      +-------------------+      +------------------+
-|   User enters    | ---> |  Edge function    | ---> |   Frontend gets  |
-|   6-digit code   |      |  validates code   |      |   session tokens |
-+------------------+      |  Creates session  |      |   Sets session   |
-                          |  via Admin API    |      |   Navigates to   |
-                          +-------------------+      |   /feed          |
-                                                     +------------------+
-```
+## Technical Details
 
-## Implementation
+**Single file changed:** `src/components/BottomNavigation.tsx`
 
-### 1. Update `supabase/functions/verify-login-otp/index.ts`
+**Nav container changes:**
+- From: `left-1/2 -translate-x-1/2 bottom-6` (centered, no background)
+- To: `left-0 right-0 bottom-[5px] mx-3 rounded-2xl bg-background/80 backdrop-blur-lg border border-border/30` (full-width with margin, translucent, 5px from bottom)
 
-Instead of `generateLink` + `verifyOtp`, we'll:
+**Item layout changes:**
+- From: `flex items-center gap-4` (horizontal icons only)
+- To: `flex justify-around items-center h-16 px-2` (evenly spaced, taller for labels)
+- Each item: `flex flex-col items-center gap-0.5` with icon + `<span className="text-[10px]">Label</span>`
 
-1. Validate the OTP code from the `email_otps` table
-2. Look up the user by email using Admin API
-3. Generate a new session using Admin API `createUser` with `shouldCreateUser: false` or use `generateLink` with `newEmail` option that doesn't trigger redirects
+**Active state:**
+- Wrap active item content in a pill: `bg-primary/15 rounded-xl px-3 py-1`
 
-Actually, the cleanest solution is to use `supabase.auth.admin.generateLink()` but pass `{ redirectTo: 'NONE' }` - but that's not supported.
-
-**Better approach**: Use the magic link but DON'T call `verifyOtp` in the edge function. Instead:
-- Generate the link
-- Extract the `token_hash`
-- Return the `token_hash` to the frontend
-- The frontend calls `verifyOtp` with the `token_hash` directly
-
-This way, no redirect happens because the frontend controls the flow.
-
-```typescript
-// Edge function - just validate OTP and return the token_hash
-const { data: linkData } = await supabase.auth.admin.generateLink({
-  type: 'magiclink',
-  email: sanitizedEmail,
-});
-
-const url = new URL(linkData.properties.action_link);
-const token_hash = url.searchParams.get('token');
-
-return new Response(JSON.stringify({ 
-  success: true,
-  token_hash,
-}));
-```
-
-```typescript
-// Frontend - verify the token_hash to get a session
-const { data } = await supabase.functions.invoke('verify-login-otp', {
-  body: { email, code: otp }
-});
-
-// Verify the token_hash to get a session
-const { data: sessionData, error } = await supabase.auth.verifyOtp({
-  token_hash: data.token_hash,
-  type: 'magiclink',
-});
-
-// User is now logged in
-if (sessionData.session) {
-  navigate('/feed', { replace: true });
-}
-```
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `supabase/functions/verify-login-otp/index.ts` | Remove server-side `verifyOtp` call, return `token_hash` instead |
-| `src/pages/LoginVerification.tsx` | Call `supabase.auth.verifyOtp({ token_hash })` on the client side |
-
-## Why This Works
-
-- The edge function validates your custom 6-digit OTP code
-- It generates a magic link token (but doesn't verify it)
-- The token is sent to the frontend
-- The frontend calls `verifyOtp` which creates the session locally
-- No redirect happens because everything stays in the same browser context
-
-## After Implementation
-
-1. Redeploy the `verify-login-otp` edge function
-2. Test the full flow:
-   - Enter email on sign-in page
-   - Receive 6-digit code via email
-   - Enter code on verification page
-   - Get logged in immediately and redirected to `/feed`
+**What stays the same:**
+- `isVisible`, `lastInteraction`, `handleInteraction`, auto-hide timer, event listeners
+- `allowedPages`, `isAuthPage` checks
+- All nav item definitions (paths, actions, icons)
+- Create Post Drawer
 
