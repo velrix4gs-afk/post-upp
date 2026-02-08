@@ -61,24 +61,24 @@ const LoginVerification = () => {
         return;
       }
 
-      if (!data?.session?.access_token || !data?.session?.refresh_token) {
+      if (!data?.token_hash) {
         toast({
           title: 'Sign in failed',
-          description: 'Invalid session received. Please try again.',
+          description: 'Invalid response from server. Please try again.',
           variant: 'destructive'
         });
         setOtp('');
         return;
       }
 
-      // Set the session directly — user is now logged in
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
+      // Verify the token_hash client-side to create session locally
+      const { data: sessionData, error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: 'magiclink',
       });
 
-      if (sessionError) {
-        console.error('Set session error:', sessionError);
+      if (verifyError || !sessionData?.session) {
+        console.error('Client verifyOtp error:', verifyError);
         toast({
           title: 'Sign in failed',
           description: 'Failed to complete sign in. Please try again.',

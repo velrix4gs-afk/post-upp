@@ -75,7 +75,7 @@ serve(async (req) => {
       .delete()
       .eq('id', otpData.id);
 
-    // Generate a magic link to get token_hash
+    // Generate a magic link to get token_hash (don't verify server-side)
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
       email: sanitizedEmail,
@@ -100,27 +100,11 @@ serve(async (req) => {
       );
     }
 
-    // Verify OTP server-side to get a full session
-    const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-      token_hash,
-      type: 'magiclink',
-    });
-
-    if (sessionError || !sessionData?.session) {
-      console.error('Session verification error:', sessionError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create session' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // Return the token_hash to the frontend — it will verify client-side
     return new Response(
       JSON.stringify({ 
         success: true,
-        session: {
-          access_token: sessionData.session.access_token,
-          refresh_token: sessionData.session.refresh_token,
-        },
+        token_hash,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
