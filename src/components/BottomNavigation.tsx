@@ -63,8 +63,6 @@ export const BottomNavigation = () => {
   }
 
   const isActive = (path: string) => location.pathname === path;
-  const isReelsPage = location.pathname === '/reels';
-  const composerOffsetClass = isReelsPage ? '' : 'bottom-24';
 
   // Instagram-like bottom nav: Home, Search, Reels, Profile
   const navItems = [
@@ -104,15 +102,13 @@ export const BottomNavigation = () => {
     <>
       <nav
         className={cn(
-          "md:hidden fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-in-out",
+          "md:hidden fixed left-0 right-0 mx-3 z-50 transition-all duration-300 ease-in-out rounded-2xl bg-background/80 backdrop-blur-lg border border-border/30",
           isVisible 
-            ? "bottom-6 opacity-100 translate-y-0" 
-            : "bottom-6 opacity-0 translate-y-4 pointer-events-none",
-          composerOffsetClass
+            ? "bottom-[5px] opacity-100 translate-y-0" 
+            : "bottom-[5px] opacity-0 translate-y-4 pointer-events-none"
         )}
       >
-        {/* Floating icons without background */}
-        <div className="flex items-center gap-4">
+        <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item, index) => {
             const Icon = item.icon;
             const isActiveTab = item.isActive;
@@ -125,11 +121,12 @@ export const BottomNavigation = () => {
                     handleInteraction();
                     item.action?.();
                   }}
-                  className="flex items-center justify-center"
+                  className="flex flex-col items-center gap-0.5"
                 >
-                  <div className="h-12 w-12 rounded-full bg-primary shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200">
-                    <Icon className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
+                  <div className="h-10 w-10 rounded-full bg-primary shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200">
+                    <Icon className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
                   </div>
+                  <span className="text-[10px] text-muted-foreground">Create</span>
                 </button>
               );
             }
@@ -145,20 +142,23 @@ export const BottomNavigation = () => {
                     navigate(item.path);
                   }
                 }}
-                className={cn(
-                  "flex items-center justify-center p-3 transition-all duration-200",
-                  isActiveTab 
-                    ? "text-primary" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                className="flex flex-col items-center gap-0.5 transition-all duration-200"
               >
-                <div className="relative">
+                <div
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all duration-200",
+                    isActiveTab
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
                   <Icon
                     className={cn(
-                      "h-6 w-6 transition-all duration-200 drop-shadow-md",
+                      "h-5 w-5 transition-all duration-200",
                       isActiveTab ? "stroke-[2.5px]" : "stroke-[2px]"
                     )}
                   />
+                  <span className="text-[10px]">{item.label}</span>
                 </div>
               </button>
             );
