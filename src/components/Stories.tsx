@@ -1,54 +1,28 @@
 import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { useStories } from '@/hooks/useStories';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { Plus, Camera, Video, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { VerificationBadge } from '@/components/premium/VerificationBadge';
 import { ProfileHoverCard } from '@/components/ProfileHoverCard';
+
 const Stories = () => {
-  const {
-    user
-  } = useAuth();
-  const {
-    profile
-  } = useProfile();
-  const {
-    stories,
-    createStory,
-    viewStory,
-    deleteStory
-  } = useStories();
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const { stories, viewStory, deleteStory } = useStories();
+  const navigate = useNavigate();
   const [selectedStory, setSelectedStory] = useState<any>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [content, setContent] = useState('');
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMediaFile(file);
-    const preview = URL.createObjectURL(file);
-    setMediaPreview(preview);
-  };
-  const handleCreateStory = async () => {
-    if (!content.trim() && !mediaFile) return;
-    await createStory(content, mediaFile || undefined);
-    setCreateDialogOpen(false);
-    setContent('');
-    setMediaFile(null);
-    setMediaPreview(null);
-  };
+
   const handleStoryClick = async (story: any) => {
     await viewStory(story.id);
     setSelectedStory(story);
   };
+
   const handleDeleteStory = async (storyId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteStory(storyId);
@@ -56,6 +30,7 @@ const Stories = () => {
       setSelectedStory(null);
     }
   };
+
   return <>
       {/* Floating stories - no background */}
       <div className="py-3 px-2">
@@ -65,78 +40,27 @@ const Stories = () => {
             .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
           `}</style>
           {/* Add Story - Floating circle with + */}
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <div className="flex-shrink-0 w-[72px] text-center cursor-pointer">
-                <div className="relative w-[68px] h-[68px] mx-auto">
-                  <div className="w-[68px] h-[68px] rounded-full bg-background border-2 border-dashed border-primary/50 flex items-center justify-center hover:border-primary transition-colors">
-                    {profile?.avatar_url ? (
-                      <Avatar className="w-14 h-14">
-                        <AvatarImage src={profile.avatar_url} className="object-cover" />
-                        <AvatarFallback className="bg-muted text-muted-foreground">
-                          {profile?.display_name?.[0] || '+'}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <Plus className="h-7 w-7 text-primary" />
-                    )}
-                  </div>
-                  {/* Plus badge */}
-                  <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center border-2 border-background">
-                    <Plus className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
-                  </div>
-                </div>
-                <p className="text-[11px] mt-1.5 text-muted-foreground truncate font-medium">Your Story</p>
+          <div className="flex-shrink-0 w-[72px] text-center cursor-pointer" onClick={() => navigate('/create/story')}>
+            <div className="relative w-[68px] h-[68px] mx-auto">
+              <div className="w-[68px] h-[68px] rounded-full bg-background border-2 border-dashed border-primary/50 flex items-center justify-center hover:border-primary transition-colors">
+                {profile?.avatar_url ? (
+                  <Avatar className="w-14 h-14">
+                    <AvatarImage src={profile.avatar_url} className="object-cover" />
+                    <AvatarFallback className="bg-muted text-muted-foreground">
+                      {profile?.display_name?.[0] || '+'}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Plus className="h-7 w-7 text-primary" />
+                )}
               </div>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Story</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="content">What's on your mind?</Label>
-                  <Input id="content" placeholder="Share something..." value={content} onChange={e => setContent(e.target.value)} />
-                </div>
-                
-                {mediaPreview && <div className="relative">
-                    {mediaFile?.type.startsWith('video/') ? <video src={mediaPreview} className="w-full h-48 object-cover rounded" controls /> : <img src={mediaPreview} alt="Preview" className="w-full h-48 object-cover rounded" />}
-                    <Button size="sm" variant="destructive" className="absolute top-2 right-2" onClick={() => {
-                  setMediaFile(null);
-                  setMediaPreview(null);
-                }}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>}
-                
-                <div className="flex space-x-2">
-                  <Label htmlFor="photo-upload" className="cursor-pointer">
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <span>
-                        <Camera className="h-4 w-4 mr-2" />
-                        Photo
-                      </span>
-                    </Button>
-                  </Label>
-                  <input id="photo-upload" type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-                  
-                  <Label htmlFor="video-upload" className="cursor-pointer">
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <span>
-                        <Video className="h-4 w-4 mr-2" />
-                        Video
-                      </span>
-                    </Button>
-                  </Label>
-                  <input id="video-upload" type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
-                </div>
-                
-                <Button onClick={handleCreateStory} className="w-full">
-                  Share Story
-                </Button>
+              {/* Plus badge */}
+              <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center border-2 border-background">
+                <Plus className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
               </div>
-            </DialogContent>
-          </Dialog>
+            </div>
+            <p className="text-[11px] mt-1.5 text-muted-foreground truncate font-medium">Your Story</p>
+          </div>
 
           {/* Story Items - Floating circles */}
           {stories.map(story => <div key={story.id} className="flex-shrink-0 w-[72px] text-center cursor-pointer snap-start relative group" onClick={() => handleStoryClick(story)}>
@@ -183,9 +107,7 @@ const Stories = () => {
                       <VerificationBadge isVerified={selectedStory.profiles.is_verified} />
                     </p>
                     <p className="text-white/70 text-xs">
-                      {formatDistanceToNow(new Date(selectedStory.created_at), {
-                    addSuffix: true
-                  })}
+                      {formatDistanceToNow(new Date(selectedStory.created_at), { addSuffix: true })}
                     </p>
                   </div>
                 </div>
