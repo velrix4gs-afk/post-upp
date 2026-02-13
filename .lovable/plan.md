@@ -1,51 +1,33 @@
 
 
-# Redesign Bottom Navigation Bar (Matching Reference Image)
+# Connect Story Creation to the New Instagram-Style Editor
+
+## Problem
+The "Your Story" button in the feed opens an old basic dialog with a simple text input and file picker. The new full-featured Instagram-style story editor at `/create/story` exists but is not reachable from the feed.
 
 ## What Changes
 
-### 1. Full-width translucent bar pinned 5px from the bottom
-- Change from centered floating icons to a full-width rounded bar sitting 5px above the bottom edge of the screen
-- Add a translucent background using `bg-background/80 backdrop-blur-lg` so content behind it shows through slightly
-- Add rounded corners (`rounded-2xl`) and slight horizontal margin (`mx-3`) to give the pill/capsule shape from the reference image
+### 1. Replace the old dialog with navigation to `/create/story`
+In `src/components/Stories.tsx`, the "Your Story" circle currently wraps a `Dialog` with a basic form. This will be changed to simply navigate to `/create/story` on click, removing the old dialog entirely.
 
-### 2. Add text labels under each icon
-- Each nav item becomes a vertical stack: icon on top, small label text ("Home", "Search", "Create", "Reels", "Profile") below
-- Labels use `text-[10px]` for a clean, compact look
-
-### 3. Active tab pill highlight
-- The active tab gets a subtle rounded pill background highlight (e.g., `bg-primary/15 rounded-xl`) wrapping the icon and label together, similar to the green highlight in the reference image
-- Active icon and label use the primary color
-
-### 4. Create button styling
-- Keep the circular primary-colored icon but sized to match the row, with a "Create" label underneath like the other items
-
-### 5. Keep auto-hide behavior
-- All auto-hide logic (3-second timer, scroll/touch listeners, fade animation) stays exactly as-is
-- The bar fades in/out the same way it does now
-
-### 6. Keep all existing functionality
-- Same 5 nav items, same paths, same Create drawer, same page visibility rules, same auth checks
+### What stays the same
+- The story circles layout and styling
+- The story viewer dialog (for viewing existing stories)
+- The delete button on stories
+- All hover cards, avatars, gradient rings
+- The `useStories` hook usage for viewing/deleting
+- The new `CreateStoryPage` component (untouched)
 
 ## Technical Details
 
-**Single file changed:** `src/components/BottomNavigation.tsx`
+**File:** `src/components/Stories.tsx`
 
-**Nav container changes:**
-- From: `left-1/2 -translate-x-1/2 bottom-6` (centered, no background)
-- To: `left-0 right-0 bottom-[5px] mx-3 rounded-2xl bg-background/80 backdrop-blur-lg border border-border/30` (full-width with margin, translucent, 5px from bottom)
+- Remove the `createDialogOpen`, `content`, `mediaFile`, `mediaPreview` state variables
+- Remove `handleFileSelect` and `handleCreateStory` functions
+- Remove the `Dialog`/`DialogTrigger`/`DialogContent` wrapping the "Your Story" circle
+- Replace with a simple `div` that calls `navigate('/create/story')` on click
+- Remove unused imports (`Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogTrigger`, `Input`, `Label`, `Camera`, `Video`, `createStory`)
+- Add `useNavigate` from react-router-dom
 
-**Item layout changes:**
-- From: `flex items-center gap-4` (horizontal icons only)
-- To: `flex justify-around items-center h-16 px-2` (evenly spaced, taller for labels)
-- Each item: `flex flex-col items-center gap-0.5` with icon + `<span className="text-[10px]">Label</span>`
-
-**Active state:**
-- Wrap active item content in a pill: `bg-primary/15 rounded-xl px-3 py-1`
-
-**What stays the same:**
-- `isVisible`, `lastInteraction`, `handleInteraction`, auto-hide timer, event listeners
-- `allowedPages`, `isAuthPage` checks
-- All nav item definitions (paths, actions, icons)
-- Create Post Drawer
+The "Your Story" circle keeps its exact same visual appearance (avatar, plus badge, label) -- only the click behavior changes from opening a dialog to navigating to the new page.
 
