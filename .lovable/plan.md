@@ -1,33 +1,34 @@
 
+# Fix Story Viewer: Remove Duplicate Close Button, Playback HUD, and Add Caption Space
 
-# Connect Story Creation to the New Instagram-Style Editor
+## Issues Found
+1. **Two close buttons** -- The shadcn `DialogContent` automatically renders an X button in the top-right corner. There is also a manually coded X button. Both appear, causing confusion.
+2. **Video playback HUD** -- The `<video>` element uses the `controls` attribute, which renders the browser/WebView's native playback bar (play, pause, seek, volume). This clutters the viewer.
+3. **No caption area** -- Story text/content is only shown when there is no media. If a story has both media and text, the text is not displayed.
 
-## Problem
-The "Your Story" button in the feed opens an old basic dialog with a simple text input and file picker. The new full-featured Instagram-style story editor at `/create/story` exists but is not reachable from the feed.
+## What Will Change
 
-## What Changes
+### File: `src/components/Stories.tsx`
 
-### 1. Replace the old dialog with navigation to `/create/story`
-In `src/components/Stories.tsx`, the "Your Story" circle currently wraps a `Dialog` with a basic form. This will be changed to simply navigate to `/create/story` on click, removing the old dialog entirely.
+**1. Remove the duplicate close button**
+- Remove the manual X `<Button>` (the one coded explicitly)
+- Keep the built-in `DialogContent` close button (which is styled consistently)
+- Alternatively, hide the built-in one and keep the custom one -- whichever fits the dark theme better. The custom one styled for dark backgrounds will be kept, and the built-in one will be hidden using the `[&>button]:hidden` class on `DialogContent`.
 
-### What stays the same
-- The story circles layout and styling
-- The story viewer dialog (for viewing existing stories)
-- The delete button on stories
-- All hover cards, avatars, gradient rings
-- The `useStories` hook usage for viewing/deleting
-- The new `CreateStoryPage` component (untouched)
+**2. Remove video `controls` attribute**
+- Remove `controls` from the `<video>` tag so no native playback HUD appears
+- Keep `autoPlay` and add `playsInline` and `muted` (for autoplay to work reliably in WebView)
+- Add tap-to-pause/play functionality so users can still control playback by tapping the video
 
-## Technical Details
+**3. Add caption overlay at the bottom**
+- When a story has both media and text content, display the caption as a semi-transparent overlay at the bottom of the media area
+- When there is no caption, the media fills the full viewer without any bottom bar
+- Caption styling: white text on a gradient background (transparent to semi-black), positioned at the bottom of the media container
 
-**File:** `src/components/Stories.tsx`
-
-- Remove the `createDialogOpen`, `content`, `mediaFile`, `mediaPreview` state variables
-- Remove `handleFileSelect` and `handleCreateStory` functions
-- Remove the `Dialog`/`DialogTrigger`/`DialogContent` wrapping the "Your Story" circle
-- Replace with a simple `div` that calls `navigate('/create/story')` on click
-- Remove unused imports (`Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogTrigger`, `Input`, `Label`, `Camera`, `Video`, `createStory`)
-- Add `useNavigate` from react-router-dom
-
-The "Your Story" circle keeps its exact same visual appearance (avatar, plus badge, label) -- only the click behavior changes from opening a dialog to navigating to the new page.
-
+## What Stays the Same
+- Story circles layout and styling in the feed
+- Story click and view tracking logic
+- Delete button for own stories
+- Avatar, username, verification badge, and timestamp in the header
+- The `useStories` hook and all data fetching
+- The `CreateStoryPage` editor (untouched)
