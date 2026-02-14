@@ -91,7 +91,7 @@ const Stories = () => {
 
       {/* Story Viewer */}
       {selectedStory && <Dialog open={!!selectedStory} onOpenChange={() => setSelectedStory(null)}>
-          <DialogContent className="max-w-md p-0">
+          <DialogContent className="max-w-md p-0 [&>button]:hidden">
             <div className="relative bg-black rounded-lg overflow-hidden">
               <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -121,10 +121,18 @@ const Stories = () => {
                 </div>
               </div>
               
-              <div className="aspect-[9/16] flex items-center justify-center bg-black">
-                {selectedStory.media_url ? selectedStory.media_type === 'video' ? <video src={selectedStory.media_url} className="w-full h-full object-cover" controls autoPlay /> : <img src={selectedStory.media_url} alt="Story" className="w-full h-full object-cover" /> : <div className="p-6 text-center">
+              <div className="aspect-[9/16] flex items-center justify-center bg-black relative">
+                {selectedStory.media_url ? selectedStory.media_type === 'video' ? <video src={selectedStory.media_url} className="w-full h-full object-cover" autoPlay playsInline muted loop onClick={(e) => {
+                    const video = e.currentTarget;
+                    video.paused ? video.play() : video.pause();
+                  }} /> : <img src={selectedStory.media_url} alt="Story" className="w-full h-full object-cover" /> : <div className="p-6 text-center">
                     <p className="text-white text-lg">{selectedStory.content}</p>
                   </div>}
+                {selectedStory.media_url && selectedStory.content && (
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                    <p className="text-white text-sm text-center">{selectedStory.content}</p>
+                  </div>
+                )}
               </div>
             </div>
           </DialogContent>
