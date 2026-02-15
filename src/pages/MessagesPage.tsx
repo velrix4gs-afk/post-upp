@@ -45,7 +45,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles, ArrowLeft } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -346,15 +346,29 @@ const MessagesPage = () => {
     : messages;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-background">
       <Navigation />
-      <main className="container mx-auto px-0 md:px-4 h-screen">
+      <main className="container mx-auto px-0 md:px-4 flex-1 overflow-hidden">
         <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}
           <div className={`${selectedChatId || showAIChat ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
             <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (window.history.length > 1) navigate(-1);
+                      else navigate('/feed');
+                    }}
+                    className="h-8 w-8 md:hidden"
+                    aria-label="Go back"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                  <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
+                </div>
                 <div className="flex items-center gap-1">
                   <Button 
                     size="icon"
@@ -432,47 +446,13 @@ const MessagesPage = () => {
                   
                   <Separator className="my-2 bg-primary/10" />
 
-                  {/* Friends who aren't in chats yet */}
-                    {!selectedChatId && friends
-                      .filter(f => 
-                        !chats.some(c => c.participants.some(p => p.user_id === f.id)) &&
-                        (!newChatSearch || 
-                          f.display_name?.toLowerCase().includes(newChatSearch.toLowerCase()) ||
-                          f.username?.toLowerCase().includes(newChatSearch.toLowerCase()))
-                      )
-                      .map((friend) => (
-                        <div
-                          key={friend.id}
-                          className="p-3 rounded-lg cursor-pointer hover:bg-primary/10 transition-all duration-200 group border border-transparent hover:border-primary/20 active:scale-[0.98]"
-                          onClick={() => handleCreateNewChat(friend.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-11 w-11 ring-2 ring-transparent group-hover:ring-primary/30 transition-all">
-                              <AvatarImage src={friend.avatar_url} />
-                              <AvatarFallback className="bg-gradient-primary text-white">
-                                {friend.display_name?.[0] || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
-                                {friend.display_name || 'User'}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                @{friend.username || 'username'}
-                              </p>
-                            </div>
-                            <MessageCircle className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                          </div>
-                        </div>
-                      ))}
-
                     {/* Existing Chats */}
                     {filteredChats.length === 0 && searchQuery ? (
                       <div className="text-center py-8 px-4 text-muted-foreground">
                         <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
                         <p className="text-sm">No results found</p>
                       </div>
-                    ) : filteredChats.length === 0 && friends.length === 0 && !newChatSearch ? (
+                    ) : filteredChats.length === 0 && !searchQuery ? (
                       <div className="text-center py-16 px-4 text-muted-foreground">
                         <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
                         <p className="font-semibold mb-2 text-base">No conversations yet</p>
