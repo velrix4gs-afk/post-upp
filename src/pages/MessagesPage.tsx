@@ -45,7 +45,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles, ArrowLeft } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles, ArrowLeft, Check } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -507,7 +507,7 @@ const MessagesPage = () => {
                             <div className="flex gap-3">
                               <div className="relative flex-shrink-0">
                                 <Avatar className={`h-12 w-12 ring-2 transition-all ${
-                                  selectedChatId === chat.id ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'
+                                  selectedChatId === chat.id ? 'ring-primary/50' : 'ring-border/50 group-hover:ring-primary/20'
                                 }`}>
                                   <AvatarImage src={avatar} />
                                   <AvatarFallback className={selectedChatId === chat.id ? "bg-gradient-primary text-white" : "bg-muted"}>{chatName[0]}</AvatarFallback>
@@ -518,25 +518,25 @@ const MessagesPage = () => {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-0.5">
-                                  <div className="min-w-0 flex-1">
-                                    <p className={`font-medium truncate text-sm md:text-base transition-colors ${
-                                      selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
-                                    }`}>
-                                      {chatName}
-                                      {chatUsername && !chat.is_group && (
-                                        <span className="text-muted-foreground font-normal ml-1">@{chatUsername}</span>
-                                      )}
-                                    </p>
-                                  </div>
+                                  <p className={`font-semibold truncate text-sm md:text-base transition-colors ${
+                                    selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
+                                  }`}>
+                                    {chatName}
+                                  </p>
                                   {lastMessageTime && (
                                     <span className="text-xs flex-shrink-0 text-muted-foreground">
                                       {lastMessageTime}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs md:text-sm text-muted-foreground truncate">
-                                  {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
-                                </p>
+                                <div className="flex items-center gap-1">
+                                  {lastMessage?.sender_id === user?.id && (
+                                    <Check className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                                  )}
+                                  <p className="text-xs md:text-sm text-muted-foreground truncate">
+                                    {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
