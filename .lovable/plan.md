@@ -1,42 +1,45 @@
 
-# Fix Messages Page: 4 Issues
 
-## Issue 1: Page sometimes doesn't open
-**Root cause**: The `MessagesPage` wraps everything in `<Navigation />` plus a `<Card>` with `h-screen` inside a `min-h-screen` container. The lazy-loaded page may fail silently if the `useMessages` or `useFriends` hooks error out during fetch, leaving the page blank. Additionally, `h-screen` nested inside another full-height container can cause overflow issues on mobile WebView.
+# Restyle Chat List Items to Match Reference Design
 
-**Fix**: Wrap the main content in an error boundary with a retry button, and fix the height calculation to use `h-[100dvh]` (dynamic viewport height) instead of `h-screen` which is unreliable in WebViews. Add a loading state fallback so the page always renders something.
+## What the reference image shows
+- Large circular profile avatar on the left with a subtle ring/border
+- User's display name (or nickname) prominently on the first line
+- Last message preview below the name, prefixed with a checkmark icon (indicating sent/read status)
+- Timestamp right-aligned on the same row as the name
+- Clean dark background with good spacing
 
-**File**: `src/pages/MessagesPage.tsx`
+## Current state
+The chat list items (lines 497-542 in `MessagesPage.tsx`) already have a similar structure but with minor differences:
+- The username handle (`@username`) is shown inline next to the display name -- this should move to below or be removed from the name row to keep it clean like the reference
+- No read/sent checkmark indicator before the last message snippet
+- Timestamp is already right-aligned on the name row (this is correct)
 
-## Issue 2: No back navigation
-**Root cause**: The "Messages" header (line 357) has no back button. When viewing the chat list on mobile, there is no way to navigate back to the feed. The `BackNavigation` component is imported but only used inside the chat view, not on the chat list view.
+## Changes
 
-**Fix**: Add a back arrow button next to the "Messages" title in the chat list header that navigates back using `navigate(-1)` or to `/feed`. This only needs to show on mobile since desktop has the sidebar always visible.
+### File: `src/pages/MessagesPage.tsx`
 
-**File**: `src/pages/MessagesPage.tsx`
+**1. Clean up the name row**
+- Show only the display name (or nickname) on the first line, without the `@username` handle inline
+- Keep the timestamp right-aligned on this same row (already correct)
 
-## Issue 3: Non-friends showing in DMs
-**Root cause**: Lines 436-467 in `MessagesPage.tsx` display ALL entries from `useFriends()` (the `friends` array) who don't have an existing chat. The `useFriends` hook fetches from the `friendships` edge function, and these users are shown as quick-start chat suggestions directly in the chat list. However, the issue states users who are NOT friends are appearing. This happens because existing chats (loaded by `useMessages`) show ALL chats the user is a participant in -- there is no filtering by friendship status. So if a chat was created before the friendship check was added, or if someone somehow bypassed it, those chats persist.
+**2. Add a checkmark before the last message**
+- Add a `Check` icon (from lucide-react) before the last message snippet to indicate sent status
+- Only show checkmark for messages sent by the current user
+- Style: small muted icon, similar to the reference
 
-**Fix**: 
-- Remove the inline friends suggestions from the chat list (lines 436-467). The `NewChatDialog` (+ button) already properly filters to mutual followers and is the correct way to start new chats.
-- This eliminates the visual clutter of showing friend avatars directly in the chat list and ensures the only way to start new chats is through the dialog which has proper mutual-follow validation.
+**3. Increase avatar ring visibility**
+- Add a subtle border/ring around the avatar to match the reference image's circular frame effect (a thin `ring-2 ring-border/50` or similar)
 
-**File**: `src/pages/MessagesPage.tsx`
+**4. Adjust spacing and sizing**
+- Ensure the avatar is `h-12 w-12` (already correct)
+- Slightly increase padding if needed for a more spacious feel
 
-## Issue 4: Empty space at bottom
-**Root cause**: The page uses `min-h-screen` on the outer div and `h-screen` on `<main>`, but `<Navigation />` takes up space at the top, pushing content down. The Card inside tries to fill `h-full` but the actual available height is less than the screen, leaving empty space at the bottom. On mobile WebView, browser chrome further reduces available space.
+## What stays the same
+- All click handlers and navigation logic
+- Online indicator dot
+- Chat filtering and search
+- AI Assistant chat item at top
+- The overall flex layout structure
+- All hooks and data fetching
 
-**Fix**: Change the layout to use `h-[100dvh]` with `flex flex-col` on the outer container, and make `<main>` use `flex-1 overflow-hidden` instead of `h-screen`. This ensures the Card fills exactly the remaining space after the Navigation header, with no empty gap.
-
-**File**: `src/pages/MessagesPage.tsx`
-
-## Technical Summary
-
-All changes are in a single file: `src/pages/MessagesPage.tsx`
-
-1. **Outer container**: Change from `min-h-screen` to `h-[100dvh] flex flex-col overflow-hidden`
-2. **Main element**: Change from `h-screen` to `flex-1 overflow-hidden`
-3. **Back button**: Add `ArrowLeft` icon button next to "Messages" title, visible on mobile, navigates back
-4. **Remove friend suggestions block**: Delete lines 436-467 (the inline friends list in the sidebar) -- the `+` button / `NewChatDialog` already handles this correctly with proper mutual-follow filtering
-5. **Import cleanup**: Add `ArrowLeft` to the lucide import if not already present
