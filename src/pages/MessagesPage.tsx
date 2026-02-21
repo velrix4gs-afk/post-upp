@@ -680,7 +680,7 @@ const MessagesPage = () => {
                   backgroundPosition: 'center'
                 } : {}}>
 
-                  <div className="space-y-2 max-w-4xl mx-auto">
+                  <div className="space-y-2 max-w-4xl mx-auto pb-[50px] my-[2px]">
                     {searchQuery.trim() && filteredMessages.length === 0 ?
                   <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
