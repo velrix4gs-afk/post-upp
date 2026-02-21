@@ -757,7 +757,7 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
-                <div className="fixed inset-x-0 bottom-0 md:absolute md:auto md:right-auto bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100]">
+                <div className="fixed inset-x-0 bottom-0 md:absolute md:auto md:auto bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100] ml-[320px]">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
