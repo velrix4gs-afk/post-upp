@@ -61,31 +61,31 @@ const MessagesPage = () => {
   const { isAdmin } = useAdmin();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
-  const { 
-    chats, 
-    messages, 
+  const {
+    chats,
+    messages,
     chatsLoading,
     messagesLoading,
-    sendMessage, 
-    editMessage, 
-    deleteMessage, 
+    sendMessage,
+    editMessage,
+    deleteMessage,
     reactToMessage,
     unreactToMessage,
     starMessage,
     unstarMessage,
     forwardMessage,
     markMessageRead,
-    refetchChats, 
-    refetchMessages 
+    refetchChats,
+    refetchMessages
   } = useMessages(selectedChatId || undefined);
   const { createChat: createChatByUuid } = useChats();
   const { friends } = useFriends();
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
   const { isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
-  const selectedChat = chats.find(c => c.id === selectedChatId);
-  const otherParticipant = selectedChat?.participants.find(p => p.user_id !== user?.id);
+  const selectedChat = chats.find((c) => c.id === selectedChatId);
+  const otherParticipant = selectedChat?.participants.find((p) => p.user_id !== user?.id);
   const { formatLastSeen, isOnline } = useLastSeen(otherParticipant?.user_id);
-  
+
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [newChatSearch, setNewChatSearch] = useState('');
@@ -105,7 +105,7 @@ const MessagesPage = () => {
   const [showClearChat, setShowClearChat] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
-  
+
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -150,7 +150,7 @@ const MessagesPage = () => {
   useEffect(() => {
     if (user) {
       refetchChats();
-      
+
       // Request notification permission
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
@@ -202,7 +202,7 @@ const MessagesPage = () => {
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if ((!messageText.trim() && !selectedImage) || !selectedChatId) return;
+    if (!messageText.trim() && !selectedImage || !selectedChatId) return;
 
     try {
       // Handle edit
@@ -219,16 +219,16 @@ const MessagesPage = () => {
       if (selectedImage) {
         const fileExt = selectedImage.name.split('.').pop();
         const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('messages')
-          .upload(fileName, selectedImage);
+
+        const { error: uploadError } = await supabase.storage.
+        from('messages').
+        upload(fileName, selectedImage);
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('messages')
-          .getPublicUrl(fileName);
+        const { data: { publicUrl } } = supabase.storage.
+        from('messages').
+        getPublicUrl(fileName);
 
         mediaUrl = publicUrl;
         mediaType = isVideo ? `video/${fileExt}` : `image/${fileExt}`;
@@ -272,16 +272,16 @@ const MessagesPage = () => {
 
     try {
       const fileName = `${user?.id}/${Date.now()}.webm`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('messages')
-        .upload(fileName, audioBlob);
+
+      const { error: uploadError } = await supabase.storage.
+      from('messages').
+      upload(fileName, audioBlob);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('messages')
-        .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.
+      from('messages').
+      getPublicUrl(fileName);
 
       await sendMessage('🎤 Voice message', undefined, publicUrl, 'audio/webm');
 
@@ -305,16 +305,16 @@ const MessagesPage = () => {
   const handleCreateNewChat = async (friendId: string) => {
     try {
       console.log('[MessagesPage] Creating chat with friend UUID:', friendId);
-      
+
       // Validate UUID format before calling
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(friendId)) {
         throw new Error('CHAT_002: Invalid user ID format');
       }
-      
+
       const chatId = await createChatByUuid(friendId);
       console.log('[MessagesPage] Chat created with ID:', chatId);
-      
+
       if (chatId) {
         setSelectedChatId(chatId);
         setSearchQuery('');
@@ -329,21 +329,21 @@ const MessagesPage = () => {
       throw error;
     }
   };
-  
+
   // Filter chats by name or participant
-  const filteredChats = chats.filter(chat => 
-    chat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.participants.some(p => 
-      p.profiles.display_name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const filteredChats = chats.filter((chat) =>
+  chat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  chat.participants.some((p) =>
+  p.profiles.display_name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
   );
 
   // Filter messages by content when in a chat
-  const filteredMessages = selectedChatId && searchQuery.trim() 
-    ? messages.filter(msg => 
-        msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : messages;
+  const filteredMessages = selectedChatId && searchQuery.trim() ?
+  messages.filter((msg) =>
+  msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) :
+  messages;
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-background">
@@ -359,33 +359,33 @@ const MessagesPage = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      if (window.history.length > 1) navigate(-1);
-                      else navigate('/feed');
+                      if (window.history.length > 1) navigate(-1);else
+                      navigate('/feed');
                     }}
                     className="h-8 w-8 md:hidden"
-                    aria-label="Go back"
-                  >
+                    aria-label="Go back">
+
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button 
+                  <Button
                     size="icon"
                     variant="ghost"
                     onClick={() => setShowNewChatDialog(true)}
                     className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
-                    title="New Direct Message"
-                  >
+                    title="New Direct Message">
+
                     <Plus className="h-5 w-5" />
                   </Button>
-                  <Button 
+                  <Button
                     size="icon"
                     variant="ghost"
                     onClick={() => setShowGroupChatDialog(true)}
                     className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
-                    title="New Group Chat"
-                  >
+                    title="New Group Chat">
+
                     <UsersIcon className="h-5 w-5" />
                   </Button>
                 </div>
@@ -396,8 +396,8 @@ const MessagesPage = () => {
                   placeholder={selectedChatId ? "Search in conversation..." : "Search messages..."}
                   className="pl-9 bg-background/50 border-primary/20 focus:border-primary transition-colors"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                  onChange={(e) => setSearchQuery(e.target.value)} />
+
               </div>
             </div>
 
@@ -405,21 +405,21 @@ const MessagesPage = () => {
               <div className="space-y-1">
                   {/* AI Assistant Chat - Pinned at top */}
                   <div
-                    className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
-                      showAIChat 
-                        ? 'bg-gradient-to-r from-primary/20 to-primary/5 border-primary/30 shadow-md' 
-                        : 'hover:bg-primary/5 border-transparent hover:border-primary/10'
-                    }`}
-                    onClick={() => {
-                      setShowAIChat(true);
-                      setSelectedChatId(null);
-                    }}
-                  >
+                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
+                  showAIChat ?
+                  'bg-gradient-to-r from-primary/20 to-primary/5 border-primary/30 shadow-md' :
+                  'hover:bg-primary/5 border-transparent hover:border-primary/10'}`
+                  }
+                  onClick={() => {
+                    setShowAIChat(true);
+                    setSelectedChatId(null);
+                  }}>
+
                     <div className="flex gap-3">
                       <div className="relative flex-shrink-0">
                         <div className={`h-12 w-12 rounded-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/60 ring-2 transition-all ${
-                          showAIChat ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'
-                        }`}>
+                      showAIChat ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'}`
+                      }>
                           <Sparkles className="h-6 w-6 text-primary-foreground" />
                         </div>
                         <div className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-success rounded-full border-2 border-background" />
@@ -428,8 +428,8 @@ const MessagesPage = () => {
                         <div className="flex items-center justify-between gap-2 mb-0.5">
                           <div className="min-w-0 flex-1">
                             <p className={`font-medium truncate text-sm md:text-base transition-colors ${
-                              showAIChat ? 'text-primary' : 'group-hover:text-primary'
-                            }`}>
+                          showAIChat ? 'text-primary' : 'group-hover:text-primary'}`
+                          }>
                               {isAdmin ? 'Admin AI Assistant' : 'Post Up AI'}
                               <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
                                 AI
@@ -447,102 +447,102 @@ const MessagesPage = () => {
                   <Separator className="my-2 bg-primary/10" />
 
                     {/* Existing Chats */}
-                    {filteredChats.length === 0 && searchQuery ? (
-                      <div className="text-center py-8 px-4 text-muted-foreground">
+                    {filteredChats.length === 0 && searchQuery ?
+                <div className="text-center py-8 px-4 text-muted-foreground">
                         <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
                         <p className="text-sm">No results found</p>
-                      </div>
-                    ) : filteredChats.length === 0 && !searchQuery ? (
-                      <div className="text-center py-16 px-4 text-muted-foreground">
+                      </div> :
+                filteredChats.length === 0 && !searchQuery ?
+                <div className="text-center py-16 px-4 text-muted-foreground">
                         <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
                         <p className="font-semibold mb-2 text-base">No conversations yet</p>
                         <p className="text-sm mb-4">Start chatting by adding friends first</p>
-                        <Button 
-                          onClick={() => navigate('/friends')}
-                          className="bg-gradient-primary hover:shadow-glow"
-                        >
+                        <Button
+                    onClick={() => navigate('/friends')}
+                    className="bg-gradient-primary hover:shadow-glow">
+
                           Find Friends
                         </Button>
-                      </div>
-                    ) : (
-                      filteredChats.map(chat => {
-                        const otherParticipant = chat.participants.find(p => p.user_id !== user?.id);
-                        const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
-                        const chatUsername = otherParticipant?.profiles?.username;
-                        const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
-                        // Get last message from messages array for this chat
-                        const chatMessages = messages.filter(m => m.chat_id === chat.id);
-                        const lastMessage = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null;
-                        const lastMessageTime = lastMessage?.created_at || chat.updated_at
-                          ? formatDistanceToNow(new Date(lastMessage?.created_at || chat.updated_at), { addSuffix: false })
-                              .replace('about ', '')
-                              .replace(' minutes', 'm')
-                              .replace(' minute', 'm')
-                              .replace(' hours', 'h')
-                              .replace(' hour', 'h')
-                              .replace(' days', 'd')
-                              .replace(' day', 'd')
-                              .replace(' weeks', 'w')
-                              .replace(' week', 'w')
-                              .replace(' months', 'mo')
-                              .replace(' month', 'mo')
-                              .replace('less than a', '<1')
-                          : '';
-                        const isOnlineUser = otherParticipant ? isUserOnline(otherParticipant.user_id) : false;
-                        // Get last message snippet
-                        const lastMessageSnippet = lastMessage?.content 
-                          ? (lastMessage.content.length > 30 ? lastMessage.content.slice(0, 30) + '...' : lastMessage.content)
-                          : (lastMessage?.media_url ? '📷 Media' : 'Tap to chat');
+                      </div> :
 
-                        return (
-                          <div
-                            key={chat.id}
-                            className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
-                              selectedChatId === chat.id 
-                                ? 'bg-gradient-primary/10 border-primary/30 shadow-md' 
-                                : 'hover:bg-primary/5 border-transparent hover:border-primary/10'
-                            }`}
-                            onClick={() => setSelectedChatId(chat.id)}
-                          >
+                filteredChats.map((chat) => {
+                  const otherParticipant = chat.participants.find((p) => p.user_id !== user?.id);
+                  const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
+                  const chatUsername = otherParticipant?.profiles?.username;
+                  const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
+                  // Get last message from messages array for this chat
+                  const chatMessages = messages.filter((m) => m.chat_id === chat.id);
+                  const lastMessage = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null;
+                  const lastMessageTime = lastMessage?.created_at || chat.updated_at ?
+                  formatDistanceToNow(new Date(lastMessage?.created_at || chat.updated_at), { addSuffix: false }).
+                  replace('about ', '').
+                  replace(' minutes', 'm').
+                  replace(' minute', 'm').
+                  replace(' hours', 'h').
+                  replace(' hour', 'h').
+                  replace(' days', 'd').
+                  replace(' day', 'd').
+                  replace(' weeks', 'w').
+                  replace(' week', 'w').
+                  replace(' months', 'mo').
+                  replace(' month', 'mo').
+                  replace('less than a', '<1') :
+                  '';
+                  const isOnlineUser = otherParticipant ? isUserOnline(otherParticipant.user_id) : false;
+                  // Get last message snippet
+                  const lastMessageSnippet = lastMessage?.content ?
+                  lastMessage.content.length > 30 ? lastMessage.content.slice(0, 30) + '...' : lastMessage.content :
+                  lastMessage?.media_url ? '📷 Media' : 'Tap to chat';
+
+                  return (
+                    <div
+                      key={chat.id}
+                      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
+                      selectedChatId === chat.id ?
+                      'bg-gradient-primary/10 border-primary/30 shadow-md' :
+                      'hover:bg-primary/5 border-transparent hover:border-primary/10'}`
+                      }
+                      onClick={() => setSelectedChatId(chat.id)}>
+
                             <div className="flex gap-3">
                               <div className="relative flex-shrink-0">
                                 <Avatar className={`h-12 w-12 ring-2 transition-all ${
-                                  selectedChatId === chat.id ? 'ring-primary/50' : 'ring-border/50 group-hover:ring-primary/20'
-                                }`}>
+                          selectedChatId === chat.id ? 'ring-primary/50' : 'ring-border/50 group-hover:ring-primary/20'}`
+                          }>
                                   <AvatarImage src={avatar} />
                                   <AvatarFallback className={selectedChatId === chat.id ? "bg-gradient-primary text-white" : "bg-muted"}>{chatName[0]}</AvatarFallback>
                                 </Avatar>
-                                {isOnlineUser && (
-                                  <div className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-success rounded-full border-2 border-background" />
-                                )}
+                                {isOnlineUser &&
+                          <div className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-success rounded-full border-2 border-background" />
+                          }
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-0.5">
                                   <p className={`font-semibold truncate text-sm md:text-base transition-colors ${
-                                    selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'
-                                  }`}>
+                            selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'}`
+                            }>
                                     {chatName}
                                   </p>
-                                  {lastMessageTime && (
-                                    <span className="text-xs flex-shrink-0 text-muted-foreground">
+                                  {lastMessageTime &&
+                            <span className="text-xs flex-shrink-0 text-muted-foreground">
                                       {lastMessageTime}
                                     </span>
-                                  )}
+                            }
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  {lastMessage?.sender_id === user?.id && (
-                                    <Check className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-                                  )}
+                                  {lastMessage?.sender_id === user?.id &&
+                            <Check className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                            }
                                   <p className="text-xs md:text-sm text-muted-foreground truncate">
                                     {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
                                   </p>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    )}
+                          </div>);
+
+                })
+                }
                   </div>
             </ScrollArea>
           </div>
@@ -552,43 +552,43 @@ const MessagesPage = () => {
           {/* Chat Area */}
           <div className={`${selectedChatId || showAIChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col relative`}>
             {/* AI Assistant Chat */}
-            {showAIChat ? (
-              <AIAssistantChat 
-                isAdmin={isAdmin}
-                onBack={() => setShowAIChat(false)}
-              />
-            ) : selectedChat ? (
-              <>
+            {showAIChat ?
+            <AIAssistantChat
+              isAdmin={isAdmin}
+              onBack={() => setShowAIChat(false)} /> :
+
+            selectedChat ?
+            <>
                 {/* Chat Header */}
                 <div
-                  className="p-2 border-b border-border/50 flex items-center justify-between bg-card/80 backdrop-blur-sm sticky top-0 z-10 cursor-pointer hover:bg-card/90 transition-colors"
-                  onClick={() => {
-                    if (selectedChat?.is_group) {
-                      setShowGroupInfo(true);
-                    } else if (otherParticipant?.user_id) {
-                      navigate(`/profile/${otherParticipant.user_id}`);
-                    }
-                  }}
-                >
+                className="p-2 border-b border-border/50 flex items-center justify-between bg-card/80 backdrop-blur-sm sticky top-0 z-10 cursor-pointer hover:bg-card/90 transition-colors"
+                onClick={() => {
+                  if (selectedChat?.is_group) {
+                    setShowGroupInfo(true);
+                  } else if (otherParticipant?.user_id) {
+                    navigate(`/profile/${otherParticipant.user_id}`);
+                  }
+                }}>
+
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Button
-                      size="icon"
-                      variant="ghost"
-                      className="md:hidden flex-shrink-0 h-10 w-10 hover:bg-black/5 dark:hover:bg-white/5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedChatId(null);
-                      }}
-                    >
+                    size="icon"
+                    variant="ghost"
+                    className="md:hidden flex-shrink-0 h-10 w-10 hover:bg-black/5 dark:hover:bg-white/5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedChatId(null);
+                    }}>
+
                       ←
                     </Button>
                     {(() => {
-                      const otherParticipant = selectedChat.participants.find(p => p.user_id !== user?.id);
-                      const chatName = selectedChat.name || otherParticipant?.profiles.display_name || 'User';
-                      const chatAvatar = selectedChat.avatar_url || otherParticipant?.profiles.avatar_url;
-                      
-                      return (
-                        <>
+                    const otherParticipant = selectedChat.participants.find((p) => p.user_id !== user?.id);
+                    const chatName = selectedChat.name || otherParticipant?.profiles.display_name || 'User';
+                    const chatAvatar = selectedChat.avatar_url || otherParticipant?.profiles.avatar_url;
+
+                    return (
+                      <>
                             <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/20">
                               <AvatarImage src={chatAvatar} />
                               <AvatarFallback className="bg-gradient-primary text-white">{chatName[0]}</AvatarFallback>
@@ -596,174 +596,174 @@ const MessagesPage = () => {
                             <div className="min-w-0 flex-1">
                               <p className="font-medium truncate text-[15px]">{chatName}</p>
                               <div className="flex items-center gap-2 text-[13px]">
-                                {isOnline ? (
-                                  <span className="text-primary">online</span>
-                                ) : (
-                                  <span className="text-muted-foreground">{formatLastSeen()}</span>
-                                )}
+                                {isOnline ?
+                            <span className="text-primary">online</span> :
+
+                            <span className="text-muted-foreground">{formatLastSeen()}</span>
+                            }
                               </div>
                             </div>
-                        </>
-                      );
-                    })()}
+                        </>);
+
+                  })()}
                   </div>
                   <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                    {!selectedChat?.is_group && (
-                      <>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveCall('voice');
-                            setIsCallInitiator(true);
-                            toast({
-                              title: 'Starting voice call...',
-                              description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                            });
-                            if ('Notification' in window && Notification.permission === 'granted') {
-                              new Notification('Voice Call', {
-                                body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                                icon: '/favicon.ico',
-                              });
-                            }
-                          }}
-                        >
+                    {!selectedChat?.is_group &&
+                  <>
+                        <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveCall('voice');
+                        setIsCallInitiator(true);
+                        toast({
+                          title: 'Starting voice call...',
+                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`
+                        });
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                          new Notification('Voice Call', {
+                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                            icon: '/favicon.ico'
+                          });
+                        }
+                      }}>
+
                           <Phone className="h-5 w-5" />
                         </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveCall('video');
-                            setIsCallInitiator(true);
-                            toast({
-                              title: 'Starting video call...',
-                              description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                            });
-                            if ('Notification' in window && Notification.permission === 'granted') {
-                              new Notification('Video Call', {
-                                body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                                icon: '/favicon.ico',
-                              });
-                            }
-                          }}
-                        >
+                        <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveCall('video');
+                        setIsCallInitiator(true);
+                        toast({
+                          title: 'Starting video call...',
+                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`
+                        });
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                          new Notification('Video Call', {
+                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
+                            icon: '/favicon.ico'
+                          });
+                        }
+                      }}>
+
                           <Video className="h-5 w-5" />
                         </Button>
                       </>
-                    )}
+                  }
                     <ChatMenu
-                      chatId={selectedChatId}
-                      otherUserId={otherParticipant?.user_id}
-                      onViewMedia={() => setShowMediaTab(true)}
-                      onSearchInChat={() => setShowSearchDialog(true)}
-                      onViewStarred={() => setShowStarredDialog(true)}
-                      onWallpaperChange={() => setShowWallpaper(true)}
-                      onClearChat={() => setShowClearChat(true)}
-                      onBlock={() => setShowBlockDialog(true)}
-                      onReport={() => setShowReportDialog(true)}
-                      onDisappearingMessages={() => setShowDisappearingDialog(true)}
-                    />
+                    chatId={selectedChatId}
+                    otherUserId={otherParticipant?.user_id}
+                    onViewMedia={() => setShowMediaTab(true)}
+                    onSearchInChat={() => setShowSearchDialog(true)}
+                    onViewStarred={() => setShowStarredDialog(true)}
+                    onWallpaperChange={() => setShowWallpaper(true)}
+                    onClearChat={() => setShowClearChat(true)}
+                    onBlock={() => setShowBlockDialog(true)}
+                    onReport={() => setShowReportDialog(true)}
+                    onDisappearingMessages={() => setShowDisappearingDialog(true)} />
+
                   </div>
                 </div>
 
                 {/* Messages Area */}
-                <div 
-                  className="flex-1 overflow-y-auto px-4 py-3 pb-4 bg-gradient-to-br from-background to-muted/20"
-                  style={chatSettings?.wallpaper_url ? {
-                    backgroundImage: `url(${chatSettings.wallpaper_url})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  } : {}}
-                >
+                <div
+                className="flex-1 overflow-y-auto px-4 py-3 pb-4 bg-gradient-to-br from-background to-muted/20"
+                style={chatSettings?.wallpaper_url ? {
+                  backgroundImage: `url(${chatSettings.wallpaper_url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                } : {}}>
+
                   <div className="space-y-2 max-w-4xl mx-auto">
-                    {searchQuery.trim() && filteredMessages.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
+                    {searchQuery.trim() && filteredMessages.length === 0 ?
+                  <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p className="font-medium mb-2">No messages found</p>
                         <p className="text-sm">Try a different search term</p>
-                      </div>
-                    ) : (
-                      filteredMessages.map((message) => {
-                        const isOwn = message.sender_id === user?.id;
-                        const senderProfile = selectedChat?.participants.find(p => p.user_id === message.sender_id)?.profiles;
-                        
-                        // Find replied-to message if this is a reply
-                        const replyToData = message.reply_to 
-                          ? (() => {
-                              const replyMsg = messages.find(m => m.id === message.reply_to);
-                              if (replyMsg) {
-                                const replySenderProfile = selectedChat?.participants.find(p => p.user_id === replyMsg.sender_id)?.profiles;
-                                return {
-                                  id: replyMsg.id,
-                                  content: replyMsg.content || '',
-                                  sender_name: replySenderProfile?.display_name || 'Unknown',
-                                  media_url: replyMsg.media_url,
-                                  media_type: replyMsg.media_type
-                                };
-                              }
-                              return undefined;
-                            })()
-                          : undefined;
-                        
-                        return (
-                          <EnhancedMessageBubble
-                            key={message.id}
-                            id={message.id}
-                            content={message.content || ''}
-                            sender={{
-                              username: senderProfile?.username || '',
-                              display_name: senderProfile?.display_name || 'Unknown',
-                              avatar_url: senderProfile?.avatar_url
-                            }}
-                            timestamp={message.created_at}
-                            isOwn={isOwn}
-                            mediaUrl={message.media_url}
-                            mediaType={message.media_type}
-                            isEdited={message.is_edited}
-                            status={message.status}
-                            isForwarded={message.is_forwarded}
-                            bubbleColor={chatSettings?.theme_color}
-                            replyTo={replyToData}
-                            onEdit={isOwn ? handleEditMessage : undefined}
-                            onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
-                            onReply={() => setReplyingTo({
-                              ...message,
-                              sender: senderProfile
-                            })}
-                            onReact={reactToMessage}
-                            onUnreact={unreactToMessage}
-                            onStar={starMessage}
-                            onUnstar={unstarMessage}
-                            onForward={(id) => {
-                              setForwardingMessageId(id);
-                              setShowForwardDialog(true);
-                            }}
-                            onScrollToMessage={(msgId) => {
-                              const element = document.getElementById(`message-${msgId}`);
-                              element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }}
-                          />
-                        );
-                      })
-                    )}
+                      </div> :
+
+                  filteredMessages.map((message) => {
+                    const isOwn = message.sender_id === user?.id;
+                    const senderProfile = selectedChat?.participants.find((p) => p.user_id === message.sender_id)?.profiles;
+
+                    // Find replied-to message if this is a reply
+                    const replyToData = message.reply_to ?
+                    (() => {
+                      const replyMsg = messages.find((m) => m.id === message.reply_to);
+                      if (replyMsg) {
+                        const replySenderProfile = selectedChat?.participants.find((p) => p.user_id === replyMsg.sender_id)?.profiles;
+                        return {
+                          id: replyMsg.id,
+                          content: replyMsg.content || '',
+                          sender_name: replySenderProfile?.display_name || 'Unknown',
+                          media_url: replyMsg.media_url,
+                          media_type: replyMsg.media_type
+                        };
+                      }
+                      return undefined;
+                    })() :
+                    undefined;
+
+                    return (
+                      <EnhancedMessageBubble
+                        key={message.id}
+                        id={message.id}
+                        content={message.content || ''}
+                        sender={{
+                          username: senderProfile?.username || '',
+                          display_name: senderProfile?.display_name || 'Unknown',
+                          avatar_url: senderProfile?.avatar_url
+                        }}
+                        timestamp={message.created_at}
+                        isOwn={isOwn}
+                        mediaUrl={message.media_url}
+                        mediaType={message.media_type}
+                        isEdited={message.is_edited}
+                        status={message.status}
+                        isForwarded={message.is_forwarded}
+                        bubbleColor={chatSettings?.theme_color}
+                        replyTo={replyToData}
+                        onEdit={isOwn ? handleEditMessage : undefined}
+                        onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
+                        onReply={() => setReplyingTo({
+                          ...message,
+                          sender: senderProfile
+                        })}
+                        onReact={reactToMessage}
+                        onUnreact={unreactToMessage}
+                        onStar={starMessage}
+                        onUnstar={unstarMessage}
+                        onForward={(id) => {
+                          setForwardingMessageId(id);
+                          setShowForwardDialog(true);
+                        }}
+                        onScrollToMessage={(msgId) => {
+                          const element = document.getElementById(`message-${msgId}`);
+                          element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }} />);
+
+
+                  })
+                  }
                     <div ref={messagesEndRef} />
                   </div>
                   <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
-                <div className="fixed inset-x-0 bottom-0 md:absolute md:left-auto md:right-auto bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100]">
+                <div className="fixed inset-x-0 bottom-0 md:absolute md:-auto md:right-auto bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100]">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
                   {/* Reply Preview */}
-                  {replyingTo && (
-                    <div className="px-4 py-2 flex items-center justify-between bg-muted/50">
+                  {replyingTo &&
+                <div className="px-4 py-2 flex items-center justify-between bg-muted/50">
                       <div className="flex-1 min-w-0 border-l-4 border-primary pl-3">
                         <p className="text-xs font-medium text-primary mb-0.5">
                           {replyingTo.sender?.display_name}
@@ -772,163 +772,163 @@ const MessagesPage = () => {
                           {replyingTo.content}
                         </p>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => setReplyingTo(null)}
-                        className="h-8 w-8"
-                      >
+                      <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setReplyingTo(null)}
+                    className="h-8 w-8">
+
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  )}
+                }
 
                   {/* Media Preview */}
-                  {imagePreview && (
-                    <div className="px-4 py-2 flex items-center gap-3 bg-muted/50">
-                      {isVideo ? (
-                        <video 
-                          src={imagePreview} 
-                          className="h-20 w-32 object-cover rounded-lg"
-                          controls
-                        />
-                      ) : (
-                        <img 
-                          src={imagePreview} 
-                          alt="Preview" 
-                          className="h-20 w-20 object-cover rounded-lg" 
-                        />
-                      )}
+                  {imagePreview &&
+                <div className="px-4 py-2 flex items-center gap-3 bg-muted/50">
+                      {isVideo ?
+                  <video
+                    src={imagePreview}
+                    className="h-20 w-32 object-cover rounded-lg"
+                    controls /> :
+
+
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="h-20 w-20 object-cover rounded-lg" />
+
+                  }
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-muted-foreground">
                           {isVideo ? '🎥 Video' : '📷 Image'} ready to send
                         </p>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          setSelectedImage(null);
-                          setImagePreview(null);
-                          setIsVideo(false);
-                        }}
-                        className="h-8 w-8"
-                      >
+                      <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedImage(null);
+                      setImagePreview(null);
+                      setIsVideo(false);
+                    }}
+                    className="h-8 w-8">
+
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  )}
+                }
 
                   {/* Voice Recorder UI */}
-                  {isRecordingVoice ? (
-                    <div className="p-2">
+                  {isRecordingVoice ?
+                <div className="p-2">
                       <VoiceRecorder
-                        onSend={(audioBlob, duration) => {
-                          handleVoiceSend(audioBlob, duration);
-                          setIsRecordingVoice(false);
-                        }}
-                        onCancel={() => setIsRecordingVoice(false)}
-                      />
-                    </div>
-                  ) : (
-                    <>
+                    onSend={(audioBlob, duration) => {
+                      handleVoiceSend(audioBlob, duration);
+                      setIsRecordingVoice(false);
+                    }}
+                    onCancel={() => setIsRecordingVoice(false)} />
+
+                    </div> :
+
+                <>
                       {/* Message Input */}
-                      <form onSubmit={handleSendMessage} className="p-3">
+                      <form onSubmit={handleSendMessage} className="p-3 rounded-full">
                         <div className="flex items-end gap-2">
                           {/* Attachments Menu Button */}
                           <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="h-10 w-10 rounded-full hover:bg-primary/10 flex-shrink-0"
-                            onClick={() => setShowAttachmentsSheet(true)}
-                          >
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-10 w-10 rounded-full hover:bg-primary/10 flex-shrink-0"
+                        onClick={() => setShowAttachmentsSheet(true)}>
+
                             <Plus className="h-5 w-5" />
                           </Button>
                           <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*,video/*"
-                            onChange={handleImageSelect}
-                          />
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*,video/*"
+                        onChange={handleImageSelect} />
+
                           <input
-                            type="file"
-                            ref={cameraInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            capture="environment"
-                            onChange={handleImageSelect}
-                          />
+                        type="file"
+                        ref={cameraInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleImageSelect} />
+
                           
                           {/* Input Container */}
                           <div className="flex-1 flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-full px-4 py-2 border border-border/50 focus-within:border-primary/50 transition-all">
                             <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
-                            >
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 hover:bg-primary/10 flex-shrink-0">
+
                               <Smile className="h-5 w-5" />
                             </Button>
                             
                             <Input
-                              ref={messageInputRef}
-                              value={messageText}
-                              onChange={(e) => {
-                                setMessageText(e.target.value);
-                                handleTyping();
-                              }}
-                              placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
-                              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-0"
-                              disabled={isRecordingVoice}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleSendMessage();
-                                }
-                              }}
-                            />
+                          ref={messageInputRef}
+                          value={messageText}
+                          onChange={(e) => {
+                            setMessageText(e.target.value);
+                            handleTyping();
+                          }}
+                          placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
+                          className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-0"
+                          disabled={isRecordingVoice}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }} />
+
                             
                             <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
-                              onClick={() => fileInputRef.current?.click()}
-                              title="Attach image or video"
-                            >
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Attach image or video">
+
                               <Paperclip className="h-5 w-5" />
                             </Button>
                           </div>
                           
                           {/* Send/Voice Button */}
-                          {messageText.trim() || selectedImage ? (
-                            <Button 
-                              type="submit"
-                              size="icon"
-                              className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all"
-                            >
+                          {messageText.trim() || selectedImage ?
+                      <Button
+                        type="submit"
+                        size="icon"
+                        className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all">
+
                               <Send className="h-5 w-5" />
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              size="icon"
-                              className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all"
-                              onClick={() => setIsRecordingVoice(true)}
-                            >
+                            </Button> :
+
+                      <Button
+                        type="button"
+                        size="icon"
+                        className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all"
+                        onClick={() => setIsRecordingVoice(true)}>
+
                               <Mic className="h-5 w-5" />
                             </Button>
-                          )}
+                      }
                         </div>
                       </form>
                     </>
-                  )}
+                }
                 </div>
-              </> 
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+              </> :
+
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 <div className="text-center max-w-md px-6 space-y-4 animate-fade-in">
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl rounded-full"></div>
@@ -938,16 +938,16 @@ const MessagesPage = () => {
                   <p className="text-sm text-muted-foreground">
                     Send private messages to friends and connect with others in your network
                   </p>
-                  <Button 
-                    onClick={() => setShowNewChatDialog(true)}
-                    className="mt-4 bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                  >
+                  <Button
+                  onClick={() => setShowNewChatDialog(true)}
+                  className="mt-4 bg-gradient-primary hover:shadow-glow transition-all duration-300">
+
                     <Plus className="h-4 w-4 mr-2" />
                     Start New Chat
                   </Button>
                 </div>
               </div>
-            )}
+            }
           </div>
         </Card>
       </main>
@@ -956,8 +956,8 @@ const MessagesPage = () => {
       <NewChatDialog
         open={showNewChatDialog}
         onClose={() => setShowNewChatDialog(false)}
-        onSelectFriend={handleCreateNewChat}
-      />
+        onSelectFriend={handleCreateNewChat} />
+
 
       <GroupChatDialog
         open={showGroupChatDialog}
@@ -965,14 +965,14 @@ const MessagesPage = () => {
         onGroupCreated={(chatId) => {
           setSelectedChatId(chatId);
           refetchChats();
-        }}
-      />
+        }} />
+
 
       <StarredMessagesDialog
         open={showStarredDialog}
         onClose={() => setShowStarredDialog(false)}
-        chatId={selectedChatId || undefined}
-      />
+        chatId={selectedChatId || undefined} />
+
 
       <ForwardMessageDialog
         open={showForwardDialog}
@@ -982,8 +982,8 @@ const MessagesPage = () => {
         }}
         onForward={handleForwardMessage}
         chats={chats}
-        currentChatId={selectedChatId || undefined}
-      />
+        currentChatId={selectedChatId || undefined} />
+
 
       <AlertDialog open={!!deletingMessageId} onOpenChange={() => setDeletingMessageId(null)}>
         <AlertDialogContent>
@@ -1001,145 +1001,145 @@ const MessagesPage = () => {
       </AlertDialog>
 
       {/* Additional Dialogs */}
-      {showSearchDialog && selectedChatId && (
-        <SearchInChatDialog
-          chatId={selectedChatId}
-          open={showSearchDialog}
-          onOpenChange={setShowSearchDialog}
-          onMessageSelect={(msgId) => {
-            // Scroll to message
-            const msgEl = document.getElementById(`msg-${msgId}`);
-            msgEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setShowSearchDialog(false);
-          }}
-        />
-      )}
+      {showSearchDialog && selectedChatId &&
+      <SearchInChatDialog
+        chatId={selectedChatId}
+        open={showSearchDialog}
+        onOpenChange={setShowSearchDialog}
+        onMessageSelect={(msgId) => {
+          // Scroll to message
+          const msgEl = document.getElementById(`msg-${msgId}`);
+          msgEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setShowSearchDialog(false);
+        }} />
 
-      {showMediaTab && selectedChatId && (
-        <ChatMediaTab
-          chatId={selectedChatId}
-        />
-      )}
+      }
 
-      {showGroupInfo && selectedChatId && selectedChat?.is_group && (
-        <GroupInfoDialog
-          chatId={selectedChatId}
-          open={showGroupInfo}
-          onOpenChange={setShowGroupInfo}
-        />
-      )}
+      {showMediaTab && selectedChatId &&
+      <ChatMediaTab
+        chatId={selectedChatId} />
 
-      {showWallpaper && selectedChatId && (
-        <WallpaperDialog
-          chatId={selectedChatId}
-          open={showWallpaper}
-          onOpenChange={setShowWallpaper}
-        />
-      )}
+      }
 
-      {showClearChat && selectedChatId && (
-        <ClearChatDialog
-          chatId={selectedChatId}
-          open={showClearChat}
-          onOpenChange={setShowClearChat}
-          onCleared={() => {
-            refetchMessages();
-            setShowClearChat(false);
-          }}
-        />
-      )}
+      {showGroupInfo && selectedChatId && selectedChat?.is_group &&
+      <GroupInfoDialog
+        chatId={selectedChatId}
+        open={showGroupInfo}
+        onOpenChange={setShowGroupInfo} />
 
-      {showBlockDialog && otherParticipant && (
-        <BlockUserDialog
-          userId={otherParticipant.user_id}
-          userName={otherParticipant.profiles.display_name}
-          open={showBlockDialog}
-          onOpenChange={setShowBlockDialog}
-        />
-      )}
+      }
 
-      {showReportDialog && otherParticipant && (
-        <ReportUserDialog
-          userId={otherParticipant.user_id}
-          userName={otherParticipant.profiles.username || ''}
-          open={showReportDialog}
-          onOpenChange={setShowReportDialog}
-        />
-      )}
+      {showWallpaper && selectedChatId &&
+      <WallpaperDialog
+        chatId={selectedChatId}
+        open={showWallpaper}
+        onOpenChange={setShowWallpaper} />
 
-      {showLocationDialog && (
-        <LocationShareDialog
-          open={showLocationDialog}
-          onOpenChange={setShowLocationDialog}
-          onShare={async (lat, lon, address) => {
-            const locationText = `📍 ${address || `${lat}, ${lon}`}`;
-            await sendMessage(locationText);
-            setShowLocationDialog(false);
-          }}
-        />
-      )}
+      }
 
-      {showContactDialog && (
-        <ContactShareDialog
-          open={showContactDialog}
-          onOpenChange={setShowContactDialog}
-          onShare={async (contactIds) => {
-            const contactText = `👤 Shared ${contactIds.length} contact${contactIds.length > 1 ? 's' : ''}`;
-            await sendMessage(contactText);
-            setShowContactDialog(false);
-          }}
-        />
-      )}
+      {showClearChat && selectedChatId &&
+      <ClearChatDialog
+        chatId={selectedChatId}
+        open={showClearChat}
+        onOpenChange={setShowClearChat}
+        onCleared={() => {
+          refetchMessages();
+          setShowClearChat(false);
+        }} />
 
-      {showChatSettings && selectedChatId && (
-        <ChatSettingsDialog
-          chatId={selectedChatId}
-          open={showChatSettings}
-          onOpenChange={setShowChatSettings}
-        />
-      )}
+      }
 
-      {showDisappearingDialog && selectedChatId && (
-        <DisappearingMessagesDialog
-          chatId={selectedChatId}
-          isOpen={showDisappearingDialog}
-          onClose={() => setShowDisappearingDialog(false)}
-        />
-      )}
+      {showBlockDialog && otherParticipant &&
+      <BlockUserDialog
+        userId={otherParticipant.user_id}
+        userName={otherParticipant.profiles.display_name}
+        open={showBlockDialog}
+        onOpenChange={setShowBlockDialog} />
 
-      {activeCall === 'voice' && selectedChatId && otherParticipant && (
-        <VoiceCall
-          chatId={selectedChatId}
-          isInitiator={isCallInitiator}
-          onEndCall={() => {
-            setActiveCall(null);
-            setIsCallInitiator(false);
-          }}
-          participantName={otherParticipant.profiles.display_name}
-          participantAvatar={otherParticipant.profiles.avatar_url}
-        />
-      )}
+      }
 
-      {activeCall === 'video' && selectedChatId && (
-        <VideoCall
-          chatId={selectedChatId}
-          isInitiator={isCallInitiator}
-          onEndCall={() => {
-            setActiveCall(null);
-            setIsCallInitiator(false);
-          }}
-        />
-      )}
+      {showReportDialog && otherParticipant &&
+      <ReportUserDialog
+        userId={otherParticipant.user_id}
+        userName={otherParticipant.profiles.username || ''}
+        open={showReportDialog}
+        onOpenChange={setShowReportDialog} />
 
-      {showReactionPicker && reactingToMessageId && (
-        <ReactionPicker
-          onReact={(reaction) => {
-            reactToMessage(reactingToMessageId, reaction);
-            setShowReactionPicker(false);
-            setReactingToMessageId(null);
-          }}
-        />
-      )}
+      }
+
+      {showLocationDialog &&
+      <LocationShareDialog
+        open={showLocationDialog}
+        onOpenChange={setShowLocationDialog}
+        onShare={async (lat, lon, address) => {
+          const locationText = `📍 ${address || `${lat}, ${lon}`}`;
+          await sendMessage(locationText);
+          setShowLocationDialog(false);
+        }} />
+
+      }
+
+      {showContactDialog &&
+      <ContactShareDialog
+        open={showContactDialog}
+        onOpenChange={setShowContactDialog}
+        onShare={async (contactIds) => {
+          const contactText = `👤 Shared ${contactIds.length} contact${contactIds.length > 1 ? 's' : ''}`;
+          await sendMessage(contactText);
+          setShowContactDialog(false);
+        }} />
+
+      }
+
+      {showChatSettings && selectedChatId &&
+      <ChatSettingsDialog
+        chatId={selectedChatId}
+        open={showChatSettings}
+        onOpenChange={setShowChatSettings} />
+
+      }
+
+      {showDisappearingDialog && selectedChatId &&
+      <DisappearingMessagesDialog
+        chatId={selectedChatId}
+        isOpen={showDisappearingDialog}
+        onClose={() => setShowDisappearingDialog(false)} />
+
+      }
+
+      {activeCall === 'voice' && selectedChatId && otherParticipant &&
+      <VoiceCall
+        chatId={selectedChatId}
+        isInitiator={isCallInitiator}
+        onEndCall={() => {
+          setActiveCall(null);
+          setIsCallInitiator(false);
+        }}
+        participantName={otherParticipant.profiles.display_name}
+        participantAvatar={otherParticipant.profiles.avatar_url} />
+
+      }
+
+      {activeCall === 'video' && selectedChatId &&
+      <VideoCall
+        chatId={selectedChatId}
+        isInitiator={isCallInitiator}
+        onEndCall={() => {
+          setActiveCall(null);
+          setIsCallInitiator(false);
+        }} />
+
+      }
+
+      {showReactionPicker && reactingToMessageId &&
+      <ReactionPicker
+        onReact={(reaction) => {
+          reactToMessage(reactingToMessageId, reaction);
+          setShowReactionPicker(false);
+          setReactingToMessageId(null);
+        }} />
+
+      }
 
       {/* Attachments Sheet */}
       <ChatAttachmentsSheet
@@ -1158,24 +1158,24 @@ const MessagesPage = () => {
           } else {
             toast({ title: 'Type a message first to schedule', variant: 'destructive' });
           }
-        }}
-      />
+        }} />
+
 
       {/* Schedule Message Dialog */}
-      {showScheduleDialog && selectedChatId && (
-        <ScheduleMessageDialog
-          chatId={selectedChatId}
-          content={messageText}
-          open={showScheduleDialog}
-          onOpenChange={setShowScheduleDialog}
-          onScheduled={() => {
-            setMessageText('');
-            setShowScheduleDialog(false);
-          }}
-        />
-      )}
-    </div>
-  );
+      {showScheduleDialog && selectedChatId &&
+      <ScheduleMessageDialog
+        chatId={selectedChatId}
+        content={messageText}
+        open={showScheduleDialog}
+        onOpenChange={setShowScheduleDialog}
+        onScheduled={() => {
+          setMessageText('');
+          setShowScheduleDialog(false);
+        }} />
+
+      }
+    </div>);
+
 };
 
 export default MessagesPage;
