@@ -45,7 +45,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles, ArrowLeft, Check } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles, ArrowLeft, Check, Pin } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -112,7 +112,7 @@ const MessagesPage = () => {
   const [reactingToMessageId, setReactingToMessageId] = useState<string | null>(null);
   const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  // deletingMessageId state removed — EnhancedMessageBubble handles its own delete dialog
   const [encryptionEnabled, setEncryptionEnabled] = useState(true);
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [showDisappearingDialog, setShowDisappearingDialog] = useState(false);
@@ -167,9 +167,43 @@ const MessagesPage = () => {
     }
   }, []);
 
+  const isInitialLoadRef = useRef(true);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!messages.length) return;
+
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      // On initial load, find first unread message not sent by current user
+      const firstUnread = messages.find(
+        (m) => m.sender_id !== user?.id && m.status !== 'read'
+      );
+      if (firstUnread) {
+        const el = document.getElementById(`message-${firstUnread.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'auto', block: 'center' });
+          return;
+        }
+      }
+      // Fallback: scroll to bottom
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    } else {
+      // On new messages, only auto-scroll if near bottom
+      const container = messagesContainerRef.current;
+      if (container) {
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+        if (isNearBottom) {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }
+  }, [messages, user?.id]);
+
+  // Reset initial load flag when chat changes
+  useEffect(() => {
+    isInitialLoadRef.current = true;
+  }, [selectedChatId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -260,12 +294,7 @@ const MessagesPage = () => {
     setMessageText(content);
   };
 
-  const handleDeleteMessage = async () => {
-    if (deletingMessageId) {
-      await deleteMessage(deletingMessageId);
-      setDeletingMessageId(null);
-    }
-  };
+  // handleDeleteMessage removed — deletion handled directly via onDelete prop
 
   const handleVoiceSend = async (audioBlob: Blob, duration: number) => {
     if (!selectedChatId) return;
@@ -330,13 +359,36 @@ const MessagesPage = () => {
     }
   };
 
-  // Filter chats by name or participant
-  const filteredChats = chats.filter((chat) =>
-  chat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  chat.participants.some((p) =>
-  p.profiles.display_name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  );
+  // Fetch pinned chat IDs
+  const [pinnedChatIds, setPinnedChatIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    const fetchPinned = async () => {
+      const { data } = await supabase
+        .from('chat_settings')
+        .select('chat_id')
+        .eq('user_id', user.id)
+        .eq('is_pinned', true);
+      if (data) setPinnedChatIds(data.map((d) => d.chat_id));
+    };
+    fetchPinned();
+  }, [user, selectedChatId]);
+
+  // Filter chats by name or participant, then sort pinned to top
+  const filteredChats = chats
+    .filter((chat) =>
+      chat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      chat.participants.some((p) =>
+        p.profiles.display_name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    )
+    .sort((a, b) => {
+      const aPinned = pinnedChatIds.includes(a.id);
+      const bPinned = pinnedChatIds.includes(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
 
   // Filter messages by content when in a chat
   const filteredMessages = selectedChatId && searchQuery.trim() ?
@@ -529,7 +581,10 @@ const MessagesPage = () => {
                                     </span>
                             }
                                 </div>
-                                <div className="flex items-center gap-1">
+                                 <div className="flex items-center gap-1">
+                                  {pinnedChatIds.includes(chat.id) &&
+                            <Pin className="h-3 w-3 flex-shrink-0 text-primary/60 rotate-45" />
+                            }
                                   {lastMessage?.sender_id === user?.id &&
                             <Check className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
                             }
@@ -673,7 +728,8 @@ const MessagesPage = () => {
 
                 {/* Messages Area */}
                 <div
-                className="flex-1 overflow-y-auto px-4 py-3 pb-4 bg-gradient-to-br from-background to-muted/20"
+                 ref={messagesContainerRef}
+                 className="flex-1 overflow-y-auto px-4 py-3 pb-4 bg-gradient-to-br from-background to-muted/20"
                 style={chatSettings?.wallpaper_url ? {
                   backgroundImage: `url(${chatSettings.wallpaper_url})`,
                   backgroundSize: 'cover',
@@ -730,7 +786,7 @@ const MessagesPage = () => {
                         bubbleColor={chatSettings?.theme_color}
                         replyTo={replyToData}
                         onEdit={isOwn ? handleEditMessage : undefined}
-                        onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}
+                        onDelete={(id, deleteFor) => deleteMessage(id, deleteFor)}
                         onReply={() => setReplyingTo({
                           ...message,
                           sender: senderProfile
@@ -985,20 +1041,7 @@ const MessagesPage = () => {
         currentChatId={selectedChatId || undefined} />
 
 
-      <AlertDialog open={!!deletingMessageId} onOpenChange={() => setDeletingMessageId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Message</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this message? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteMessage}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Redundant delete dialog removed — EnhancedMessageBubble handles delete confirmation */}
 
       {/* Additional Dialogs */}
       {showSearchDialog && selectedChatId &&

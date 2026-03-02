@@ -2328,130 +2328,7 @@ export type Database = {
           poll_id?: string
           votes_count?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "poll_options_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "polls"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      poll_votes: {
-        Row: {
-          created_at: string | null
-          id: string
-          option_id: string
-          poll_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          option_id: string
-          poll_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          option_id?: string
-          poll_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "poll_votes_option_id_fkey"
-            columns: ["option_id"]
-            isOneToOne: false
-            referencedRelation: "poll_options"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "poll_votes_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "polls"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      polls: {
-        Row: {
-          allow_multiple: boolean | null
-          created_at: string | null
-          created_by: string | null
-          expires_at: string | null
-          id: string
-          is_active: boolean | null
-          post_id: string | null
-          question: string
-        }
-        Insert: {
-          allow_multiple?: boolean | null
-          created_at?: string | null
-          created_by?: string | null
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          post_id?: string | null
-          question: string
-        }
-        Update: {
-          allow_multiple?: boolean | null
-          created_at?: string | null
-          created_by?: string | null
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          post_id?: string | null
-          question?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "polls_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "comments_view"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "polls_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "user_status_view"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "polls_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "polls_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "polls_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "posts_view"
-            referencedColumns: ["post_id"]
-          },
-          {
-            foreignKeyName: "polls_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "trending_posts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       post_comments: {
         Row: {
@@ -3385,6 +3262,21 @@ export type Database = {
           created_at?: string
           id?: string
           post_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      room_members: {
+        Row: {
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          room_id?: string
           user_id?: string
         }
         Relationships: []
