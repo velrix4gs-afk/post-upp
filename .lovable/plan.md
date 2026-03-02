@@ -1,45 +1,57 @@
+# Fix Message Deletion & Enhance Chat Features
 
+## Analysis Summary
 
-# Restyle Chat List Items to Match Reference Design
+After thorough review, **most requested features already exist** in the codebase (ChatMenu.tsx has nickname, shared media, mute, export, report, pin, theme, AI summary, clear chat, unblock, view profile). The key issues to fix are:
 
-## What the reference image shows
-- Large circular profile avatar on the left with a subtle ring/border
-- User's display name (or nickname) prominently on the first line
-- Last message preview below the name, prefixed with a checkmark icon (indicating sent/read status)
-- Timestamp right-aligned on the same row as the name
-- Clean dark background with good spacing
+## Changes Required
 
-## Current state
-The chat list items (lines 497-542 in `MessagesPage.tsx`) already have a similar structure but with minor differences:
-- The username handle (`@username`) is shown inline next to the display name -- this should move to below or be removed from the name row to keep it clean like the reference
-- No read/sent checkmark indicator before the last message snippet
-- Timestamp is already right-aligned on the name row (this is correct)
+### 1. Fix Message Deletion (double dialog bug)
 
-## Changes
+**File: `src/pages/MessagesPage.tsx**`
 
-### File: `src/pages/MessagesPage.tsx`
+- The `EnhancedMessageBubble` already has its own delete confirmation dialog with "Delete for me" / "Delete for everyone" options
+- But `MessagesPage` passes `onDelete={(id) => setDeletingMessageId(id)}` which only captures the id, then shows a SECOND redundant dialog
+- **Fix**: Change the `onDelete` prop to directly call `deleteMessage(id, deleteFor)` — remove the `deletingMessageId` state, the outer `AlertDialog` (lines 988-1001), and `handleDeleteMessage`
 
-**1. Clean up the name row**
-- Show only the display name (or nickname) on the first line, without the `@username` handle inline
-- Keep the timestamp right-aligned on this same row (already correct)
+### 2. Auto-scroll to Latest Unread
 
-**2. Add a checkmark before the last message**
-- Add a `Check` icon (from lucide-react) before the last message snippet to indicate sent status
-- Only show checkmark for messages sent by the current user
-- Style: small muted icon, similar to the reference
+**File: `src/pages/MessagesPage.tsx**`
 
-**3. Increase avatar ring visibility**
-- Add a subtle border/ring around the avatar to match the reference image's circular frame effect (a thin `ring-2 ring-border/50` or similar)
+- Currently `scrollToBottom()` runs on every message change, forcing users to the bottom
+- **Fix**: On initial chat load, find the first unread message (message not sent by current user with status !== 'read') and scroll to it. On subsequent new messages, only auto-scroll if user is already near the bottom (within 200px).
 
-**4. Adjust spacing and sizing**
-- Ensure the avatar is `h-12 w-12` (already correct)
-- Slightly increase padding if needed for a more spacious feel
+### 3. Pinned Chats Sort to Top
 
-## What stays the same
-- All click handlers and navigation logic
-- Online indicator dot
-- Chat filtering and search
-- AI Assistant chat item at top
-- The overall flex layout structure
-- All hooks and data fetching
+**File: `src/pages/MessagesPage.tsx**`
 
+- `filteredChats` doesn't account for pinned status from `useChatSettings`
+- **Fix**: Fetch pinned chat IDs and sort `filteredChats` so pinned chats appear first in the list. Add a small pin icon indicator on pinned chats.
+
+### 4. Fix `onDelete` Prop Type Mismatch
+
+**File: `src/pages/MessagesPage.tsx**`  
+
+- Currently: `onDelete={isOwn ? (id) => setDeletingMessageId(id) : undefined}`
+- Should be: `onDelete={(id, deleteFor) => deleteMessage(id, deleteFor)}` for all messages (not just own — "delete for me" should work for everyone's messages)
+- The `isOwn` check should only control whether "delete for everyone" appears, which `EnhancedMessageBubble` already handles internally
+
+## What Is There but Dosent work (A lot of  Changes Needed according to what they do)
+
+- Add Nickname (ChatMenu dialog)
+- View Shared Media (ChatMenu → ChatMediaTab)
+- Mute/Unmute Notifications (ChatMenu with duration picker)
+- Export Chat as text (ChatMenu)
+- Report User with backend logging (ReportUserDialog → `reported_users` table)
+- Pin Chat / Add to Favorites (ChatMenu → useChatSettings)
+- Change Chat Theme/Color (ChatMenu theme dialog)
+- AI Summary (ChatMenu, premium gated)
+- Clear Chat history (ClearChatDialog — soft delete via `deleted_for`)
+- Unblock/Reconnect (ChatMenu checks `useBlockedUsers`)
+- Tap username → View Profile (chat header onClick → navigate to profile)
+- Chat wallpaper (WallpaperDialog)
+- File sharing with inline display (ChatAttachmentsSheet + media rendering in bubble)
+- Group info page (GroupInfoDialog)
+- Voice message recording + inline playback (VoiceRecorder + VoiceMessagePlayer)
+- Message reactions visible both sides (useMessageReactions + MessageReactions component with realtime subscription)
+- New message notifications (toast + browser Notification in useMessages realtime handler)
