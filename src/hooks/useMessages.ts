@@ -616,21 +616,10 @@ export const useMessages = (chatId?: string) => {
           description: 'Message deleted for everyone',
         });
       } else {
-        // Delete for me - add user ID to deleted_for array
-        const { data: message } = await supabase
-          .from('messages')
-          .select('deleted_for')
-          .eq('id', messageId)
-          .single();
-
-        const deletedFor = message?.deleted_for || [];
-        if (!deletedFor.includes(user!.id)) {
-          deletedFor.push(user!.id);
-        }
-
+        // Delete for me - also hard delete from database
         const { error } = await supabase
           .from('messages')
-          .update({ deleted_for: deletedFor })
+          .delete()
           .eq('id', messageId);
 
         if (error) throw error;
@@ -640,7 +629,7 @@ export const useMessages = (chatId?: string) => {
         
         toast({
           title: 'Success',
-          description: 'Message deleted for you',
+          description: 'Message deleted',
         });
       }
     } catch (err: any) {
