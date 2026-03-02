@@ -33,7 +33,7 @@ export const usePolls = () => {
       setLoading(true);
 
       // Create poll
-      const { data: poll, error: pollError } = await supabase
+      const { data: poll, error: pollError } = await (supabase as any)
         .from('polls')
         .insert({
           post_id: postId,
@@ -49,7 +49,7 @@ export const usePolls = () => {
       if (pollError) throw pollError;
 
       // Create options
-      const { error: optionsError } = await supabase
+      const { error: optionsError } = await (supabase as any)
         .from('poll_options')
         .insert(
           options.map(option => ({
@@ -85,7 +85,7 @@ export const usePolls = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('poll_votes')
         .insert(
           optionIds.map(optionId => ({
@@ -116,7 +116,7 @@ export const usePolls = () => {
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('poll_votes')
         .delete()
         .eq('poll_id', pollId)
@@ -136,7 +136,7 @@ export const usePolls = () => {
 
   const fetchPoll = async (postId: string): Promise<Poll | null> => {
     try {
-      const { data: poll, error: pollError } = await supabase
+      const { data: poll, error: pollError } = await (supabase as any)
         .from('polls')
         .select('*')
         .eq('post_id', postId)
@@ -144,7 +144,7 @@ export const usePolls = () => {
 
       if (pollError || !poll) return null;
 
-      const { data: options, error: optionsError } = await supabase
+      const { data: options, error: optionsError } = await (supabase as any)
         .from('poll_options')
         .select('*')
         .eq('poll_id', poll.id)
@@ -152,7 +152,7 @@ export const usePolls = () => {
 
       if (optionsError) throw optionsError;
 
-      const { data: votes, error: votesError } = await supabase
+      const { data: votes, error: votesError } = await (supabase as any)
         .from('poll_votes')
         .select('option_id')
         .eq('poll_id', poll.id)
