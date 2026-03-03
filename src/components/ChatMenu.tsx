@@ -158,11 +158,11 @@ export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onRep
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
             <MoreVertical className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
           {otherUserId && (
             <>
               <DropdownMenuItem onClick={() => navigate(`/profile/${otherUserId}`)}>
