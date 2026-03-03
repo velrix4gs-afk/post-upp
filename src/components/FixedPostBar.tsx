@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { usePosts } from '@/hooks/usePosts';
 import { toast } from 'sonner';
 
@@ -15,7 +15,6 @@ export const FixedPostBar = () => {
 
     setIsPosting(true);
     try {
-      // Create the post
       await createPost({
         content: content.trim(),
         privacy: 'public'
@@ -32,31 +31,27 @@ export const FixedPostBar = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handlePost();
     }
   };
 
   return (
-    <div style={{ bottom: 0 }} className="fixed left-0 right-0 bottom-20 bottom-0 z-40 bg-background/95 backdrop-blur-md border-t border-border md:hidden">
-      <div className="flex items-end gap-2 px-3 py-2">
-        {/* Text area */}
-        <Textarea
+    <div className="fixed left-0 right-0 bottom-0 z-40 bg-background/95 backdrop-blur-md border-t border-border md:hidden">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <Input
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="What's on your mind?"
-          className="flex-1 min-h-[40px] max-h-[100px] resize-none bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary rounded-2xl px-4 py-2.5 text-sm"
-          rows={1}
+          className="flex-1 h-10 rounded-full bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary px-4 text-sm"
         />
-
-        {/* Post button */}
         <Button
-          size="sm"
+          size="icon"
           onClick={handlePost}
           disabled={!content.trim() || isPosting}
-          className="rounded-full h-9 w-9 p-0 flex-shrink-0"
+          className="rounded-full h-9 w-9 flex-shrink-0"
         >
           <Send className="h-4 w-4" />
         </Button>

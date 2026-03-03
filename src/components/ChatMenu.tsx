@@ -6,6 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -162,73 +163,81 @@ export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onRep
             <MoreVertical className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuContent align="end" className="w-64 max-h-[70vh] overflow-y-auto p-1.5 shadow-xl" onClick={(e) => e.stopPropagation()}>
           {otherUserId && (
             <>
-              <DropdownMenuItem onClick={() => navigate(`/profile/${otherUserId}`)}>
-                <UserCircle className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={() => navigate(`/profile/${otherUserId}`)} className="rounded-lg py-2.5 px-3 gap-3">
+                <UserCircle className="h-4 w-4 text-primary" />
                 View Profile
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
           )}
-          <DropdownMenuItem onClick={() => setShowNicknameDialog(true)}>
-            <User className="mr-2 h-4 w-4" />
+
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 py-1.5">Chat</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setShowNicknameDialog(true)} className="rounded-lg py-2.5 px-3 gap-3">
+            <User className="h-4 w-4 text-primary" />
             Add Nickname
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onViewMedia}>
-            <Image className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={onViewMedia} className="rounded-lg py-2.5 px-3 gap-3">
+            <Image className="h-4 w-4 text-sky-500" />
             View Shared Media
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onSearchInChat}>
-            <Search className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={onSearchInChat} className="rounded-lg py-2.5 px-3 gap-3">
+            <Search className="h-4 w-4 text-muted-foreground" />
             Search in Chat
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onViewStarred}>
-            <Star className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={onViewStarred} className="rounded-lg py-2.5 px-3 gap-3">
+            <Star className="h-4 w-4 text-amber-500" />
             Starred Messages
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowLinksDialog(true)}>
-            <LinkIcon className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={() => setShowLinksDialog(true)} className="rounded-lg py-2.5 px-3 gap-3">
+            <LinkIcon className="h-4 w-4 text-sky-500" />
             Shared Links
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowThemeDialog(true)}>
-            <Palette className="mr-2 h-4 w-4" />
+
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 py-1.5">Settings</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setShowThemeDialog(true)} className="rounded-lg py-2.5 px-3 gap-3">
+            <Palette className="h-4 w-4 text-violet-500" />
             Change Theme
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onWallpaperChange}>
-            <Image className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={onWallpaperChange} className="rounded-lg py-2.5 px-3 gap-3">
+            <Image className="h-4 w-4 text-violet-500" />
             Change Wallpaper
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDisappearingMessages}>
-            <Clock className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={onDisappearingMessages} className="rounded-lg py-2.5 px-3 gap-3">
+            <Clock className="h-4 w-4 text-orange-500" />
             Disappearing Messages
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={togglePin}>
-            <Star className={`mr-2 h-4 w-4 ${settings?.is_pinned ? 'fill-current' : ''}`} />
+          <DropdownMenuItem onClick={togglePin} className="rounded-lg py-2.5 px-3 gap-3">
+            <Star className={`h-4 w-4 text-amber-500 ${settings?.is_pinned ? 'fill-current' : ''}`} />
             {settings?.is_pinned ? 'Unpin Chat' : 'Pin Chat'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={togglePin}>
-            <Heart className={`mr-2 h-4 w-4 ${settings?.is_pinned ? 'fill-current text-red-500' : ''}`} />
+          <DropdownMenuItem onClick={togglePin} className="rounded-lg py-2.5 px-3 gap-3">
+            <Heart className={`h-4 w-4 ${settings?.is_pinned ? 'fill-current text-red-500' : 'text-pink-500'}`} />
             Add to Favorites
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => settings?.is_muted ? handleUnmute() : setShowMuteDialog(true)}>
-            <BellOff className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={() => settings?.is_muted ? handleUnmute() : setShowMuteDialog(true)} className="rounded-lg py-2.5 px-3 gap-3">
+            <BellOff className="h-4 w-4 text-muted-foreground" />
             {settings?.is_muted ? 'Unmute Chat' : 'Mute Chat'}
           </DropdownMenuItem>
+
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleAISummary}>
-            <Sparkles className="mr-2 h-4 w-4" />
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 px-3 py-1.5">More</DropdownMenuLabel>
+          <DropdownMenuItem onClick={handleAISummary} className="rounded-lg py-2.5 px-3 gap-3">
+            <Sparkles className="h-4 w-4 text-violet-500" />
             AI Summary (Premium)
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleExportChat}>
-            <Download className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={handleExportChat} className="rounded-lg py-2.5 px-3 gap-3">
+            <Download className="h-4 w-4 text-muted-foreground" />
             Export Chat
           </DropdownMenuItem>
+
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onClearChat}>
-            <Trash2 className="mr-2 h-4 w-4" />
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-destructive/60 px-3 py-1.5">Danger Zone</DropdownMenuLabel>
+          <DropdownMenuItem onClick={onClearChat} className="rounded-lg py-2.5 px-3 gap-3 text-destructive focus:text-destructive">
+            <Trash2 className="h-4 w-4" />
             Clear Chat
           </DropdownMenuItem>
           {otherUserId && (
@@ -236,19 +245,19 @@ export const ChatMenu = ({ chatId, otherUserId, onExportChat, onViewMedia, onRep
               {isBlocked(otherUserId) ? (
                 <DropdownMenuItem 
                   onClick={() => unblockUser(otherUserId)}
-                  className="text-green-600"
+                  className="rounded-lg py-2.5 px-3 gap-3 text-emerald-600 focus:text-emerald-600"
                 >
-                  <Unlock className="mr-2 h-4 w-4" />
+                  <Unlock className="h-4 w-4" />
                   Unblock User
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={onBlock} className="text-destructive">
-                  <Ban className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={onBlock} className="rounded-lg py-2.5 px-3 gap-3 text-destructive focus:text-destructive">
+                  <Ban className="h-4 w-4" />
                   Block User
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={onReport} className="text-destructive">
-                <AlertCircle className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={onReport} className="rounded-lg py-2.5 px-3 gap-3 text-destructive focus:text-destructive">
+                <AlertCircle className="h-4 w-4" />
                 Report User
               </DropdownMenuItem>
             </>
