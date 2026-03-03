@@ -1,40 +1,32 @@
 
 
-# Fix: Chat Menu Items All Navigate to Profile Instead of Their Actions
+# Style Chat Menu Popup & Fix Mobile Post Bar
 
-## Root Cause
-The chat header container (line 618-626 in `MessagesPage.tsx`) has an `onClick` handler that navigates to the user's profile:
-```
-onClick={() => navigate(`/profile/${otherParticipant.user_id}`)}
-```
+## Two Issues
 
-The phone, video, and back buttons inside it call `e.stopPropagation()` to prevent this. However, the `ChatMenu` component does NOT stop propagation — so when any dropdown menu item is clicked, the click event bubbles up to the header div and navigates to the profile page, overriding the actual menu action.
+### 1. Chat Menu Dropdown — Make it Stylish
+The current `DropdownMenuContent` in `ChatMenu.tsx` uses a plain `w-56` dropdown. Will enhance with:
+- Wider menu with more padding and spacing between items
+- Larger, colored icons for each action category
+- Rounded menu items with hover effects
+- Visual grouping with subtle section labels
+- Scrollable on mobile so it doesn't overflow the screen
 
-## Fix
+**File: `src/components/ChatMenu.tsx`**
+- Add `max-h-[70vh] overflow-y-auto` to `DropdownMenuContent` for mobile scroll
+- Add `py-2 px-1` padding to items for better touch targets
+- Add color classes to icons (blue for info actions, amber for pin/star, red for destructive, purple for AI)
+- Add section group labels like "Chat", "Settings", "Danger Zone" using `DropdownMenuLabel`
 
-### File: `src/components/ChatMenu.tsx`
-- Wrap the `DropdownMenuTrigger` button's `onClick` with `e.stopPropagation()` to prevent the header's profile navigation from firing when the menu trigger is clicked
-- Also add `onClick={(e) => e.stopPropagation()}` on the `DropdownMenuContent` so that clicking any menu item doesn't bubble up to the header
+**File: `src/components/ui/dropdown-menu.tsx`**
+- Update `DropdownMenuItem` to have `rounded-lg py-2.5 px-3` for larger, rounder touch targets
+- Add `shadow-lg` and smoother border to `DropdownMenuContent`
 
-### File: `src/pages/MessagesPage.tsx`
-- No changes needed — the header's onClick behavior (tap username → view profile) is correct and should remain. The fix is entirely in ChatMenu preventing propagation.
+### 2. FixedPostBar — Replace Textarea with Input
+The `FixedPostBar` uses a multi-line `Textarea` which looks oversized on mobile. Replace with a single-line `Input` styled like a normal chat input bar (matching the message input style in `MessagesPage`).
 
-## What This Fixes
-All menu items will now correctly execute their own actions:
-- Add Nickname → opens nickname dialog
-- View Shared Media → opens media tab
-- Search in Chat → opens search dialog
-- Starred Messages → opens starred dialog
-- Shared Links → opens links dialog
-- Change Theme → opens theme picker
-- Change Wallpaper → opens wallpaper dialog
-- Disappearing Messages → opens disappearing dialog
-- Pin Chat → toggles pin via useChatSettings
-- Add to Favorites → toggles pin
-- Mute Chat → opens mute duration dialog
-- AI Summary → shows toast summary
-- Export Chat → downloads chat as text
-- Clear Chat → opens clear dialog
-- Block/Unblock User → opens block dialog or unblocks
-- Report User → opens report dialog
+**File: `src/components/FixedPostBar.tsx`**
+- Replace `Textarea` with `Input`
+- Use a simple rounded-full input like the chat message input
+- Keep the send button compact and circular
 
