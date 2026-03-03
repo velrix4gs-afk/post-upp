@@ -75,7 +75,7 @@ export const useChatSettings = (chatId?: string) => {
           user_id: user.id,
           ...updates,
           updated_at: new Date().toISOString(),
-        })
+        }, { onConflict: 'chat_id,user_id' })
         .select()
         .single();
 
