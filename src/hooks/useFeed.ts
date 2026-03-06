@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { Post } from './usePosts';
+import { CacheHelper } from '@/lib/asyncStorage';
 
 export type FeedType = 'for-you' | 'following' | 'trending';
 
@@ -11,8 +12,10 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const feedTypeRef = useRef(feedType);
+  feedTypeRef.current = feedType;
 
-  const fetchFeed = async (pageNum: number = 1, reset: boolean = false) => {
+  const fetchFeed = useCallback(async (pageNum: number = 1, reset: boolean = false) => {
     if (!user) return;
 
     try {
@@ -45,8 +48,7 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      if (feedType === 'following') {
-        // Get posts from users the current user follows
+      if (feedTypeRef.current === 'following') {
         const { data: followingData } = await supabase
           .from('followers')
           .select('following_id')
@@ -61,8 +63,7 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
         }
 
         query = query.in('user_id', followingIds);
-      } else if (feedType === 'for-you') {
-        // Get posts from friends using friendships table
+      } else if (feedTypeRef.current === 'for-you') {
         const { data: friendsData } = await supabase
           .from('friends')
           .select('requester_id, receiver_id')
@@ -73,14 +74,6 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
           f.requester_id === user.id ? f.receiver_id : f.requester_id
         ) || [];
 
-        // Get user's profile to get region info
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('location')
-          .eq('id', user.id)
-          .single();
-
-        // If user has friends, prioritize their posts, otherwise show random posts
         if (friendIds.length > 0) {
           query = query.in('user_id', [...friendIds, user.id]);
         }
@@ -94,8 +87,14 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
       
       if (reset) {
         setPosts(newPosts);
+        // Save to cache on fresh fetch
+        CacheHelper.saveFeed(newPosts);
       } else {
-        setPosts(prev => [...prev, ...newPosts]);
+        setPosts(prev => {
+          const combined = [...prev, ...newPosts];
+          CacheHelper.saveFeed(combined);
+          return combined;
+        });
       }
 
       setHasMore(newPosts.length === limit);
@@ -104,7 +103,7 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const loadMore = () => {
     if (!loading && hasMore) {
@@ -119,15 +118,83 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
     fetchFeed(1, true);
   };
 
-  // Fix: Only load feed on mount or when feedType changes
-  // Don't clear posts immediately to preserve scroll position during normal scrolling
   useEffect(() => {
     if (user) {
+      // Load cached feed first for instant display
+      CacheHelper.getFeed().then(cached => {
+        if (cached && cached.length > 0) {
+          setPosts(cached);
+          setLoading(false);
+        }
+      });
+
       setPage(1);
       setHasMore(true);
       fetchFeed(1, true);
+
+      // Real-time subscription for posts
+      const channel = supabase
+        .channel(`feed-realtime-${feedType}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'posts'
+        }, async (payload) => {
+          const newPost = payload.new as any;
+          if (newPost.privacy !== 'public') return;
+
+          // Fetch profile for the new post
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, display_name, avatar_url, is_verified')
+            .eq('id', newPost.user_id)
+            .single();
+
+          const postWithProfile: Post = {
+            ...newPost,
+            profiles: profile || { username: 'unknown', display_name: 'Unknown', is_verified: false }
+          };
+
+          setPosts(prev => {
+            if (prev.some(p => p.id === postWithProfile.id)) return prev;
+            const updated = [postWithProfile, ...prev];
+            CacheHelper.saveFeed(updated);
+            return updated;
+          });
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'posts'
+        }, (payload) => {
+          const updated = payload.new as any;
+          setPosts(prev => {
+            const newPosts = prev.map(p => 
+              p.id === updated.id ? { ...p, ...updated } : p
+            );
+            CacheHelper.saveFeed(newPosts);
+            return newPosts;
+          });
+        })
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'posts'
+        }, (payload) => {
+          const deletedId = (payload.old as any).id;
+          setPosts(prev => {
+            const filtered = prev.filter(p => p.id !== deletedId);
+            CacheHelper.saveFeed(filtered);
+            return filtered;
+          });
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  }, [user?.id, feedType]);
+  }, [user?.id, feedType, fetchFeed]);
 
   return {
     posts,

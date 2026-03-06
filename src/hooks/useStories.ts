@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
+import { CacheHelper } from '@/lib/asyncStorage';
 
 export interface Story {
   id: string;
@@ -26,17 +27,68 @@ export const useStories = () => {
 
   useEffect(() => {
     if (user) {
+      // Load cached stories first
+      CacheHelper.getStories().then(cached => {
+        if (cached && cached.length > 0) {
+          setStories(cached);
+          setLoading(false);
+        }
+      });
+
       fetchStories();
       
-      // Set up real-time subscription for stories
+      // Real-time: handle INSERT/DELETE directly in state
       const channel = supabase
-        .channel('stories-changes')
+        .channel('stories-realtime')
         .on('postgres_changes', {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'stories'
-        }, () => {
-          fetchStories();
+        }, async (payload) => {
+          const newStory = payload.new as any;
+          
+          // Fetch profile for the new story
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, display_name, avatar_url')
+            .eq('id', newStory.user_id)
+            .single();
+
+          const storyWithProfile: Story = {
+            ...newStory,
+            profiles: profile || { username: 'unknown', display_name: 'Unknown' }
+          };
+
+          setStories(prev => {
+            if (prev.some(s => s.id === storyWithProfile.id)) return prev;
+            const updated = [storyWithProfile, ...prev];
+            CacheHelper.saveStories(updated);
+            return updated;
+          });
+        })
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'stories'
+        }, (payload) => {
+          const deletedId = (payload.old as any).id;
+          setStories(prev => {
+            const filtered = prev.filter(s => s.id !== deletedId);
+            CacheHelper.saveStories(filtered);
+            return filtered;
+          });
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'stories'
+        }, (payload) => {
+          const updated = payload.new as any;
+          setStories(prev => {
+            const newStories = prev.map(s => s.id === updated.id ? { ...s, ...updated } : s);
+            CacheHelper.saveStories(newStories);
+            return newStories;
+          });
         })
         .subscribe();
 
@@ -62,7 +114,9 @@ export const useStories = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setStories(data || []);
+      const storiesData = data || [];
+      setStories(storiesData);
+      CacheHelper.saveStories(storiesData);
     } catch (err: any) {
       toast({
         title: 'Error',
@@ -82,7 +136,6 @@ export const useStories = () => {
       let media_type = null;
 
       if (mediaFile) {
-        // Validate file size (max 10MB)
         if (mediaFile.size > 10 * 1024 * 1024) {
           toast({
             title: 'File Too Large',
@@ -92,7 +145,6 @@ export const useStories = () => {
           return;
         }
 
-        // Validate file type
         if (!mediaFile.type.startsWith('image/') && !mediaFile.type.startsWith('video/')) {
           toast({
             title: 'Invalid File',
@@ -137,7 +189,7 @@ export const useStories = () => {
         description: 'Story created successfully!',
       });
       
-      await fetchStories();
+      // Real-time will handle adding to state
     } catch (err: any) {
       console.error('Story creation error:', err);
       toast({
@@ -178,6 +230,7 @@ export const useStories = () => {
         title: 'Success',
         description: 'Story deleted successfully!',
       });
+      // Real-time will handle removing from state
     } catch (err: any) {
       toast({
         title: 'Error',

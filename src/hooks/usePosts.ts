@@ -39,7 +39,6 @@ export const usePosts = () => {
     if (!session?.access_token) return;
 
     try {
-      // Use direct database query instead of edge function
       const { data: postsData, error } = await supabase
         .from('posts')
         .select(`
@@ -61,7 +60,6 @@ export const usePosts = () => {
         return;
       }
 
-      // Get reactions for each post
       const postsWithReactions = await Promise.all(
         (postsData || []).map(async (post) => {
           const { data: reactions } = await supabase
@@ -94,7 +92,6 @@ export const usePosts = () => {
       throw new Error('You must be logged in to create a post');
     }
 
-    // Validate that at least content or media is provided
     if (!postData.content && !postData.media_url) {
       throw new Error('Post must have either content or media');
     }
@@ -110,8 +107,11 @@ export const usePosts = () => {
 
       console.log('Post creation response:', data);
 
-      // Add new post to the beginning of the list
-      setPosts(prevPosts => [data, ...prevPosts]);
+      // Real-time will handle adding to state, but also add optimistically
+      setPosts(prevPosts => {
+        if (prevPosts.some(p => p.id === data.id)) return prevPosts;
+        return [data, ...prevPosts];
+      });
       
       toast({
         title: 'Success',
@@ -145,7 +145,6 @@ export const usePosts = () => {
 
       if (error) throw error;
 
-      // Update local state
       setPosts(prevPosts =>
         prevPosts.map(post => (post.id === postId ? { ...post, ...data } : post))
       );
@@ -178,7 +177,6 @@ export const usePosts = () => {
 
       if (error) throw error;
 
-      // Remove post from local state
       setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
       
       toast({
@@ -200,7 +198,6 @@ export const usePosts = () => {
     if (!session?.access_token) return;
 
     try {
-      // Optimistic update first
       const currentUserId = session.user?.id;
       setPosts(prevPosts =>
         prevPosts.map(post => {
@@ -211,11 +208,9 @@ export const usePosts = () => {
             let newCount = post.reactions_count;
             
             if (hasUserReaction) {
-              // Remove reaction
               newReactions = newReactions.filter(r => !(r.user_id === currentUserId && r.reaction_type === reactionType));
               newCount = Math.max(0, newCount - 1);
             } else {
-              // Add reaction (remove other reactions from same user first)
               newReactions = newReactions.filter(r => r.user_id !== currentUserId);
               newReactions.push({
                 id: 'temp',
@@ -235,7 +230,6 @@ export const usePosts = () => {
         })
       );
 
-      // Call API
       const { data, error } = await supabase.functions.invoke('reactions', {
         body: {
           target_id: postId,
@@ -249,9 +243,6 @@ export const usePosts = () => {
 
       if (error) throw error;
 
-      // Refresh posts to get accurate server state
-      await fetchPosts();
-
       return data;
     } catch (error) {
       console.error('Error toggling reaction:', error);
@@ -259,7 +250,6 @@ export const usePosts = () => {
         description: `Could not update reaction • ERR004`,
         variant: 'destructive',
       });
-      // Revert optimistic update on error
       fetchPosts();
       throw error;
     }
@@ -268,32 +258,57 @@ export const usePosts = () => {
   useEffect(() => {
     fetchPosts();
 
-    // Set up real-time subscription for posts
+    // Real-time: handle INSERT/UPDATE/DELETE without full re-fetch
     const channel = supabase
-      .channel('posts-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'posts'
-        },
-        (payload) => {
-          // Fetch the complete post data with profile info
-          fetchPosts();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'posts'
-        },
-        (payload) => {
-          fetchPosts();
-        }
-      )
+      .channel('posts-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'posts'
+      }, async (payload) => {
+        const newPost = payload.new as any;
+        
+        // Fetch profile + reactions for the new post
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, display_name, avatar_url, is_verified, verification_type, verified_at')
+          .eq('id', newPost.user_id)
+          .single();
+
+        const { data: reactions } = await supabase
+          .from('post_reactions')
+          .select('*')
+          .eq('post_id', newPost.id);
+
+        const postWithProfile: Post = {
+          ...newPost,
+          profiles: profile || { username: 'unknown', display_name: 'Unknown', is_verified: false },
+          reactions: reactions || []
+        };
+
+        setPosts(prev => {
+          if (prev.some(p => p.id === postWithProfile.id)) return prev;
+          return [postWithProfile, ...prev];
+        });
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'posts'
+      }, (payload) => {
+        const updated = payload.new as any;
+        setPosts(prev => prev.map(p => 
+          p.id === updated.id ? { ...p, ...updated } : p
+        ));
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'posts'
+      }, (payload) => {
+        const deletedId = (payload.old as any).id;
+        setPosts(prev => prev.filter(p => p.id !== deletedId));
+      })
       .subscribe();
 
     return () => {

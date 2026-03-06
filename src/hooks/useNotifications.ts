@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { CacheHelper } from '@/lib/asyncStorage';
 
 export interface Notification {
   id: string;
@@ -40,6 +41,16 @@ export const useNotifications = () => {
   useEffect(() => {
     if (user) {
       requestNotificationPermission();
+
+      // Load cached notifications first for instant display
+      CacheHelper.getNotifications().then(cached => {
+        if (cached && cached.length > 0) {
+          setNotifications(cached);
+          setUnreadCount(cached.filter((n: Notification) => !n.is_read).length);
+          setLoading(false);
+        }
+      });
+
       fetchNotifications();
       
       // Set up real-time subscription for new notifications
@@ -52,19 +63,39 @@ export const useNotifications = () => {
           filter: `user_id=eq.${user.id}`
         }, (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
+          setNotifications(prev => {
+            const updated = [newNotification, ...prev];
+            CacheHelper.saveNotifications(updated);
+            return updated;
+          });
           setUnreadCount(prev => prev + 1);
           
-          // Show toast for new notification
           toast(newNotification.title, {
             description: newNotification.content,
           });
 
-          // Show browser notification
           showBrowserNotification(
             newNotification.title,
             newNotification.content
           );
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        }, (payload) => {
+          const updated = payload.new as Notification;
+          setNotifications(prev => {
+            const newList = prev.map(n => n.id === updated.id ? updated : n);
+            CacheHelper.saveNotifications(newList);
+            return newList;
+          });
+          // Recalculate unread
+          setNotifications(prev => {
+            setUnreadCount(prev.filter(n => !n.is_read).length);
+            return prev;
+          });
         })
         .subscribe();
 
@@ -86,8 +117,10 @@ export const useNotifications = () => {
 
       if (error) throw error;
       
-      setNotifications((data || []) as Notification[]);
-      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+      const notifs = (data || []) as Notification[];
+      setNotifications(notifs);
+      setUnreadCount(notifs.filter(n => !n.is_read).length);
+      CacheHelper.saveNotifications(notifs);
     } catch (err: any) {
       toast.error('Failed to load notifications');
     } finally {
@@ -104,9 +137,11 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
-      );
+      setNotifications(prev => {
+        const updated = prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n);
+        CacheHelper.saveNotifications(updated);
+        return updated;
+      });
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err: any) {
       toast.error('Failed to mark notification as read');
@@ -123,7 +158,11 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setNotifications(prev => {
+        const updated = prev.map(n => ({ ...n, is_read: true }));
+        CacheHelper.saveNotifications(updated);
+        return updated;
+      });
       setUnreadCount(0);
     } catch (err: any) {
       toast.error('Failed to mark all notifications as read');

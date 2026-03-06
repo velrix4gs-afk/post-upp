@@ -75,8 +75,8 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 5 minutes
-    if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) return null;
+    // Cache expires after 30 minutes (offline-first, real-time handles freshness)
+    if (Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
     
     return JSON.parse(data);
   },
@@ -92,8 +92,8 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 2 minutes
-    if (Date.now() - parseInt(timestamp) > 2 * 60 * 1000) return null;
+    // Cache expires after 30 minutes
+    if (Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
     
     return JSON.parse(data);
   },
@@ -109,8 +109,42 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 1 minute
-    if (Date.now() - parseInt(timestamp) > 60 * 1000) return null;
+    // Cache expires after 30 minutes
+    if (Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
+    
+    return JSON.parse(data);
+  },
+
+  async saveStories(stories: any[]) {
+    await AsyncStorage.setItem('stories_cache', JSON.stringify(stories));
+    await AsyncStorage.setItem('stories_timestamp', Date.now().toString());
+  },
+
+  async getStories() {
+    const data = await AsyncStorage.getItem('stories_cache');
+    const timestamp = await AsyncStorage.getItem('stories_timestamp');
+    
+    if (!data || !timestamp) return null;
+    
+    // Cache expires after 2 minutes (stories change frequently)
+    if (Date.now() - parseInt(timestamp) > 2 * 60 * 1000) return null;
+    
+    return JSON.parse(data);
+  },
+
+  async saveNotifications(notifications: any[]) {
+    await AsyncStorage.setItem('notifications_cache', JSON.stringify(notifications));
+    await AsyncStorage.setItem('notifications_timestamp', Date.now().toString());
+  },
+
+  async getNotifications() {
+    const data = await AsyncStorage.getItem('notifications_cache');
+    const timestamp = await AsyncStorage.getItem('notifications_timestamp');
+    
+    if (!data || !timestamp) return null;
+    
+    // Cache expires after 5 minutes
+    if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) return null;
     
     return JSON.parse(data);
   }
