@@ -1,32 +1,53 @@
 
 
-# Style Chat Menu Popup & Fix Mobile Post Bar
+# Real-Time Everywhere + Offline Cache
 
-## Two Issues
+## Current State
+- **Messages** (`useMessages.ts`): Already has real-time subscriptions for INSERT/UPDATE/DELETE + cache via `CacheHelper`
+- **Stories** (`useStories.ts`): Already has real-time subscription but re-fetches everything on any change
+- **Notifications** (`useNotifications.ts`): Already has real-time INSERT subscription
+- **Feed/Posts** (`useFeed.ts`, `usePosts.ts`): NO real-time subscriptions, NO caching
+- **Cache** (`asyncStorage.ts`): Has helpers for feed, chats, messages, profiles — but feed cache is never used
+- **IndexedDB cache** (`cache.ts`): Exists but is barely used
 
-### 1. Chat Menu Dropdown — Make it Stylish
-The current `DropdownMenuContent` in `ChatMenu.tsx` uses a plain `w-56` dropdown. Will enhance with:
-- Wider menu with more padding and spacing between items
-- Larger, colored icons for each action category
-- Rounded menu items with hover effects
-- Visual grouping with subtle section labels
-- Scrollable on mobile so it doesn't overflow the screen
+## Plan
 
-**File: `src/components/ChatMenu.tsx`**
-- Add `max-h-[70vh] overflow-y-auto` to `DropdownMenuContent` for mobile scroll
-- Add `py-2 px-1` padding to items for better touch targets
-- Add color classes to icons (blue for info actions, amber for pin/star, red for destructive, purple for AI)
-- Add section group labels like "Chat", "Settings", "Danger Zone" using `DropdownMenuLabel`
+### 1. Add real-time to `useFeed.ts`
+- Subscribe to `postgres_changes` on `posts` table (INSERT, UPDATE, DELETE)
+- On INSERT: prepend new post to feed (fetch profile inline)
+- On UPDATE: update the matching post in state
+- On DELETE: remove from state
+- Load cached feed from `CacheHelper.getFeed()` on mount before fetching
+- Save fetched feed to `CacheHelper.saveFeed()` after each fetch
 
-**File: `src/components/ui/dropdown-menu.tsx`**
-- Update `DropdownMenuItem` to have `rounded-lg py-2.5 px-3` for larger, rounder touch targets
-- Add `shadow-lg` and smoother border to `DropdownMenuContent`
+### 2. Add real-time to `usePosts.ts`
+- Subscribe to `postgres_changes` on `posts` table for INSERT/UPDATE/DELETE
+- Same pattern: update local state directly from payload without full re-fetch
+- Cache posts via `CacheHelper.saveFeed()`
 
-### 2. FixedPostBar — Replace Textarea with Input
-The `FixedPostBar` uses a multi-line `Textarea` which looks oversized on mobile. Replace with a single-line `Input` styled like a normal chat input bar (matching the message input style in `MessagesPage`).
+### 3. Improve `useStories.ts` real-time
+- Instead of re-fetching all stories on every change, handle INSERT/DELETE directly in state
+- Cache stories in `CacheHelper` (add `saveStories`/`getStories` methods to `asyncStorage.ts`)
 
-**File: `src/components/FixedPostBar.tsx`**
-- Replace `Textarea` with `Input`
-- Use a simple rounded-full input like the chat message input
-- Keep the send button compact and circular
+### 4. Extend `asyncStorage.ts` cache
+- Add `saveStories` / `getStories` with 2-minute expiry
+- Add `saveNotifications` / `getNotifications` with 1-minute expiry
+- Increase feed cache expiry from 5 min to 30 min (offline-first, real-time handles freshness)
+
+### 5. Add offline caching to `useNotifications.ts`
+- Load cached notifications on mount before fetch
+- Save to cache after fetch
+
+### 6. Increase cache TTLs for offline use
+- Feed: 5 min → 30 min
+- Chats: 2 min → 30 min
+- Messages: 1 min → 30 min
+- Since real-time keeps data fresh while online, longer cache TTLs ensure offline works
+
+### Files to modify
+- `src/hooks/useFeed.ts` — add realtime subscription + cache read/write
+- `src/hooks/usePosts.ts` — add realtime subscription
+- `src/hooks/useStories.ts` — optimize realtime to avoid full refetch, add cache
+- `src/hooks/useNotifications.ts` — add cache read/write
+- `src/lib/asyncStorage.ts` — add stories/notifications cache helpers, increase TTLs
 
