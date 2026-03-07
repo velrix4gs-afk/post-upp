@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
+import { enqueueOfflineAction } from '@/lib/offlineQueue';
 
 export interface Post {
   id: string;
