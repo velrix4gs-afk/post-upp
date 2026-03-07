@@ -49,20 +49,35 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
         .range(offset, offset + limit - 1);
 
       if (feedTypeRef.current === 'following') {
+        // Get followed users
         const { data: followingData } = await supabase
           .from('followers')
           .select('following_id')
           .eq('follower_id', user.id);
-
         const followingIds = followingData?.map(f => f.following_id) || [];
-        
-        if (followingIds.length === 0) {
+
+        // Get followed pages
+        const { data: followedPages } = await supabase
+          .from('page_followers' as any)
+          .select('page_id')
+          .eq('user_id', user.id);
+        const followedPageIds = ((followedPages || []) as any[]).map((f: any) => f.page_id);
+
+        if (followingIds.length === 0 && followedPageIds.length === 0) {
           setPosts([]);
           setHasMore(false);
           return;
         }
 
-        query = query.in('user_id', followingIds);
+        // Build OR filter: user posts from followed users + page posts from followed pages
+        const filters: string[] = [];
+        if (followingIds.length > 0) {
+          filters.push(`user_id.in.(${followingIds.join(',')})`);
+        }
+        if (followedPageIds.length > 0) {
+          filters.push(`page_id.in.(${followedPageIds.join(',')})`);
+        }
+        query = query.or(filters.join(','));
       } else if (feedTypeRef.current === 'for-you') {
         const { data: friendsData } = await supabase
           .from('friends')
@@ -74,9 +89,23 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
           f.requester_id === user.id ? f.receiver_id : f.requester_id
         ) || [];
 
+        // Also include page posts from followed pages
+        const { data: followedPages } = await supabase
+          .from('page_followers' as any)
+          .select('page_id')
+          .eq('user_id', user.id);
+        const followedPageIds = ((followedPages || []) as any[]).map((f: any) => f.page_id);
+
+        const filters: string[] = [];
         if (friendIds.length > 0) {
-          query = query.in('user_id', [...friendIds, user.id]);
+          filters.push(`user_id.in.(${[...friendIds, user.id].join(',')})`);
+        } else {
+          filters.push(`user_id.eq.${user.id}`);
         }
+        if (followedPageIds.length > 0) {
+          filters.push(`page_id.in.(${followedPageIds.join(',')})`);
+        }
+        query = query.or(filters.join(','));
       }
 
       const { data, error } = await query;
