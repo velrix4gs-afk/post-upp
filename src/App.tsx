@@ -134,6 +134,9 @@ class ErrorBoundary extends Component<
 const AuthenticatedFeatures = () => {
   const { user } = useAuth();
   
+  // Always run offline sync for queued actions
+  useOfflineSync();
+  
   if (!user) return null;
   
   return (
