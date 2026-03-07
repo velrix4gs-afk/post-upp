@@ -124,8 +124,7 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 2 minutes (stories change frequently)
-    if (Date.now() - parseInt(timestamp) > 2 * 60 * 1000) return null;
+    if (navigator.onLine && Date.now() - parseInt(timestamp) > 2 * 60 * 1000) return null;
     
     return JSON.parse(data);
   },
