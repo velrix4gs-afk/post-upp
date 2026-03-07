@@ -71,13 +71,13 @@ const processAction = async (item: QueuedAction): Promise<boolean> => {
     }
 
     if (item.action === 'insert') {
-      const { error } = await supabase.from(item.table).insert(item.payload);
+      const { error } = await (supabase.from(item.table as any) as any).insert(item.payload);
       if (error) throw error;
       return true;
     }
 
     if (item.action === 'update') {
-      let query = supabase.from(item.table).update(item.payload);
+      let query = (supabase.from(item.table as any) as any).update(item.payload);
       if (item.filters) {
         for (const [key, value] of Object.entries(item.filters)) {
           query = query.eq(key, value);
@@ -89,7 +89,7 @@ const processAction = async (item: QueuedAction): Promise<boolean> => {
     }
 
     if (item.action === 'delete') {
-      let query = supabase.from(item.table).delete();
+      let query = (supabase.from(item.table as any) as any).delete();
       if (item.filters) {
         for (const [key, value] of Object.entries(item.filters)) {
           query = query.eq(key, value);
@@ -101,7 +101,7 @@ const processAction = async (item: QueuedAction): Promise<boolean> => {
     }
 
     if (item.action === 'upsert') {
-      const { error } = await supabase.from(item.table).upsert(item.payload);
+      const { error } = await (supabase.from(item.table as any) as any).upsert(item.payload);
       if (error) throw error;
       return true;
     }
