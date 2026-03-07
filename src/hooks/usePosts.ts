@@ -241,6 +241,16 @@ export const usePosts = () => {
         })
       );
 
+      // If offline, queue the reaction
+      if (!navigator.onLine) {
+        enqueueOfflineAction('rpc', 'reactions', {
+          target_id: postId,
+          target_type: 'post',
+          reaction_type: reactionType,
+        });
+        return { queued: true };
+      }
+
       const { data, error } = await supabase.functions.invoke('reactions', {
         body: {
           target_id: postId,
