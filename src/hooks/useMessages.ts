@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
 import { AsyncStorage, CacheHelper } from '@/lib/asyncStorage';
+import { enqueueOfflineAction } from '@/lib/offlineQueue';
 
 export interface Message {
   id: string;
