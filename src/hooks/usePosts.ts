@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
+import { enqueueOfflineAction } from '@/lib/offlineQueue';
 
 export interface Post {
   id: string;
@@ -97,6 +98,16 @@ export const usePosts = () => {
     }
 
     try {
+      // If offline, queue the post
+      if (!navigator.onLine) {
+        enqueueOfflineAction('rpc', 'posts', postData);
+        toast({
+          title: 'Queued',
+          description: 'Post will be published when you\'re back online',
+        });
+        return { queued: true };
+      }
+
       console.log('Creating post with data:', postData);
       
       const { data, error } = await supabase.functions.invoke('posts', {
@@ -229,6 +240,16 @@ export const usePosts = () => {
           return post;
         })
       );
+
+      // If offline, queue the reaction
+      if (!navigator.onLine) {
+        enqueueOfflineAction('rpc', 'reactions', {
+          target_id: postId,
+          target_type: 'post',
+          reaction_type: reactionType,
+        });
+        return { queued: true };
+      }
 
       const { data, error } = await supabase.functions.invoke('reactions', {
         body: {

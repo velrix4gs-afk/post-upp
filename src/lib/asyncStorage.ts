@@ -75,8 +75,8 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 30 minutes (offline-first, real-time handles freshness)
-    if (Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
+    // Skip TTL when offline — always return cached data
+    if (navigator.onLine && Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
     
     return JSON.parse(data);
   },
@@ -92,8 +92,7 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 30 minutes
-    if (Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
+    if (navigator.onLine && Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
     
     return JSON.parse(data);
   },
@@ -109,8 +108,7 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 30 minutes
-    if (Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
+    if (navigator.onLine && Date.now() - parseInt(timestamp) > 30 * 60 * 1000) return null;
     
     return JSON.parse(data);
   },
@@ -126,8 +124,7 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 2 minutes (stories change frequently)
-    if (Date.now() - parseInt(timestamp) > 2 * 60 * 1000) return null;
+    if (navigator.onLine && Date.now() - parseInt(timestamp) > 2 * 60 * 1000) return null;
     
     return JSON.parse(data);
   },
@@ -143,8 +140,7 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 5 minutes
-    if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) return null;
+    if (navigator.onLine && Date.now() - parseInt(timestamp) > 5 * 60 * 1000) return null;
     
     return JSON.parse(data);
   }

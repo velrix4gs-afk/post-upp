@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
 import { AsyncStorage, CacheHelper } from '@/lib/asyncStorage';
+import { enqueueOfflineAction } from '@/lib/offlineQueue';
 
 export interface Message {
   id: string;
@@ -467,6 +468,30 @@ export const useMessages = (chatId?: string) => {
     
     // Persist status in localStorage
     const messageStatusKey = `msg_status_${tempId}`;
+
+    // If offline, queue the action and mark as queued
+    if (!navigator.onLine) {
+      localStorage.setItem(messageStatusKey, 'queued');
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempId ? { ...msg, status: 'sending' as const } : msg
+      ));
+      enqueueOfflineAction('insert', 'messages', {
+        chat_id: chatId,
+        sender_id: user.id,
+        content: content.trim() || null,
+        media_url: mediaUrl || null,
+        media_type: mediaType || null,
+        reply_to: replyTo || null,
+        status: 'sent'
+      });
+      toast({
+        title: 'Queued',
+        description: 'Message will be sent when you\'re back online',
+        duration: 2000,
+      });
+      return;
+    }
+
     localStorage.setItem(messageStatusKey, 'sending');
 
     try {
@@ -525,6 +550,26 @@ export const useMessages = (chatId?: string) => {
       }, 3000);
     } catch (err: any) {
       console.error('Send message error:', err);
+      
+      // If network error, queue it
+      if (!navigator.onLine || err?.message?.includes('fetch') || err?.message?.includes('Failed to fetch')) {
+        localStorage.setItem(messageStatusKey, 'queued');
+        enqueueOfflineAction('insert', 'messages', {
+          chat_id: chatId,
+          sender_id: user.id,
+          content: content.trim() || null,
+          media_url: mediaUrl || null,
+          media_type: mediaType || null,
+          reply_to: replyTo || null,
+          status: 'sent'
+        });
+        toast({
+          title: 'Queued',
+          description: 'Will send when connection is restored',
+          duration: 2000,
+        });
+        return;
+      }
       
       // Update status to failed
       localStorage.setItem(messageStatusKey, 'failed');
