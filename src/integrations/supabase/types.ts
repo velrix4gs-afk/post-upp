@@ -2148,6 +2148,45 @@ export type Database = {
           },
         ]
       }
+      page_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_members_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings_view"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           avatar_url: string | null
@@ -2599,6 +2638,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           media_urls: string[] | null
+          page_id: string | null
           privacy: string | null
           reactions_count: number | null
           reposts_count: number | null
@@ -2624,6 +2664,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           media_urls?: string[] | null
+          page_id?: string | null
           privacy?: string | null
           reactions_count?: number | null
           reposts_count?: number | null
@@ -2649,6 +2690,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           media_urls?: string[] | null
+          page_id?: string | null
           privacy?: string | null
           reactions_count?: number | null
           reposts_count?: number | null
@@ -2659,6 +2701,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "posts_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_user_id_fkey"
             columns: ["user_id"]
@@ -4963,6 +5012,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           media_urls: string[] | null
+          page_id: string | null
           privacy: string | null
           reactions_count: number | null
           reposts_count: number | null
@@ -5021,6 +5071,10 @@ export type Database = {
       }
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_page_member: {
+        Args: { _page_id: string; _roles?: string[]; _user_id: string }
         Returns: boolean
       }
       is_profile_discoverable: {

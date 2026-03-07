@@ -19,14 +19,14 @@ const EditPagePage = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [bio, setBio] = useState('');
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
-  const [isPublished, setIsPublished] = useState(true);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,14 +36,13 @@ const EditPagePage = () => {
 
   const loadPage = async () => {
     if (!pageId || !user) return;
-    
     setLoading(true);
     try {
+      // Try pages table (the main page system)
       const { data, error } = await supabase
-        .from('creator_pages')
+        .from('pages' as any)
         .select('*')
         .eq('id', pageId)
-        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
@@ -53,12 +52,13 @@ const EditPagePage = () => {
         return;
       }
 
-      setTitle(data.title);
-      setSlug(data.slug);
-      setBio(data.bio || '');
-      setCoverPreview(data.cover_url);
-      setProfilePreview(data.profile_url);
-      setIsPublished(data.is_published ?? true);
+      const pageData = data as any;
+      setName(pageData.name || '');
+      setUsername(pageData.username || '');
+      setDescription(pageData.description || '');
+      setCategory(pageData.category || '');
+      setCoverPreview(pageData.cover_url);
+      setProfilePreview(pageData.avatar_url);
     } catch (error: any) {
       await logError({
         message: error.message,
@@ -77,12 +77,10 @@ const EditPagePage = () => {
   const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: 'Image too large (max 5MB)' });
       return;
     }
-    
     setCoverImage(file);
     setCoverPreview(URL.createObjectURL(file));
   };
@@ -90,18 +88,16 @@ const EditPagePage = () => {
   const handleProfileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: 'Image too large (max 5MB)' });
       return;
     }
-    
     setProfileImage(file);
     setProfilePreview(URL.createObjectURL(file));
   };
 
   const handleSave = async () => {
-    if (!user || !title.trim() || !slug.trim()) {
+    if (!user || !name.trim() || !username.trim()) {
       toast({ title: 'Please fill in required fields' });
       return;
     }
@@ -109,48 +105,38 @@ const EditPagePage = () => {
     setSaving(true);
     try {
       let coverUrl = coverPreview;
-      let profileUrl = profilePreview;
+      let avatarUrl = profilePreview;
 
-      // Upload new cover if changed
       if (coverImage) {
         const coverPath = `pages/${user.id}/cover-${Date.now()}.${coverImage.name.split('.').pop()}`;
-        const { error: coverError } = await supabase.storage
-          .from('media')
-          .upload(coverPath, coverImage);
-        
+        const { error: coverError } = await supabase.storage.from('covers').upload(coverPath, coverImage);
         if (!coverError) {
-          const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(coverPath);
+          const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(coverPath);
           coverUrl = publicUrl;
         }
       }
 
-      // Upload new profile if changed
       if (profileImage) {
-        const profilePath = `pages/${user.id}/profile-${Date.now()}.${profileImage.name.split('.').pop()}`;
-        const { error: profileError } = await supabase.storage
-          .from('media')
-          .upload(profilePath, profileImage);
-        
+        const profilePath = `pages/${user.id}/avatar-${Date.now()}.${profileImage.name.split('.').pop()}`;
+        const { error: profileError } = await supabase.storage.from('avatars').upload(profilePath, profileImage);
         if (!profileError) {
-          const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(profilePath);
-          profileUrl = publicUrl;
+          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(profilePath);
+          avatarUrl = publicUrl;
         }
       }
 
-      // Update page
       const { error } = await supabase
-        .from('creator_pages')
+        .from('pages' as any)
         .update({
-          title,
-          slug,
-          bio,
+          name,
+          username,
+          description,
+          category,
           cover_url: coverUrl,
-          profile_url: profileUrl,
-          is_published: isPublished,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', pageId)
-        .eq('user_id', user.id);
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', pageId);
 
       if (error) throw error;
 
@@ -160,7 +146,7 @@ const EditPagePage = () => {
       await logError({
         message: error.message,
         type: 'page_update_error',
-        context: { pageId, title, slug },
+        context: { pageId, name, username },
         userId: user?.id,
         componentName: 'EditPagePage'
       });
@@ -172,16 +158,12 @@ const EditPagePage = () => {
 
   const handleDelete = async () => {
     if (!user || !pageId) return;
-
     try {
       const { error } = await supabase
-        .from('creator_pages')
+        .from('pages' as any)
         .delete()
-        .eq('id', pageId)
-        .eq('user_id', user.id);
-
+        .eq('id', pageId);
       if (error) throw error;
-
       toast({ title: 'Page deleted' });
       navigate('/pages');
     } catch (error: any) {
@@ -210,7 +192,7 @@ const EditPagePage = () => {
         <div className="flex items-center justify-between p-4">
           <BackNavigation />
           <h1 className="text-xl font-bold">Edit Page</h1>
-          <Button size="sm" onClick={handleSave} disabled={saving || !title.trim()}>
+          <Button size="sm" onClick={handleSave} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           </Button>
         </div>
@@ -219,10 +201,7 @@ const EditPagePage = () => {
       <div className="max-w-2xl mx-auto p-4 space-y-6">
         {/* Cover Image */}
         <Card className="overflow-hidden">
-          <div
-            className="h-48 bg-muted flex items-center justify-center cursor-pointer relative group"
-            onClick={() => coverInputRef.current?.click()}
-          >
+          <div className="h-48 bg-muted flex items-center justify-center cursor-pointer relative group" onClick={() => coverInputRef.current?.click()}>
             {coverPreview ? (
               <>
                 <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
@@ -242,10 +221,7 @@ const EditPagePage = () => {
 
         {/* Profile Image */}
         <div className="flex items-center gap-4">
-          <div
-            className="w-24 h-24 rounded-full bg-muted flex items-center justify-center cursor-pointer overflow-hidden group relative"
-            onClick={() => profileInputRef.current?.click()}
-          >
+          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center cursor-pointer overflow-hidden group relative" onClick={() => profileInputRef.current?.click()}>
             {profilePreview ? (
               <>
                 <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
@@ -267,55 +243,20 @@ const EditPagePage = () => {
         {/* Page Details */}
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title">Page Title *</Label>
-            <Input
-              id="title"
-              placeholder="e.g., My Brand"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={50}
-            />
+            <Label htmlFor="name">Page Name *</Label>
+            <Input id="name" placeholder="e.g., My Brand" value={name} onChange={(e) => setName(e.target.value)} maxLength={50} />
           </div>
-
           <div>
-            <Label htmlFor="slug">Page URL *</Label>
+            <Label htmlFor="username">Page Username *</Label>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">postup.com/page/</span>
-              <Input
-                id="slug"
-                placeholder="my-brand"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                maxLength={50}
-              />
+              <span className="text-sm text-muted-foreground">/page/</span>
+              <Input id="username" placeholder="my-brand" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} maxLength={50} />
             </div>
           </div>
-
           <div>
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell people about your page..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              maxLength={300}
-              rows={4}
-            />
-            <p className="text-xs text-muted-foreground text-right mt-1">{bio.length}/300</p>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-            <div>
-              <p className="font-medium">Publish Status</p>
-              <p className="text-sm text-muted-foreground">Make page visible to others</p>
-            </div>
-            <Button
-              variant={isPublished ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setIsPublished(!isPublished)}
-            >
-              {isPublished ? 'Published' : 'Draft'}
-            </Button>
+            <Label htmlFor="description">Bio</Label>
+            <Textarea id="description" placeholder="Tell people about your page..." value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} rows={4} />
+            <p className="text-xs text-muted-foreground text-right mt-1">{description.length}/300</p>
           </div>
         </div>
 
@@ -325,28 +266,19 @@ const EditPagePage = () => {
             <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="font-semibold text-destructive mb-1">Danger Zone</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                Once deleted, this page cannot be recovered
-              </p>
+              <p className="text-sm text-muted-foreground mb-3">Once deleted, this page cannot be recovered</p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Page
-                  </Button>
+                  <Button variant="destructive" size="sm"><Trash2 className="h-4 w-4 mr-2" />Delete Page</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Page?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your page.
-                    </AlertDialogDescription>
+                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
