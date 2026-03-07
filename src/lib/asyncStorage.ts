@@ -140,8 +140,7 @@ export const CacheHelper = {
     
     if (!data || !timestamp) return null;
     
-    // Cache expires after 5 minutes
-    if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) return null;
+    if (navigator.onLine && Date.now() - parseInt(timestamp) > 5 * 60 * 1000) return null;
     
     return JSON.parse(data);
   }
