@@ -66,7 +66,7 @@ export const usePages = () => {
           return {
             ...page,
             is_following: !!following,
-            user_role: membership?.role || null,
+            user_role: (membership as any)?.role || null,
           };
         })
       );
