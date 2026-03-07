@@ -98,6 +98,16 @@ export const usePosts = () => {
     }
 
     try {
+      // If offline, queue the post
+      if (!navigator.onLine) {
+        enqueueOfflineAction('rpc', 'posts', postData);
+        toast({
+          title: 'Queued',
+          description: 'Post will be published when you\'re back online',
+        });
+        return { queued: true };
+      }
+
       console.log('Creating post with data:', postData);
       
       const { data, error } = await supabase.functions.invoke('posts', {
