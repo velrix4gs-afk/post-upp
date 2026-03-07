@@ -363,6 +363,13 @@ const App = () => (
                     </Suspense>
                   </ProtectedRoute>
                 } />
+                <Route path="/page/:username" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <PageProfilePage />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
