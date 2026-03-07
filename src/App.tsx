@@ -10,6 +10,7 @@ import { lazy, Suspense, Component, ReactNode, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { initNetworkMonitor } from "@/lib/networkMonitor";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 
 // Lazy load components that are only needed when authenticated
 const RealtimeNotifications = lazy(() => import("@/components/RealtimeNotifications").then(m => ({ default: m.RealtimeNotifications })));
