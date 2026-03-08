@@ -183,7 +183,7 @@ const PagesPage = () => {
           {page.category && <Badge variant="secondary" className="mt-1 text-xs">{page.category}</Badge>}
           <p className="text-xs text-muted-foreground mt-1">{page.followers_count} followers</p>
         </div>
-        {showFollowBtn && user && page.created_by !== user.id && (
+        {showFollowBtn && user && page.created_by !== user.id && !page.user_role && (
           <Button
             variant={page.is_following ? 'outline' : 'default'}
             size="sm"
