@@ -104,7 +104,12 @@ const Feed = () => {
             author_id: post.user_id,
             is_verified: post.profiles?.is_verified,
             verification_type: post.profiles?.verification_type,
-            verified_at: post.profiles?.verified_at
+            verified_at: post.profiles?.verified_at,
+            page_id: post.page_id,
+            page_name: (post as any).page?.name,
+            page_username: (post as any).page?.username,
+            page_avatar: (post as any).page?.avatar_url,
+            page_is_verified: (post as any).page?.is_verified,
           }} />)}
               
               {hasMore && <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
