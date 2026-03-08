@@ -48,6 +48,11 @@ export interface PostCardModernProps {
     verification_type?: string | null;
     verified_at?: string | null;
     is_pinned?: boolean;
+    page_id?: string;
+    page_name?: string;
+    page_username?: string;
+    page_avatar?: string;
+    page_is_verified?: boolean;
   };
 }
 
