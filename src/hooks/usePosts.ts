@@ -16,6 +16,7 @@ export interface Post {
   shares_count?: number;
   created_at: string;
   updated_at: string;
+  page_id?: string;
   profiles: {
     username: string;
     display_name: string;
@@ -24,6 +25,12 @@ export interface Post {
     verification_type?: string | null;
     verified_at?: string | null;
   };
+  page?: {
+    name: string;
+    username: string;
+    avatar_url?: string;
+    is_verified: boolean;
+  } | null;
   reactions?: {
     id: string;
     user_id: string;

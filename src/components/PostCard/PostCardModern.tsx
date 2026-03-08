@@ -259,8 +259,17 @@ export const PostCardModern = ({
 
   // Get initials for avatar fallback with color
   const getAvatarFallback = () => {
-    const name = post.author_name || 'U';
+    const name = displayName || 'U';
     return name.charAt(0).toUpperCase();
+  };
+
+  const handleAuthorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isPagePost && post.page_username) {
+      navigate(`/page/${post.page_username}`);
+    } else {
+      navigate(`/profile/${post.author_id}`);
+    }
   };
   return <TooltipProvider>
       <>

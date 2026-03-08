@@ -279,17 +279,36 @@ export const usePages = () => {
     }
   };
 
-  const createPagePost = async (pageId: string, postData: { content?: string; media_url?: string; media_type?: string }) => {
+  const createPagePost = async (pageId: string, postData: { content?: string; media_url?: string; media_type?: string; mediaFile?: File }) => {
     if (!user) return;
     try {
+      let mediaUrl = postData.media_url;
+      let mediaType = postData.media_type;
+
+      // Upload media file if provided
+      if (postData.mediaFile) {
+        const file = postData.mediaFile;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('posts')
+          .upload(fileName, file, { cacheControl: '3600', upsert: false });
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('posts')
+          .getPublicUrl(uploadData.path);
+        mediaUrl = publicUrl;
+        mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+      }
+
       const { data, error } = await supabase
         .from('posts')
         .insert({
           user_id: user.id,
           page_id: pageId,
           content: postData.content,
-          media_url: postData.media_url,
-          media_type: postData.media_type,
+          media_url: mediaUrl,
+          media_type: mediaType,
           privacy: 'public',
         })
         .select()
