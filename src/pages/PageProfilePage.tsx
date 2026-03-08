@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePages, Page } from '@/hooks/usePages';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,9 +9,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { Users, Settings, Send, ImageIcon, CheckCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, Settings, Send, ImageIcon, CheckCircle, Globe, Mail, X, ThumbsUp, FileText } from 'lucide-react';
 import { PostCardModern } from '@/components/PostCard/PostCardModern';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 const PageProfilePage = () => {
@@ -25,6 +25,9 @@ const PageProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [newPostContent, setNewPostContent] = useState('');
   const [posting, setPosting] = useState(false);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnerOrAdmin = page?.user_role === 'owner' || page?.user_role === 'admin' || page?.user_role === 'editor';
 
@@ -58,12 +61,34 @@ const PageProfilePage = () => {
     }
   };
 
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 10MB', variant: 'destructive' });
+      return;
+    }
+    setMediaFile(file);
+    setMediaPreview(URL.createObjectURL(file));
+  };
+
+  const clearMedia = () => {
+    setMediaFile(null);
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    setMediaPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleCreatePost = async () => {
-    if (!page || !newPostContent.trim()) return;
+    if (!page || (!newPostContent.trim() && !mediaFile)) return;
     setPosting(true);
     try {
-      await createPagePost(page.id, { content: newPostContent });
+      await createPagePost(page.id, {
+        content: newPostContent,
+        mediaFile: mediaFile || undefined,
+      });
       setNewPostContent('');
+      clearMedia();
       const pagePosts = await getPagePosts(page.id);
       setPosts(pagePosts);
     } catch {
@@ -140,6 +165,10 @@ const PageProfilePage = () => {
                 <Users className="h-4 w-4" />
                 <span className="font-semibold text-foreground">{page.followers_count}</span> followers
               </div>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                <span className="font-semibold text-foreground">{posts.length}</span> posts
+              </div>
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -149,7 +178,17 @@ const PageProfilePage = () => {
                   variant={page.is_following ? 'outline' : 'default'}
                   className="rounded-full"
                 >
-                  {page.is_following ? 'Following' : 'Follow'}
+                  {page.is_following ? (
+                    <>
+                      <ThumbsUp className="h-4 w-4 mr-2" />
+                      Liked
+                    </>
+                  ) : (
+                    <>
+                      <ThumbsUp className="h-4 w-4 mr-2" />
+                      Like Page
+                    </>
+                  )}
                 </Button>
               )}
               {isOwnerOrAdmin && (
@@ -161,59 +200,164 @@ const PageProfilePage = () => {
           </div>
         </div>
 
-        {/* Create Post (for page admins) */}
-        {isOwnerOrAdmin && (
-          <div className="px-4 mt-6">
-            <Card className="p-4">
-              <Textarea
-                placeholder={`Post as ${page.name}...`}
-                value={newPostContent}
-                onChange={(e) => setNewPostContent(e.target.value)}
-                className="min-h-[80px] resize-none border-0 focus-visible:ring-0 p-0"
-              />
-              <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t">
-                <Button
-                  size="sm"
-                  disabled={!newPostContent.trim() || posting}
-                  onClick={handleCreatePost}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {posting ? 'Posting...' : 'Post'}
-                </Button>
-              </div>
-            </Card>
-          </div>
-        )}
+        {/* Tabs */}
+        <div className="mt-6">
+          <Tabs defaultValue="posts" className="w-full">
+            <TabsList className="w-full rounded-none border-b bg-transparent h-auto p-0">
+              <TabsTrigger value="posts" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-3">
+                Posts
+              </TabsTrigger>
+              <TabsTrigger value="about" className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-3">
+                About
+              </TabsTrigger>
+            </TabsList>
 
-        {/* Posts Feed */}
-        <div className="mt-6 space-y-4 px-4">
-          <h3 className="font-semibold text-lg">Posts</h3>
-          {posts.length === 0 ? (
-            <Card className="p-12 text-center">
-              <ImageIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No posts yet</p>
-            </Card>
-          ) : (
-            posts.map((post: any) => (
-              <PostCardModern
-                key={post.id}
-                post={{
-                  id: post.id,
-                  content: post.content || '',
-                  media_url: post.media_url,
-                  created_at: post.created_at,
-                  reactions_count: post.reactions_count || 0,
-                  comments_count: post.comments_count || 0,
-                  shares_count: post.shares_count || 0,
-                  author_name: page.name,
-                  author_username: page.username,
-                  author_avatar: page.avatar_url,
-                  author_id: post.user_id,
-                  is_verified: page.is_verified,
-                }}
-              />
-            ))
-          )}
+            <TabsContent value="posts" className="mt-0">
+              {/* Create Post (for page admins) */}
+              {isOwnerOrAdmin && (
+                <div className="px-4 mt-4">
+                  <Card className="p-4">
+                    <Textarea
+                      placeholder={`Post as ${page.name}...`}
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                      className="min-h-[80px] resize-none border-0 focus-visible:ring-0 p-0"
+                    />
+
+                    {/* Media Preview */}
+                    {mediaPreview && (
+                      <div className="relative mt-3 rounded-lg overflow-hidden">
+                        {mediaFile?.type.startsWith('video/') ? (
+                          <video src={mediaPreview} className="max-h-64 w-full object-cover rounded-lg" controls />
+                        ) : (
+                          <img src={mediaPreview} alt="Preview" className="max-h-64 w-full object-cover rounded-lg" />
+                        )}
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className="absolute top-2 right-2 h-7 w-7 rounded-full"
+                          onClick={clearMedia}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handleMediaSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Photo/Video
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={(!newPostContent.trim() && !mediaFile) || posting}
+                        onClick={handleCreatePost}
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        {posting ? 'Posting...' : 'Post'}
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
+              {/* Posts Feed */}
+              <div className="mt-4 space-y-4 px-4">
+                {posts.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <ImageIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">No posts yet</p>
+                  </Card>
+                ) : (
+                  posts.map((post: any) => (
+                    <PostCardModern
+                      key={post.id}
+                      post={{
+                        id: post.id,
+                        content: post.content || '',
+                        media_url: post.media_url,
+                        created_at: post.created_at,
+                        reactions_count: post.reactions_count || 0,
+                        comments_count: post.comments_count || 0,
+                        shares_count: post.shares_count || 0,
+                        author_name: post.profiles?.display_name || page.name,
+                        author_username: post.profiles?.username || page.username,
+                        author_avatar: post.profiles?.avatar_url || page.avatar_url,
+                        author_id: post.user_id,
+                        is_verified: page.is_verified,
+                        page_id: page.id,
+                        page_name: page.name,
+                        page_username: page.username,
+                        page_avatar: page.avatar_url,
+                        page_is_verified: page.is_verified,
+                      }}
+                    />
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="about" className="mt-0 px-4 pt-4">
+              <Card className="p-6 space-y-4">
+                <h3 className="font-semibold text-lg">About {page.name}</h3>
+
+                {page.description && (
+                  <div>
+                    <p className="text-sm text-muted-foreground font-medium mb-1">Description</p>
+                    <p className="text-sm text-foreground">{page.description}</p>
+                  </div>
+                )}
+
+                {page.category && (
+                  <div>
+                    <p className="text-sm text-muted-foreground font-medium mb-1">Category</p>
+                    <Badge variant="secondary">{page.category}</Badge>
+                  </div>
+                )}
+
+                {page.website_url && (
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <a
+                      href={page.website_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {page.website_url}
+                    </a>
+                  </div>
+                )}
+
+                {page.contact_email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <a
+                      href={`mailto:${page.contact_email}`}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {page.contact_email}
+                    </a>
+                  </div>
+                )}
+
+                {!page.description && !page.website_url && !page.contact_email && (
+                  <p className="text-sm text-muted-foreground">No additional information available.</p>
+                )}
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
