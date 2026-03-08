@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const ALLOWED_ORIGINS = [
   'https://post-upp.lovable.app',
@@ -16,52 +17,111 @@ const getCorsHeaders = (origin: string | null) => ({
   'Access-Control-Allow-Credentials': 'true',
 });
 
+// Validation schemas
+const uuidSchema = z.string().uuid();
+
+const sendMessageSchema = z.object({
+  action: z.literal('send'),
+  chat_id: uuidSchema,
+  content: z.string().max(5000).optional(),
+  media_url: z.string().url().max(2000).optional(),
+  media_type: z.enum(['image', 'video', 'audio', 'file']).optional(),
+  reply_to: uuidSchema.optional().nullable(),
+}).refine(data => data.content || data.media_url, {
+  message: 'Must have content or media',
+});
+
+const editMessageSchema = z.object({
+  action: z.literal('edit'),
+  messageId: uuidSchema,
+  content: z.string().min(1).max(5000),
+});
+
+const deleteMessageSchema = z.object({
+  action: z.literal('delete'),
+  messageId: uuidSchema,
+  deleteFor: z.enum(['me', 'everyone']).optional(),
+});
+
+const reactMessageSchema = z.object({
+  action: z.literal('react'),
+  messageId: uuidSchema,
+  reactionType: z.string().min(1).max(50),
+});
+
+const unreactMessageSchema = z.object({
+  action: z.literal('unreact'),
+  messageId: uuidSchema,
+});
+
+const starMessageSchema = z.object({
+  action: z.enum(['star', 'unstar']),
+  messageId: uuidSchema,
+});
+
+const forwardMessageSchema = z.object({
+  action: z.literal('forward'),
+  messageId: uuidSchema,
+  toChatIds: z.array(uuidSchema).min(1).max(20),
+});
+
+const markReadSchema = z.object({
+  action: z.literal('mark_read'),
+  messageId: uuidSchema,
+});
+
+const typingSchema = z.object({
+  action: z.literal('typing'),
+  chatId: uuidSchema,
+  isTyping: z.boolean(),
+});
+
+const fetchMessagesSchema = z.object({
+  chat_id: uuidSchema,
+  action: z.undefined().optional(),
+});
+
+const listChatsSchema = z.object({
+  action: z.literal('list_chats').optional(),
+}).passthrough();
+
 serve(async (req) => {
   const origin = req.headers.get('origin');
   const corsHeaders = getCorsHeaders(origin);
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Create client with service role for database operations
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      { auth: { autoRefreshToken: false, persistSession: false } }
     );
     
-    // Create anon client for auth verification
     const supabaseAnonClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return new Response(JSON.stringify({ error: 'No authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Get user from JWT using anon client
     const { data: { user }, error: userError } = await supabaseAnonClient.auth.getUser(authHeader.replace('Bearer ', ''));
     if (userError || !user) {
-      throw new Error('Invalid or expired token');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const url = new URL(req.url);
     const method = req.method;
-
-    console.log(`Messages API: ${method} ${url.pathname}`);
-
-    // Parse request body
     const body = method !== 'GET' ? await req.json() : {};
     const action = body.action;
 
@@ -84,13 +144,7 @@ serve(async (req) => {
 
       const { data, error } = await supabaseClient
         .from('chats')
-        .select(`
-          id,
-          name,
-          avatar_url,
-          type,
-          created_at
-        `)
+        .select(`id, name, avatar_url, type, created_at`)
         .in('id', chatIds)
         .order('created_at', { ascending: false });
 
@@ -100,16 +154,7 @@ serve(async (req) => {
         (data || []).map(async (chat) => {
           const { data: participants } = await supabaseClient
             .from('chat_participants')
-            .select(`
-              user_id,
-              role,
-              joined_at,
-              profiles:user_id (
-                username,
-                display_name,
-                avatar_url
-              )
-            `)
+            .select(`user_id, role, joined_at, profiles:user_id (username, display_name, avatar_url)`)
             .eq('chat_id', chat.id);
 
           return {
@@ -134,22 +179,17 @@ serve(async (req) => {
 
     // Handle fetch messages action
     if (body.chat_id && !action) {
+      const parsed = fetchMessagesSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid request', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const { data: messages, error } = await supabaseClient
         .from('messages')
-        .select(`
-          *,
-          sender:sender_id (
-            username,
-            display_name,
-            avatar_url
-          ),
-          reply_to_message:reply_to (
-            id,
-            content,
-            sender:sender_id (display_name)
-          )
-        `)
-        .eq('chat_id', body.chat_id)
+        .select(`*, sender:sender_id (username, display_name, avatar_url), reply_to_message:reply_to (id, content, sender:sender_id (display_name))`)
+        .eq('chat_id', parsed.data.chat_id)
         .order('created_at', { ascending: true })
         .limit(100);
 
@@ -163,32 +203,14 @@ serve(async (req) => {
 
     // Handle send message action
     if (action === 'send') {
-      const { chat_id, content, media_url, media_type, reply_to } = body;
-
-      // Input validation
-      if (!chat_id || typeof chat_id !== 'string') {
-        throw new Error('Invalid chat_id');
-      }
-      
-      if (!content && !media_url) {
-        throw new Error('Message must have either content or media');
+      const parsed = sendMessageSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid message data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
-      if (content && typeof content !== 'string') {
-        throw new Error('Content must be a string');
-      }
-
-      if (content && content.length > 5000) {
-        throw new Error('Message too long (max 5000 characters)');
-      }
-
-      if (media_url && typeof media_url !== 'string') {
-        throw new Error('Invalid media_url');
-      }
-
-      if (reply_to && typeof reply_to !== 'string') {
-        throw new Error('Invalid reply_to');
-      }
+      const { chat_id, content, media_url, media_type, reply_to } = parsed.data;
 
       // Verify user is participant in the chat
       const { data: participant } = await supabaseClient
@@ -199,7 +221,9 @@ serve(async (req) => {
         .single();
 
       if (!participant) {
-        throw new Error('User is not a participant in this chat');
+        return new Response(JSON.stringify({ error: 'Not a participant in this chat' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       const { data: message, error } = await supabaseClient
@@ -212,25 +236,16 @@ serve(async (req) => {
           media_type,
           reply_to
         })
-        .select(`
-          *,
-          sender:sender_id (
-            username,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select(`*, sender:sender_id (username, display_name, avatar_url)`)
         .single();
 
       if (error) throw error;
 
-      // Update chat's updated_at
       await supabaseClient
         .from('chats')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', chat_id);
 
-      // Create notifications for other participants
       const { data: participants } = await supabaseClient
         .from('chat_participants')
         .select('user_id')
@@ -245,7 +260,6 @@ serve(async (req) => {
           content: content || 'Sent a media file',
           data: { chat_id, message_id: message.id, sender_id: user.id }
         }));
-
         await supabaseClient.from('notifications').insert(notifications);
       }
 
@@ -256,24 +270,19 @@ serve(async (req) => {
 
     // Handle edit message action
     if (action === 'edit') {
-      const { messageId, content } = body;
+      const parsed = editMessageSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid edit data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       const { data: message, error } = await supabaseClient
         .from('messages')
-        .update({
-          content,
-          is_edited: true
-        })
-        .eq('id', messageId)
+        .update({ content: parsed.data.content, is_edited: true })
+        .eq('id', parsed.data.messageId)
         .eq('sender_id', user.id)
-        .select(`
-          *,
-          sender:sender_id (
-            username,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select(`*, sender:sender_id (username, display_name, avatar_url)`)
         .single();
 
       if (error) throw error;
@@ -285,35 +294,36 @@ serve(async (req) => {
 
     // Handle delete message action
     if (action === 'delete') {
-      const { messageId, deleteFor } = body;
+      const parsed = deleteMessageSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid delete data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
-      if (deleteFor === 'everyone') {
+      if (parsed.data.deleteFor === 'everyone') {
         const { error } = await supabaseClient
           .from('messages')
           .delete()
-          .eq('id', messageId)
+          .eq('id', parsed.data.messageId)
           .eq('sender_id', user.id);
-
         if (error) throw error;
       } else {
         const { data: message, error: fetchError } = await supabaseClient
           .from('messages')
           .select('deleted_for')
-          .eq('id', messageId)
+          .eq('id', parsed.data.messageId)
           .single();
-
         if (fetchError) throw fetchError;
 
         const deletedFor = message.deleted_for || [];
         if (!deletedFor.includes(user.id)) {
           deletedFor.push(user.id);
         }
-
         const { error } = await supabaseClient
           .from('messages')
           .update({ deleted_for: deletedFor })
-          .eq('id', messageId);
-
+          .eq('id', parsed.data.messageId);
         if (error) throw error;
       }
 
@@ -324,31 +334,34 @@ serve(async (req) => {
 
     // Handle react to message
     if (action === 'react') {
-      const { messageId, reactionType } = body;
+      const parsed = reactMessageSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid reaction data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       const { data: existing } = await supabaseClient
         .from('message_reactions')
         .select('id')
-        .eq('message_id', messageId)
+        .eq('message_id', parsed.data.messageId)
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (existing) {
         const { error } = await supabaseClient
           .from('message_reactions')
-          .update({ reaction_type: reactionType })
+          .update({ reaction_type: parsed.data.reactionType })
           .eq('id', existing.id);
-
         if (error) throw error;
       } else {
         const { error } = await supabaseClient
           .from('message_reactions')
           .insert({
-            message_id: messageId,
+            message_id: parsed.data.messageId,
             user_id: user.id,
-            reaction_type: reactionType
+            reaction_type: parsed.data.reactionType
           });
-
         if (error) throw error;
       }
 
@@ -359,14 +372,18 @@ serve(async (req) => {
 
     // Handle remove reaction
     if (action === 'unreact') {
-      const { messageId } = body;
+      const parsed = unreactMessageSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       const { error } = await supabaseClient
         .from('message_reactions')
         .delete()
-        .eq('message_id', messageId)
+        .eq('message_id', parsed.data.messageId)
         .eq('user_id', user.id);
-
       if (error) throw error;
 
       return new Response(JSON.stringify({ success: true }), {
@@ -376,24 +393,24 @@ serve(async (req) => {
 
     // Handle star/unstar message
     if (action === 'star' || action === 'unstar') {
-      const { messageId } = body;
+      const parsed = starMessageSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       if (action === 'star') {
         const { error } = await supabaseClient
           .from('starred_messages')
-          .insert({
-            user_id: user.id,
-            message_id: messageId
-          });
-
+          .insert({ user_id: user.id, message_id: parsed.data.messageId });
         if (error && error.code !== '23505') throw error;
       } else {
         const { error } = await supabaseClient
           .from('starred_messages')
           .delete()
           .eq('user_id', user.id)
-          .eq('message_id', messageId);
-
+          .eq('message_id', parsed.data.messageId);
         if (error) throw error;
       }
 
@@ -404,30 +421,31 @@ serve(async (req) => {
 
     // Handle forward message
     if (action === 'forward') {
-      const { messageId, toChatIds } = body;
+      const parsed = forwardMessageSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid forward data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       const { data: originalMessage, error: fetchError } = await supabaseClient
         .from('messages')
         .select('content, media_url, media_type')
-        .eq('id', messageId)
+        .eq('id', parsed.data.messageId)
         .single();
-
       if (fetchError) throw fetchError;
 
-      const forwardedMessages = toChatIds.map((chatId: string) => ({
+      const forwardedMessages = parsed.data.toChatIds.map((chatId) => ({
         chat_id: chatId,
         sender_id: user.id,
         content: originalMessage.content,
         media_url: originalMessage.media_url,
         media_type: originalMessage.media_type,
         is_forwarded: true,
-        forwarded_from_message_id: messageId
+        forwarded_from_message_id: parsed.data.messageId
       }));
 
-      const { error } = await supabaseClient
-        .from('messages')
-        .insert(forwardedMessages);
-
+      const { error } = await supabaseClient.from('messages').insert(forwardedMessages);
       if (error) throw error;
 
       return new Response(JSON.stringify({ success: true }), {
@@ -437,15 +455,16 @@ serve(async (req) => {
 
     // Handle mark message as read
     if (action === 'mark_read') {
-      const { messageId } = body;
+      const parsed = markReadSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       const { error } = await supabaseClient
         .from('message_reads')
-        .insert({
-          message_id: messageId,
-          user_id: user.id
-        });
-
+        .insert({ message_id: parsed.data.messageId, user_id: user.id });
       if (error && error.code !== '23505') throw error;
 
       return new Response(JSON.stringify({ success: true }), {
@@ -455,17 +474,21 @@ serve(async (req) => {
 
     // Handle typing indicator
     if (action === 'typing') {
-      const { chatId, isTyping } = body;
+      const parsed = typingSchema.safeParse(body);
+      if (!parsed.success) {
+        return new Response(JSON.stringify({ error: 'Invalid data', details: parsed.error.flatten() }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       const { error } = await supabaseClient
         .from('typing_status')
         .upsert({
-          chat_id: chatId,
+          chat_id: parsed.data.chatId,
           user_id: user.id,
-          is_typing: isTyping,
+          is_typing: parsed.data.isTyping,
           updated_at: new Date().toISOString()
         });
-
       if (error) throw error;
 
       return new Response(JSON.stringify({ success: true }), {
@@ -480,8 +503,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Messages API Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: 'An error occurred processing your request' }), {
       status: 400,
       headers: { ...getCorsHeaders(req.headers.get('origin')), 'Content-Type': 'application/json' },
     });
