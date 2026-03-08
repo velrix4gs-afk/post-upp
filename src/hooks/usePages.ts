@@ -54,14 +54,14 @@ export const usePages = () => {
             .select('id')
             .eq('page_id', page.id)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
           const { data: membership } = await supabase
             .from('page_members' as any)
             .select('role')
             .eq('page_id', page.id)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
           return {
             ...page,
