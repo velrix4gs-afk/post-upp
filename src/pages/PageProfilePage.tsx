@@ -29,7 +29,7 @@ const PageProfilePage = () => {
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isOwnerOrAdmin = page?.user_role === 'owner' || page?.user_role === 'admin' || page?.user_role === 'editor';
+  const isOwnerOrAdmin = page?.user_role === 'owner' || page?.user_role === 'admin' || page?.user_role === 'editor' || (user && page?.created_by === user.id);
 
   useEffect(() => {
     if (username) loadPage();
