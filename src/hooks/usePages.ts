@@ -244,7 +244,7 @@ export const usePages = () => {
           .select('role')
           .eq('page_id', (data as any).id)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         return { ...(data as any), is_following: !!following, user_role: (membership as any)?.role || null } as Page;
       }
