@@ -37,9 +37,16 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
           shares_count,
           created_at,
           updated_at,
+          page_id,
           profiles:user_id (
             username,
             display_name,
+            avatar_url,
+            is_verified
+          ),
+          page:pages!posts_page_id_fkey (
+            name,
+            username,
             avatar_url,
             is_verified
           )

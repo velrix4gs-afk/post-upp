@@ -48,6 +48,11 @@ export interface PostCardModernProps {
     verification_type?: string | null;
     verified_at?: string | null;
     is_pinned?: boolean;
+    page_id?: string;
+    page_name?: string;
+    page_username?: string;
+    page_avatar?: string;
+    page_is_verified?: boolean;
   };
 }
 
@@ -134,6 +139,11 @@ export const PostCardModern = ({
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const isOwner = user?.id === post.author_id;
   const isFollowingAuthor = following.some(f => f.following?.id === post.author_id);
+  const isPagePost = !!post.page_id;
+  const displayName = isPagePost ? (post.page_name || post.author_name) : post.author_name;
+  const displayAvatar = isPagePost ? (post.page_avatar || post.author_avatar) : post.author_avatar;
+  const displayUsername = isPagePost ? post.page_username : post.author_username;
+  const displayVerified = isPagePost ? post.page_is_verified : post.is_verified;
   const linkPreview = extractLinkPreview(post.content || '');
   const handleFollowToggle = async () => {
     if (isFollowingAuthor) {
@@ -249,8 +259,17 @@ export const PostCardModern = ({
 
   // Get initials for avatar fallback with color
   const getAvatarFallback = () => {
-    const name = post.author_name || 'U';
+    const name = displayName || 'U';
     return name.charAt(0).toUpperCase();
+  };
+
+  const handleAuthorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isPagePost && post.page_username) {
+      navigate(`/page/${post.page_username}`);
+    } else {
+      navigate(`/profile/${post.author_id}`);
+    }
   };
   return <TooltipProvider>
       <>
@@ -292,30 +311,41 @@ export const PostCardModern = ({
           <div className="p-4">
             {/* Post Header */}
             <div className="flex items-start gap-3 mb-3">
-              <ProfileHoverCard userId={post.author_id}>
-                <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-border flex-shrink-0" onClick={e => {
-                e.stopPropagation();
-                navigate(`/profile/${post.author_id}`);
-              }}>
-                  <AvatarImage src={post.author_avatar} />
+              {isPagePost ? (
+                <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-border flex-shrink-0" onClick={handleAuthorClick}>
+                  <AvatarImage src={displayAvatar} />
                   <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                     {getAvatarFallback()}
                   </AvatarFallback>
                 </Avatar>
-              </ProfileHoverCard>
+              ) : (
+                <ProfileHoverCard userId={post.author_id}>
+                  <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-border flex-shrink-0" onClick={handleAuthorClick}>
+                    <AvatarImage src={displayAvatar} />
+                    <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                      {getAvatarFallback()}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileHoverCard>
+              )}
 
               <div className="flex-1 min-w-0">
-                <ProfileHoverCard userId={post.author_id}>
-                  <button onClick={e => {
-                  e.stopPropagation();
-                  navigate(`/profile/${post.author_id}`);
-                }} className="font-semibold text-foreground hover: text-[15px] flex items-center gap-1">
-                    {post.author_name}
-                    <VerificationBadge isVerified={post.is_verified} verificationType={post.verification_type} />
+                {isPagePost ? (
+                  <button onClick={handleAuthorClick} className="font-semibold text-foreground hover:underline text-[15px] flex items-center gap-1">
+                    {displayName}
+                    {displayVerified && <VerificationBadge isVerified={true} />}
                   </button>
-                </ProfileHoverCard>
+                ) : (
+                  <ProfileHoverCard userId={post.author_id}>
+                    <button onClick={handleAuthorClick} className="font-semibold text-foreground hover:underline text-[15px] flex items-center gap-1">
+                      {displayName}
+                      <VerificationBadge isVerified={post.is_verified} verificationType={post.verification_type} />
+                    </button>
+                  </ProfileHoverCard>
+                )}
                 
-                {post.author_username && <div className="text-muted-foreground text-sm">@{post.author_username}</div>}
+                {displayUsername && <div className="text-muted-foreground text-sm">@{displayUsername}</div>}
+                {isPagePost && <div className="text-muted-foreground text-xs">Published by {post.author_name}</div>}
                 
                 <div className="flex items-center gap-1.5 text-muted-foreground text-xs mt-0.5">
                   <Tooltip>
