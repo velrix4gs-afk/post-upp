@@ -139,6 +139,11 @@ export const PostCardModern = ({
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const isOwner = user?.id === post.author_id;
   const isFollowingAuthor = following.some(f => f.following?.id === post.author_id);
+  const isPagePost = !!post.page_id;
+  const displayName = isPagePost ? (post.page_name || post.author_name) : post.author_name;
+  const displayAvatar = isPagePost ? (post.page_avatar || post.author_avatar) : post.author_avatar;
+  const displayUsername = isPagePost ? post.page_username : post.author_username;
+  const displayVerified = isPagePost ? post.page_is_verified : post.is_verified;
   const linkPreview = extractLinkPreview(post.content || '');
   const handleFollowToggle = async () => {
     if (isFollowingAuthor) {
