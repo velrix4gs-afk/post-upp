@@ -83,6 +83,9 @@ export const useThreadedComments = (postId: string) => {
         }
       });
 
+      // Sort root comments by likes_count DESC (most relevant first)
+      rootComments.sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
+
       setComments(rootComments);
     } catch (error) {
       console.error('Error fetching comments:', error);

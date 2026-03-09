@@ -23,6 +23,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { PostReactionPicker } from "../PostReactionPicker";
 import { useReactions } from "@/hooks/useReactions";
 import { ThreadedCommentsSection } from "../ThreadedCommentsSection";
+import { useTopComment } from "@/hooks/useTopComment";
+import { VerificationBadge as TopCommentBadge } from "../premium/VerificationBadge";
 import { cn } from "@/lib/utils";
 import { VerificationBadge } from "../premium/VerificationBadge";
 import { ProfileHoverCard } from "../ProfileHoverCard";
