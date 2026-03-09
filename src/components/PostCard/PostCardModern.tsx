@@ -496,6 +496,54 @@ export const PostCardModern = ({
                 </div>
               </div>}
 
+            {/* Top Comment Preview */}
+            {topComment && !showComments && (
+              <div 
+                className="flex items-start gap-2 py-2 cursor-pointer hover:bg-muted/50 rounded-lg px-1 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowComments(true);
+                }}
+              >
+                <Avatar className="h-6 w-6 flex-shrink-0">
+                  <AvatarImage src={topComment.user?.avatar_url} />
+                  <AvatarFallback className="text-[10px]">
+                    {topComment.user?.display_name?.[0] || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="font-semibold text-xs text-foreground">
+                      {topComment.user?.display_name}
+                    </span>
+                    <TopCommentBadge 
+                      isVerified={topComment.user?.is_verified}
+                      verificationType={topComment.user?.verification_type}
+                    />
+                    {topComment.likes_count > 0 && (
+                      <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
+                        <Heart className="h-2.5 w-2.5 fill-current text-destructive" />
+                        {topComment.likes_count}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-foreground/80 line-clamp-2">{topComment.content}</p>
+                </div>
+              </div>
+            )}
+
+            {post.comments_count > 1 && !showComments && (
+              <button
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors pb-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowComments(true);
+                }}
+              >
+                View all {post.comments_count} comments
+              </button>
+            )}
+
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-1 -mx-2">
               <Tooltip>
