@@ -127,6 +127,7 @@ export const PostCardModern = ({
     getTotalReactions
   } = useReactions(post.id);
   const navigate = useNavigate();
+  const topComment = useTopComment(post.id, post.comments_count);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
