@@ -42,6 +42,10 @@ export const ThreadedCommentsSection = ({ postId }: ThreadedCommentsSectionProps
 
   return (
     <div className="space-y-4 pt-4 border-t">
+      {comments.length > 0 && (
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Most relevant</p>
+      )}
+
       <div className="flex gap-2">
         <Avatar className="h-8 w-8 flex-shrink-0">
           <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -92,7 +96,7 @@ export const ThreadedCommentsSection = ({ postId }: ThreadedCommentsSectionProps
               onReply={handleReply}
               onDelete={deleteComment}
               onLike={toggleLike}
-              isLiked={isCommentLiked(comment.id)}
+              isCommentLiked={isCommentLiked}
             />
           ))}
           {comments.length === 0 && (

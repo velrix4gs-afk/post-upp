@@ -50,7 +50,7 @@ export const useThreadedComments = (postId: string) => {
           )
         `)
         .eq('post_id', postId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }); // fetch all, sort in JS
 
       if (error) throw error;
 
@@ -82,6 +82,9 @@ export const useThreadedComments = (postId: string) => {
           rootComments.push(commentNode);
         }
       });
+
+      // Sort root comments by likes_count DESC (most relevant first)
+      rootComments.sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
 
       setComments(rootComments);
     } catch (error) {

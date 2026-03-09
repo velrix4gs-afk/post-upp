@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Heart, MessageCircle, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { ThreadedComment as ThreadedCommentType } from '@/hooks/useThreadedComments';
@@ -15,7 +15,7 @@ interface ThreadedCommentProps {
   onReply: (content: string, parentId: string) => void;
   onDelete: (commentId: string) => void;
   onLike: (commentId: string) => void;
-  isLiked: boolean;
+  isCommentLiked: (commentId: string) => boolean;
   depth?: number;
 }
 
@@ -24,22 +24,34 @@ export const ThreadedComment = ({
   onReply,
   onDelete,
   onLike,
-  isLiked,
+  isCommentLiked,
   depth = 0
 }: ThreadedCommentProps) => {
   const { user } = useAuth();
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState('');
+  const [showReplies, setShowReplies] = useState(false);
+
+  const isLiked = isCommentLiked(comment.id);
+  const maxDepth = 3;
+  const replyCount = comment.replies?.length || 0;
 
   const handleReply = () => {
     if (replyText.trim()) {
       onReply(replyText, comment.id);
       setReplyText('');
       setShowReplyBox(false);
+      setShowReplies(true);
     }
   };
 
-  const maxDepth = 3;
+  const handleShowReplyBox = () => {
+    if (!showReplyBox) {
+      const mention = comment.user?.display_name ? `@${comment.user.display_name.replace(/\s+/g, '')} ` : '';
+      setReplyText(mention);
+    }
+    setShowReplyBox(!showReplyBox);
+  };
 
   return (
     <div className={cn("flex gap-2", depth > 0 && "ml-8")}>
@@ -102,7 +114,7 @@ export const ThreadedComment = ({
               variant="ghost"
               size="sm"
               className="h-6 px-2 text-xs hover:text-blue-500"
-              onClick={() => setShowReplyBox(!showReplyBox)}
+              onClick={handleShowReplyBox}
             >
               <MessageCircle className="h-3 w-3 mr-1" />
               Reply
@@ -146,20 +158,44 @@ export const ThreadedComment = ({
           </div>
         )}
 
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 space-y-3">
-            {comment.replies.map((reply) => (
-              <ThreadedComment
-                key={reply.id}
-                comment={reply}
-                onReply={onReply}
-                onDelete={onDelete}
-                onLike={onLike}
-                isLiked={isLiked}
-                depth={depth + 1}
-              />
-            ))}
-          </div>
+        {/* Collapsible replies */}
+        {replyCount > 0 && !showReplies && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-3 text-xs text-primary hover:text-primary/80 mt-1 ml-3"
+            onClick={() => setShowReplies(true)}
+          >
+            <ChevronDown className="h-3 w-3 mr-1" />
+            View {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+          </Button>
+        )}
+
+        {replyCount > 0 && showReplies && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground mt-1 ml-3"
+              onClick={() => setShowReplies(false)}
+            >
+              <ChevronUp className="h-3 w-3 mr-1" />
+              Hide replies
+            </Button>
+            <div className="mt-2 space-y-3">
+              {comment.replies!.map((reply) => (
+                <ThreadedComment
+                  key={reply.id}
+                  comment={reply}
+                  onReply={onReply}
+                  onDelete={onDelete}
+                  onLike={onLike}
+                  isCommentLiked={isCommentLiked}
+                  depth={depth + 1}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
