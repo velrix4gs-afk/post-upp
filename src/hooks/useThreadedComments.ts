@@ -50,7 +50,7 @@ export const useThreadedComments = (postId: string) => {
           )
         `)
         .eq('post_id', postId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }); // fetch all, sort in JS
 
       if (error) throw error;
 
