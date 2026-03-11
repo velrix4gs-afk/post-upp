@@ -1,32 +1,40 @@
 
 
-# Style Chat Menu Popup & Fix Mobile Post Bar
+# Fix: Broken Feed + Comment System Issues
 
-## Two Issues
+## Root Cause Found
+The `useFeed.ts` query uses an explicit foreign key reference `page:pages!posts_page_id_fkey` but **no foreign key constraint exists** on `posts.page_id`. This causes the entire Supabase query to fail silently, resulting in zero posts loading — which makes it look like posting is broken.
 
-### 1. Chat Menu Dropdown — Make it Stylish
-The current `DropdownMenuContent` in `ChatMenu.tsx` uses a plain `w-56` dropdown. Will enhance with:
-- Wider menu with more padding and spacing between items
-- Larger, colored icons for each action category
-- Rounded menu items with hover effects
-- Visual grouping with subtle section labels
-- Scrollable on mobile so it doesn't overflow the screen
+## Plan
 
-**File: `src/components/ChatMenu.tsx`**
-- Add `max-h-[70vh] overflow-y-auto` to `DropdownMenuContent` for mobile scroll
-- Add `py-2 px-1` padding to items for better touch targets
-- Add color classes to icons (blue for info actions, amber for pin/star, red for destructive, purple for AI)
-- Add section group labels like "Chat", "Settings", "Danger Zone" using `DropdownMenuLabel`
+### 1. Add Missing Foreign Key (Database Migration)
+Add a foreign key from `posts.page_id` to `pages.id` so the join works:
+```sql
+ALTER TABLE public.posts 
+ADD CONSTRAINT posts_page_id_fkey 
+FOREIGN KEY (page_id) REFERENCES public.pages(id) ON DELETE SET NULL;
+```
 
-**File: `src/components/ui/dropdown-menu.tsx`**
-- Update `DropdownMenuItem` to have `rounded-lg py-2.5 px-3` for larger, rounder touch targets
-- Add `shadow-lg` and smoother border to `DropdownMenuContent`
+### 2. Fix `useFeed.ts` Query (Defensive)
+Also make the page join more defensive — use a hint-free approach so it doesn't break if the FK name changes:
+```
+page:pages (name, username, avatar_url, is_verified)
+```
+But since the FK migration is needed anyway, we'll keep the explicit FK reference after creating the constraint.
 
-### 2. FixedPostBar — Replace Textarea with Input
-The `FixedPostBar` uses a multi-line `Textarea` which looks oversized on mobile. Replace with a single-line `Input` styled like a normal chat input bar (matching the message input style in `MessagesPage`).
+### 3. Verify Comment System Works
+The threaded comments implementation looks correct:
+- `comments` table has `parent_id`, `likes_count` — correct
+- `comment_likes` table exists — correct
+- `ThreadedComment.tsx` has collapsible replies, `@mention` on reply — correct
+- `useTopComment.ts` fetches the highest-liked root comment — correct
+- `isCommentLiked` is properly passed per-comment — correct
 
-**File: `src/components/FixedPostBar.tsx`**
-- Replace `Textarea` with `Input`
-- Use a simple rounded-full input like the chat message input
-- Keep the send button compact and circular
+No changes needed for comments.
+
+## Files to Change
+- **Database migration**: Add FK constraint `posts_page_id_fkey`
+- **`src/hooks/useFeed.ts`**: Use hint-free join syntax as fallback safety
+
+This single FK issue is what broke the entire feed display.
 
