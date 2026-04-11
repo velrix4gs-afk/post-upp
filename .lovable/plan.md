@@ -1,40 +1,25 @@
 
 
-# Fix: Broken Feed + Comment System Issues
+# Fix: Popup Dismissal + Reply Button on Every Comment
 
-## Root Cause Found
-The `useFeed.ts` query uses an explicit foreign key reference `page:pages!posts_page_id_fkey` but **no foreign key constraint exists** on `posts.page_id`. This causes the entire Supabase query to fail silently, resulting in zero posts loading — which makes it look like posting is broken.
+## Issues Found
 
-## Plan
+### 1. Popup Won't Dismiss on Outside Tap
+The `ProfileHoverCard` wrapper has `className="touch-none select-none"` (line 69). The `touch-none` CSS class disables all touch interactions on that element and its children, which can interfere with the Dialog overlay's tap-to-dismiss behavior. Additionally, the Radix Dialog overlay already handles outside clicks natively — the issue is the `touch-none` blocking touch events from reaching the overlay.
 
-### 1. Add Missing Foreign Key (Database Migration)
-Add a foreign key from `posts.page_id` to `pages.id` so the join works:
-```sql
-ALTER TABLE public.posts 
-ADD CONSTRAINT posts_page_id_fkey 
-FOREIGN KEY (page_id) REFERENCES public.pages(id) ON DELETE SET NULL;
-```
+**Fix in `ProfileHoverCard.tsx`:**
+- Remove `touch-none` from the wrapper class
+- Instead, use `touch-manipulation` which still works for long-press detection but doesn't block all touch events
+- This lets the Dialog overlay receive taps properly so clicking/tapping anywhere outside the popup dismisses it
 
-### 2. Fix `useFeed.ts` Query (Defensive)
-Also make the page join more defensive — use a hint-free approach so it doesn't break if the FK name changes:
-```
-page:pages (name, username, avatar_url, is_verified)
-```
-But since the FK migration is needed anyway, we'll keep the explicit FK reference after creating the constraint.
+### 2. Reply Button Missing on Deep Comments
+Currently in `ThreadedComment.tsx` line 112: `{depth < maxDepth && (` — the Reply button only shows when depth is less than 3. Comments at depth 3+ have no Reply button.
 
-### 3. Verify Comment System Works
-The threaded comments implementation looks correct:
-- `comments` table has `parent_id`, `likes_count` — correct
-- `comment_likes` table exists — correct
-- `ThreadedComment.tsx` has collapsible replies, `@mention` on reply — correct
-- `useTopComment.ts` fetches the highest-liked root comment — correct
-- `isCommentLiked` is properly passed per-comment — correct
+**Fix in `ThreadedComment.tsx`:**
+- Remove the `depth < maxDepth` condition so Reply appears on every comment
+- Keep `maxDepth` only for visual nesting (indent limit) — replies beyond depth 3 still get created but render at max indent level instead of nesting further
 
-No changes needed for comments.
-
-## Files to Change
-- **Database migration**: Add FK constraint `posts_page_id_fkey`
-- **`src/hooks/useFeed.ts`**: Use hint-free join syntax as fallback safety
-
-This single FK issue is what broke the entire feed display.
+## Files to Edit
+- `src/components/ProfileHoverCard.tsx` — replace `touch-none` with `touch-manipulation`
+- `src/components/ThreadedComment.tsx` — remove depth restriction on Reply button, keep max indent for display only
 
