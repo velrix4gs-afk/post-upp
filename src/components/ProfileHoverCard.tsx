@@ -67,7 +67,7 @@ export const ProfileHoverCard = ({ userId, children, disabled }: ProfileHoverCar
         onMouseUp={handleEnd}
         onMouseLeave={handleMove}
         onClick={handleClick}
-        className="touch-none select-none"
+        className="touch-manipulation select-none"
       >
         {children}
       </div>

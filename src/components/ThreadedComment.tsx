@@ -54,7 +54,7 @@ export const ThreadedComment = ({
   };
 
   return (
-    <div className={cn("flex gap-2", depth > 0 && "ml-8")}>
+    <div className={cn("flex gap-2", depth > 0 && depth <= maxDepth && "ml-8")}>
       <ProfileHoverCard userId={comment.user_id} disabled={!comment.user_id}>
         <Avatar className="h-8 w-8 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
           <AvatarImage src={comment.user?.avatar_url} />
@@ -109,8 +109,7 @@ export const ThreadedComment = ({
             {comment.likes_count > 0 && comment.likes_count}
           </Button>
 
-          {depth < maxDepth && (
-            <Button
+          <Button
               variant="ghost"
               size="sm"
               className="h-6 px-2 text-xs hover:text-blue-500"
