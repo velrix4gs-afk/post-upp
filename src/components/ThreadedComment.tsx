@@ -118,7 +118,6 @@ export const ThreadedComment = ({
               <MessageCircle className="h-3 w-3 mr-1" />
               Reply
             </Button>
-          )}
         </div>
 
         {showReplyBox && (
