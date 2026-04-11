@@ -44,7 +44,7 @@ export const useFeed = (feedType: FeedType = 'for-you') => {
             avatar_url,
             is_verified
           ),
-          page:pages!posts_page_id_fkey (
+          page:pages (
             name,
             username,
             avatar_url,
