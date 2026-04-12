@@ -401,7 +401,7 @@ const MessagesPage = () => {
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-background">
       <Navigation />
       <main className="container mx-auto px-0 md:px-4 flex-1 overflow-hidden">
-        <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-x-0 md:border-x bg-gradient-to-br from-background via-background to-primary/5">
+        <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-background via-background to-primary/5">
           {/* Chat List Sidebar */}
           <div className={`${selectedChatId || showAIChat ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
             <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
