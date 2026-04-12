@@ -142,36 +142,16 @@ export const useChats = () => {
     }
 
     try {
-      // Check if chat already exists between these two users
-      const { data: existingChats } = await supabase
-        .from('chat_participants')
-        .select('chat_id')
-        .eq('user_id', user.id);
+      // Check if chat already exists using efficient RPC
+      const { data: existingChatId } = await supabase
+        .rpc('find_private_chat', {
+          p_user_a: user.id,
+          p_user_b: participantUuid
+        });
 
-      if (existingChats) {
-        for (const ec of existingChats) {
-          // Check if this chat has the other user as participant
-          const { data: otherParticipant } = await supabase
-            .from('chat_participants')
-            .select('user_id, chats:chat_id(type)')
-            .eq('chat_id', ec.chat_id)
-            .eq('user_id', participantUuid)
-            .maybeSingle();
-
-          if (otherParticipant) {
-            // Get the chat type
-            const { data: chatData } = await supabase
-              .from('chats')
-              .select('type')
-              .eq('id', ec.chat_id)
-              .single();
-
-            if (chatData?.type === 'private') {
-              console.log('[CHAT] Existing chat found:', ec.chat_id);
-              return ec.chat_id;
-            }
-          }
-        }
+      if (existingChatId) {
+        console.log('[CHAT] Existing chat found:', existingChatId);
+        return existingChatId;
       }
 
       console.log('[CHAT] Creating new chat with UUID:', participantUuid);

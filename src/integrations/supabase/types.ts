@@ -4975,6 +4975,10 @@ export type Database = {
         }[]
       }
       extract_hashtags: { Args: { post_content: string }; Returns: string[] }
+      find_private_chat: {
+        Args: { p_user_a: string; p_user_b: string }
+        Returns: string
+      }
       generate_verification_code: { Args: never; Returns: string }
       get_auth_uid: { Args: never; Returns: string }
       get_chat_list: {
