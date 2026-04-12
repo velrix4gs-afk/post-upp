@@ -319,7 +319,27 @@ export const useMessages = (chatId?: string) => {
       );
 
       // Filter out chats with 0 participants (orphaned/broken groups)
-      const validChats = chatsWithParticipants.filter(chat => chat.participants.length > 0);
+      let validChats = chatsWithParticipants.filter(chat => chat.participants.length > 0);
+      
+      // Deduplicate private chats: keep only the most recently updated one per other user
+      const seenUsers = new Map<string, number>();
+      validChats = validChats.filter((chat, index) => {
+        if (chat.is_group) return true;
+        const otherUser = chat.participants.find(p => p.user_id !== user!.id);
+        if (!otherUser) return true;
+        const existingIndex = seenUsers.get(otherUser.user_id);
+        if (existingIndex !== undefined) {
+          // Keep the one with more recent updated_at
+          const existingChat = validChats[existingIndex];
+          if (new Date(chat.updated_at) > new Date(existingChat.updated_at)) {
+            seenUsers.set(otherUser.user_id, index);
+            return true;
+          }
+          return false;
+        }
+        seenUsers.set(otherUser.user_id, index);
+        return true;
+      });
       
       setChats(validChats);
       
