@@ -41,6 +41,9 @@ export interface Chat {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  last_message?: string;
+  last_message_at?: string;
+  unread_count?: number;
   participants: {
     user_id: string;
     role: string;
@@ -245,101 +248,72 @@ export const useMessages = (chatId?: string) => {
   const fetchChats = async () => {
     try {
       setChatsLoading(true);
-      console.log('[useMessages] Fetching chats for user:', user?.id);
-      // Get chats where user is a participant
-      const { data: participantChats, error } = await supabase
-        .from('chat_participants')
-        .select('chat_id')
-        .eq('user_id', user!.id);
+      console.log('[useMessages] Fetching chats via get_chat_list RPC');
+      
+      // Use the optimized RPC that returns everything in one query
+      const { data: chatList, error } = await supabase.rpc('get_chat_list');
 
       if (error) throw error;
 
-      const chatIds = participantChats?.map(p => p.chat_id) || [];
-      
-      if (chatIds.length === 0) {
+      if (!chatList || chatList.length === 0) {
         setChats([]);
         setChatsLoading(false);
         return;
       }
 
-      // Get chat details
-      const { data: chatsData, error: chatsError } = await supabase
-        .from('chats')
-        .select('*')
-        .in('id', chatIds)
-        .order('updated_at', { ascending: false });
-
-      if (chatsError) throw chatsError;
-
-      // Get participants for each chat with profiles
-      const chatsWithParticipants: Chat[] = await Promise.all(
-        (chatsData || []).map(async (chat) => {
-          const { data: participants } = await supabase
-            .from('chat_participants')
-            .select('user_id, role, joined_at')
-            .eq('chat_id', chat.id);
-
-          // Fetch profiles for participants
-          const participantsWithProfiles = await Promise.all(
-            (participants || []).map(async (p) => {
-              const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('username, display_name, avatar_url')
-                .eq('id', p.user_id)
-                .maybeSingle();
-
-              if (profileError) {
-                console.error(`[useMessages] Error fetching profile for ${p.user_id}:`, profileError);
-              }
-
-              return {
-                user_id: p.user_id,
-                role: p.role,
-                joined_at: p.joined_at,
-                profiles: {
-                  username: profile?.username || 'Unknown',
-                  display_name: profile?.display_name || 'Unknown User',
-                  avatar_url: profile?.avatar_url || undefined
-                }
-              };
-            })
-          );
-
-          return {
-            id: chat.id,
-            name: chat.name,
-            avatar_url: chat.avatar_url,
-            is_group: chat.type === 'group',
-            created_by: chat.created_by,
-            created_at: chat.created_at,
-            updated_at: chat.updated_at,
-            participants: participantsWithProfiles
-          };
-        })
-      );
-
-      // Filter out chats with 0 participants (orphaned/broken groups)
-      let validChats = chatsWithParticipants.filter(chat => chat.participants.length > 0);
-      
-      // Deduplicate private chats: keep only the most recently updated one per other user
-      const seenUsers = new Map<string, number>();
-      validChats = validChats.filter((chat, index) => {
-        if (chat.is_group) return true;
-        const otherUser = chat.participants.find(p => p.user_id !== user!.id);
-        if (!otherUser) return true;
-        const existingIndex = seenUsers.get(otherUser.user_id);
-        if (existingIndex !== undefined) {
-          // Keep the one with more recent updated_at
-          const existingChat = validChats[existingIndex];
-          if (new Date(chat.updated_at) > new Date(existingChat.updated_at)) {
-            seenUsers.set(otherUser.user_id, index);
-            return true;
-          }
-          return false;
-        }
-        seenUsers.set(otherUser.user_id, index);
+      // Deduplicate private chats by other_user_id
+      const seenUsers = new Map<string, boolean>();
+      const dedupedList = (chatList as any[]).filter((chat) => {
+        if (chat.type === 'group') return true;
+        if (!chat.other_user_id) return true;
+        if (seenUsers.has(chat.other_user_id)) return false;
+        seenUsers.set(chat.other_user_id, true);
         return true;
       });
+
+      // Map RPC results to the Chat interface shape
+      const validChats: Chat[] = dedupedList.map((row: any) => ({
+        id: row.chat_id,
+        name: row.chat_name || undefined,
+        avatar_url: row.other_user_avatar || undefined,
+        is_group: row.type === 'group',
+        created_at: row.chat_created_at,
+        updated_at: row.last_message_at || row.chat_created_at,
+        last_message: row.last_message || undefined,
+        last_message_at: row.last_message_at || undefined,
+        unread_count: row.unread_count || 0,
+        participants: row.other_user_id ? [
+          {
+            user_id: user!.id,
+            role: 'member',
+            joined_at: row.chat_created_at,
+            profiles: {
+              username: user!.user_metadata?.username || 'user',
+              display_name: user!.user_metadata?.display_name || 'User',
+              avatar_url: user!.user_metadata?.avatar_url
+            }
+          },
+          {
+            user_id: row.other_user_id,
+            role: 'member',
+            joined_at: row.chat_created_at,
+            profiles: {
+              username: row.other_user_name || 'Unknown',
+              display_name: row.other_user_name || 'Unknown User',
+              avatar_url: row.other_user_avatar || undefined
+            }
+          }
+        ] : [{
+          user_id: user!.id,
+          role: 'member',
+          joined_at: row.chat_created_at,
+          profiles: {
+            username: user!.user_metadata?.username || 'user',
+            display_name: user!.user_metadata?.display_name || 'User',
+            avatar_url: user!.user_metadata?.avatar_url
+          }
+        }]
+      }));
       
       setChats(validChats);
       
@@ -350,7 +324,6 @@ export const useMessages = (chatId?: string) => {
     } catch (err: any) {
       console.error('[CHAT_001] Failed to load chats:', err);
       
-      // Use network error handler
       if (!navigator.onLine || err?.message?.includes('fetch') || err?.message?.includes('network')) {
         toast({
           title: 'No internet connection',
@@ -842,6 +815,59 @@ export const useMessages = (chatId?: string) => {
     }
   };
 
+  const createChat = async (participantUuid: string) => {
+    if (!user) return null;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(participantUuid)) {
+      console.error('[CHAT] Invalid UUID format:', participantUuid);
+      return null;
+    }
+
+    try {
+      // Check if chat already exists
+      const { data: existingChatId } = await supabase
+        .rpc('find_private_chat', {
+          p_user_a: user.id,
+          p_user_b: participantUuid
+        });
+
+      if (existingChatId) {
+        console.log('[CHAT] Existing chat found:', existingChatId);
+        return existingChatId;
+      }
+
+      // Create new chat
+      const { data: newChat, error: chatError } = await supabase
+        .from('chats')
+        .insert({
+          type: 'private',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (chatError) throw chatError;
+
+      const { error: participantsError } = await supabase
+        .from('chat_participants')
+        .insert([
+          { chat_id: newChat.id, user_id: user.id, role: 'member' },
+          { chat_id: newChat.id, user_id: participantUuid, role: 'member' }
+        ]);
+
+      if (participantsError) throw participantsError;
+
+      console.log('[CHAT] Created successfully:', newChat.id);
+      await fetchChats();
+      return newChat.id;
+    } catch (err: any) {
+      console.error('[CHAT] Error:', err);
+      return null;
+    }
+  };
+
   const refetchChats = () => {
     fetchChats();
   };
@@ -864,6 +890,7 @@ export const useMessages = (chatId?: string) => {
     unstarMessage,
     forwardMessage,
     markMessageRead,
+    createChat,
     refetchChats,
     refetchMessages
   };

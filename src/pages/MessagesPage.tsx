@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
-import { useChats } from '@/hooks/useChats';
 import { useFriends } from '@/hooks/useFriends';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePresence } from '@/hooks/usePresence';
@@ -75,10 +74,10 @@ const MessagesPage = () => {
     unstarMessage,
     forwardMessage,
     markMessageRead,
+    createChat: createChatByUuid,
     refetchChats,
     refetchMessages
   } = useMessages(selectedChatId || undefined);
-  const { createChat: createChatByUuid } = useChats();
   const { friends } = useFriends();
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
   const { isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
@@ -522,11 +521,10 @@ const MessagesPage = () => {
                   const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
                   const chatUsername = otherParticipant?.profiles?.username;
                   const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
-                  // Get last message from messages array for this chat
-                  const chatMessages = messages.filter((m) => m.chat_id === chat.id);
-                  const lastMessage = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null;
-                  const lastMessageTime = lastMessage?.created_at || chat.updated_at ?
-                  formatDistanceToNow(new Date(lastMessage?.created_at || chat.updated_at), { addSuffix: false }).
+                  // Use last_message from chat list RPC instead of filtering messages array
+                  const lastMessageContent = chat.last_message;
+                  const lastMessageTime = chat.last_message_at || chat.updated_at ?
+                  formatDistanceToNow(new Date(chat.last_message_at || chat.updated_at), { addSuffix: false }).
                   replace('about ', '').
                   replace(' minutes', 'm').
                   replace(' minute', 'm').
@@ -542,9 +540,9 @@ const MessagesPage = () => {
                   '';
                   const isOnlineUser = otherParticipant ? isUserOnline(otherParticipant.user_id) : false;
                   // Get last message snippet
-                  const lastMessageSnippet = lastMessage?.content ?
-                  lastMessage.content.length > 30 ? lastMessage.content.slice(0, 30) + '...' : lastMessage.content :
-                  lastMessage?.media_url ? '📷 Media' : 'Tap to chat';
+                  const lastMessageSnippet = lastMessageContent ?
+                  lastMessageContent.length > 30 ? lastMessageContent.slice(0, 30) + '...' : lastMessageContent :
+                  'Tap to chat';
 
                   return (
                     <div
@@ -584,9 +582,6 @@ const MessagesPage = () => {
                                  <div className="flex items-center gap-1">
                                   {pinnedChatIds.includes(chat.id) &&
                             <Pin className="h-3 w-3 flex-shrink-0 text-primary/60 rotate-45" />
-                            }
-                                  {lastMessage?.sender_id === user?.id &&
-                            <Check className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
                             }
                                   <p className="text-xs md:text-sm text-muted-foreground truncate">
                                     {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
@@ -809,11 +804,10 @@ const MessagesPage = () => {
                   }
                     <div ref={messagesEndRef} />
                   </div>
-                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
-                <div className="fixed inset-x-0 bottom-0 md:absolute md:auto md:auto bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100] ml-[320px]">
+                <div className="fixed inset-x-0 bottom-0 md:absolute md:auto md:auto bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100] md:ml-[320px]">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
