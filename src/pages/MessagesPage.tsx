@@ -804,6 +804,7 @@ const MessagesPage = () => {
                   })
                   }
                     <div ref={messagesEndRef} />
+                  </div>
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
