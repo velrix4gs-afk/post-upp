@@ -584,7 +584,6 @@ const MessagesPage = () => {
                                   {pinnedChatIds.includes(chat.id) &&
                             <Pin className="h-3 w-3 flex-shrink-0 text-primary/60 rotate-45" />
                             }
-                                  {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
                                   <p className="text-xs md:text-sm text-muted-foreground truncate">
                                     {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
                                   </p>
