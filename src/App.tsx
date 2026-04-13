@@ -12,12 +12,18 @@ import { Button } from "@/components/ui/button";
 import { initNetworkMonitor } from "@/lib/networkMonitor";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 
+// Eager-load core pages for instant navigation
+import Feed from "./pages/Feed";
+import MessagesPage from "./pages/MessagesPage";
+import ProfilePage from "./pages/ProfilePage";
+import SearchPage from "./pages/SearchPage";
+import { BottomNavigation } from "@/components/BottomNavigation";
+
 // Lazy load components that are only needed when authenticated
 const RealtimeNotifications = lazy(() => import("@/components/RealtimeNotifications").then(m => ({ default: m.RealtimeNotifications })));
 const IncomingCallOverlay = lazy(() => import("@/components/IncomingCallOverlay").then(m => ({ default: m.IncomingCallOverlay })));
-const BottomNavigation = lazy(() => import("@/components/BottomNavigation").then(m => ({ default: m.BottomNavigation })));
 
-// Lazy load pages for code splitting
+// Lazy load secondary pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const SignIn = lazy(() => import("./pages/SignIn"));
@@ -26,12 +32,8 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const MagicLinkSent = lazy(() => import("./pages/MagicLinkSent"));
-const Feed = lazy(() => import("./pages/Feed"));
-const SearchPage = lazy(() => import("./pages/SearchPage"));
-const MessagesPage = lazy(() => import("./pages/MessagesPage"));
 const FriendsPage = lazy(() => import("./pages/FriendsPage"));
 const ThreadView = lazy(() => import("./pages/ThreadView"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CreatorPage = lazy(() => import("./pages/creator/CreatorPage").then(m => ({ default: m.CreatorPage })));
 const VerificationCodes = lazy(() => import("./pages/admin/VerificationCodes"));
 const BookmarksPage = lazy(() => import("./pages/BookmarksPage"));
@@ -73,6 +75,29 @@ const queryClient = new QueryClient();
 // Initialize network monitoring
 initNetworkMonitor();
 
+// Prefetch secondary pages in background after auth
+const usePagePrefetch = () => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const prefetch = () => {
+        import("./pages/ReelsPage");
+        import("./pages/BookmarksPage");
+        import("./pages/SettingsPage");
+        import("./pages/ExplorePage");
+        import("./pages/FriendsPage");
+        import("./pages/AnalyticsDashboard");
+        import("./pages/PremiumPage");
+        import("./pages/PagesPage");
+      };
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(prefetch);
+      } else {
+        prefetch();
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+};
 // Error Boundary Component
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -138,14 +163,19 @@ const AuthenticatedFeatures = () => {
   // Always run offline sync for queued actions
   useOfflineSync();
   
+  // Prefetch secondary pages in background
+  usePagePrefetch();
+  
   if (!user) return null;
   
   return (
-    <Suspense fallback={null}>
-      <RealtimeNotifications />
-      <IncomingCallOverlay />
+    <>
+      <Suspense fallback={null}>
+        <RealtimeNotifications />
+        <IncomingCallOverlay />
+      </Suspense>
       <BottomNavigation />
-    </Suspense>
+    </>
   );
 };
 
