@@ -163,14 +163,19 @@ const AuthenticatedFeatures = () => {
   // Always run offline sync for queued actions
   useOfflineSync();
   
+  // Prefetch secondary pages in background
+  usePagePrefetch();
+  
   if (!user) return null;
   
   return (
-    <Suspense fallback={null}>
-      <RealtimeNotifications />
-      <IncomingCallOverlay />
+    <>
+      <Suspense fallback={null}>
+        <RealtimeNotifications />
+        <IncomingCallOverlay />
+      </Suspense>
       <BottomNavigation />
-    </Suspense>
+    </>
   );
 };
 
