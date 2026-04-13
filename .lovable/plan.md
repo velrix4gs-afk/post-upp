@@ -1,38 +1,47 @@
 
 
-# Preload Critical Pages + Eager Loading for Key Routes
+# Messaging System Cleanup
 
-## What This Solves
-Currently every page is lazy-loaded, meaning the JS chunk only downloads when you navigate to it — causing a visible delay. We'll eagerly preload the most important pages right after login, and prefetch others in the background.
+## Problems Found
 
-## Approach
+### 1. Chat list never shows last message previews
+`MessagesPage.tsx` line 526 tries to get last messages from the `messages` state — but that array only contains messages for the **currently selected chat**. Every other chat in the list shows "Tap to chat" instead of an actual message preview. This is the biggest UX issue.
 
-### 1. Eager-load core pages (no lazy for critical routes)
-Stop lazy-loading the 5 most-used pages and import them directly:
-- **Feed** — main landing page after login
-- **MessagesPage** — real-time, needs to be instant
-- **ProfilePage** — frequently visited
-- **SearchPage** — quick access needed
-- **BottomNavigation** — always visible
+### 2. N+1 query waterfall in `fetchChats` (useMessages.ts)
+For each chat, the code fetches participants individually, then for each participant fetches their profile individually. With 10 chats averaging 2 participants each, that's ~30 sequential DB calls just to load the chat list.
 
-These will be bundled in the main chunk and available immediately with zero delay.
+### 3. Input bar broken on mobile
+Line 816: `className="fixed inset-x-0 bottom-0 ... ml-[320px]"` — the `ml-[320px]` pushes the input bar off-screen on mobile where the sidebar is hidden. Should only apply on `md:` breakpoint.
 
-### 2. Prefetch remaining pages after auth resolves
-Add a `usePagePrefetch` hook inside `AuthenticatedFeatures` that triggers `import()` calls for secondary pages (Reels, Bookmarks, Settings, Explore, etc.) after a short idle delay (~2 seconds). This downloads chunks in the background so they're cached by the time the user navigates.
+### 4. Duplicate `messagesEndRef` divs
+Lines 810 and 812 both render `<div ref={messagesEndRef} />`, causing scroll-to-bottom to target the wrong element.
 
-### 3. React Query prefetching for messages data
-In the `AuthenticatedFeatures` component, prefetch the chat list query so message data is already in the query cache when the user opens Messages.
+### 5. Two competing chat hooks
+`useChats.ts` and `useMessages.ts` both independently fetch the chat list with different data shapes, causing confusion and redundant network calls.
 
-## Technical Details
+## Plan
 
-### Changes to `src/App.tsx`
-- Convert Feed, MessagesPage, ProfilePage, SearchPage, BottomNavigation from `lazy()` to direct `import`
-- Add a `usePagePrefetch` hook that runs `requestIdleCallback` or `setTimeout` to trigger `import()` on remaining lazy pages
-- Prefetch chat list data via `queryClient.prefetchQuery`
+### Step 1: Add last message to chat list query
+In `useMessages.ts` `fetchChats`, after fetching chats, batch-fetch the latest message per chat in a single query (select from `messages` with distinct on `chat_id` ordered by `created_at desc`). Store last messages in a Map and attach to each chat object. This gives chat list items real previews.
 
-### No other files change
-This is purely a loading strategy change in App.tsx. No database changes, no new files, no removed files.
+### Step 2: Optimize fetchChats — eliminate N+1
+Replace the per-chat participant + per-participant profile loop with a single batch query:
+- Fetch all `chat_participants` for all `chatIds` in one call
+- Fetch all unique user profiles in one call
+- Join them in memory
 
-## Files to Edit
-- `src/App.tsx` — eager imports for 5 core pages, idle-prefetch hook for the rest, query prefetch for messages
+This reduces ~30 queries to 3.
+
+### Step 3: Fix input bar mobile positioning
+Change `ml-[320px]` to `md:ml-[320px]` so the input spans full width on mobile.
+
+### Step 4: Remove duplicate messagesEndRef
+Delete the extra `<div ref={messagesEndRef} />` on line 812.
+
+### Step 5: Remove `useChats` from MessagesPage
+`useMessages` already handles chat listing. The only thing `useChats` is used for in `MessagesPage` is `createChat`. Move `createChat` logic into `useMessages` or import it standalone, and stop double-fetching.
+
+## Files to Change
+- **`src/hooks/useMessages.ts`** — add last_message field to Chat, batch-optimize fetchChats, add createChat
+- **`src/pages/MessagesPage.tsx`** — fix input ml, remove duplicate ref, remove useChats import, use last_message for previews
 
