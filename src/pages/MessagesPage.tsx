@@ -600,7 +600,7 @@ const MessagesPage = () => {
           {/* NewChatDialog is rendered at bottom of component */}
 
           {/* Chat Area */}
-          <div className={`${selectedChatId || showAIChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col relative`}>
+          <div className={`${selectedChatId || showAIChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col overflow-hidden relative`}>
             {/* AI Assistant Chat */}
             {showAIChat ?
             <AIAssistantChat
@@ -731,7 +731,7 @@ const MessagesPage = () => {
                   backgroundPosition: 'center'
                 } : {}}>
 
-                  <div className="space-y-2 max-w-4xl mx-auto pb-[50px] my-[2px]">
+                  <div className="space-y-2 max-w-4xl mx-auto my-[2px]">
                     {searchQuery.trim() && filteredMessages.length === 0 ?
                   <div className="text-center py-12 text-muted-foreground">
                         <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -807,7 +807,7 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
-                <div className="fixed left-0 right-0 bottom-0 md:absolute md:left-auto md:right-auto md:bottom-0 bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-[100] md:ml-[320px]">
+                <div className="bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-10 flex-shrink-0 border-t border-border/30">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 

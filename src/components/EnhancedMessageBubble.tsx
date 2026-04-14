@@ -182,10 +182,10 @@ export const EnhancedMessageBubble = ({
                     : undefined
                 }}
                 className={cn(
-                  "rounded-2xl px-3 py-2 md:px-4 md:py-2 shadow-sm",
+                  "rounded-2xl px-3 py-2 md:px-4 md:py-2",
                   isOwn
-                    ? !bubbleColor ? "bg-primary text-primary-foreground rounded-tr-sm" : "text-primary-foreground rounded-tr-sm"
-                    : "bg-muted rounded-tl-sm"
+                    ? !bubbleColor ? "bg-[#d3e3fd] text-[#1a1c1e] dark:bg-[#004a77] dark:text-[#d3e3fd] rounded-tr-sm" : "text-primary-foreground rounded-tr-sm"
+                    : "bg-gray-100 text-[#1a1c1e] dark:bg-[#303134] dark:text-[#e3e3e3] rounded-tl-sm"
                 )}
               >
                 {isForwarded && (
