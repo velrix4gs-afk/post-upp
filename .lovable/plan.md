@@ -1,47 +1,30 @@
 
 
-# Messaging System Cleanup
+# Fix Mobile Messaging Issues
 
-## Problems Found
+## 3 Problems to Fix
 
-### 1. Chat list never shows last message previews
-`MessagesPage.tsx` line 526 tries to get last messages from the `messages` state — but that array only contains messages for the **currently selected chat**. Every other chat in the list shows "Tap to chat" instead of an actual message preview. This is the biggest UX issue.
+### 1. Text Input Bar Not Aligned on Mobile
+Line 810: The input section uses `fixed inset-x-0 bottom-0` with `md:ml-[320px]`. On mobile, `fixed inset-x-0` stretches full width which is correct, but the input bar's form has `rounded-full` on line 886 which may cause visual misalignment. The real issue is the input container lacks left/right padding consistency on mobile. Will ensure the fixed input bar spans correctly without sidebar offset on mobile.
 
-### 2. N+1 query waterfall in `fetchChats` (useMessages.ts)
-For each chat, the code fetches participants individually, then for each participant fetches their profile individually. With 10 chats averaging 2 participants each, that's ~30 sequential DB calls just to load the chat list.
+### 2. Popup Not Dismissing on Outside Tap
+The `ProfileHoverCard` uses a Radix `Dialog` with `DialogContent` set to `bg-transparent shadow-none max-w-fit`. The problem: Radix Dialog content receives pointer events across its full bounding box. Since the content has `max-w-fit`, tapping outside the visible `MiniProfilePopup` card but inside the dialog content area doesn't trigger the overlay dismiss. Fix: add `onInteractOutside` handler to close, and ensure the DialogContent doesn't consume clicks on transparent areas by using `pointer-events-none` on the wrapper with `pointer-events-auto` on the inner card.
 
-### 3. Input bar broken on mobile
-Line 816: `className="fixed inset-x-0 bottom-0 ... ml-[320px]"` — the `ml-[320px]` pushes the input bar off-screen on mobile where the sidebar is hidden. Should only apply on `md:` breakpoint.
+### 3. Random Border Box at Bottom of Messages Page
+The `Card` on line 403 has `border-0 md:border` — this should be working. The likely culprit is the chat area wrapper `div` on line 1001 that closes, or some inner element producing a visible border on mobile. Looking at the structure: on mobile when no chat is selected, the chat list shows and the right panel is hidden. But if the `Card` still has residual border styles from `bg-gradient-to-br` or child elements, it could create a visible box. Will audit and ensure no child borders leak on mobile.
 
-### 4. Duplicate `messagesEndRef` divs
-Lines 810 and 812 both render `<div ref={messagesEndRef} />`, causing scroll-to-bottom to target the wrong element.
+## Changes
 
-### 5. Two competing chat hooks
-`useChats.ts` and `useMessages.ts` both independently fetch the chat list with different data shapes, causing confusion and redundant network calls.
+### File: `src/components/ProfileHoverCard.tsx`
+- Add `onInteractOutside` to `DialogContent` to call `setOpen(false)` — ensures tapping the overlay always dismisses
+- Set `DialogContent` to `pointer-events-none` wrapper, with `MiniProfilePopup` wrapped in a `pointer-events-auto` div so only the visible card captures events
 
-## Plan
+### File: `src/pages/MessagesPage.tsx`
+- **Input bar alignment**: Change the fixed input container (line 810) from `fixed inset-x-0 bottom-0` to use proper mobile-scoped styling. Remove `md:auto md:auto` (duplicated/meaningless). Ensure the input section uses `left-0 right-0 bottom-0` on mobile and respects the sidebar offset only on `md:` screens
+- **Border box**: Add `shadow-none` to the Card on mobile and ensure no gradient border leaks. Check the inner flex container for any border-bottom on mobile
+- Remove any remaining visual artifacts from the card edges on small screens
 
-### Step 1: Add last message to chat list query
-In `useMessages.ts` `fetchChats`, after fetching chats, batch-fetch the latest message per chat in a single query (select from `messages` with distinct on `chat_id` ordered by `created_at desc`). Store last messages in a Map and attach to each chat object. This gives chat list items real previews.
-
-### Step 2: Optimize fetchChats — eliminate N+1
-Replace the per-chat participant + per-participant profile loop with a single batch query:
-- Fetch all `chat_participants` for all `chatIds` in one call
-- Fetch all unique user profiles in one call
-- Join them in memory
-
-This reduces ~30 queries to 3.
-
-### Step 3: Fix input bar mobile positioning
-Change `ml-[320px]` to `md:ml-[320px]` so the input spans full width on mobile.
-
-### Step 4: Remove duplicate messagesEndRef
-Delete the extra `<div ref={messagesEndRef} />` on line 812.
-
-### Step 5: Remove `useChats` from MessagesPage
-`useMessages` already handles chat listing. The only thing `useChats` is used for in `MessagesPage` is `createChat`. Move `createChat` logic into `useMessages` or import it standalone, and stop double-fetching.
-
-## Files to Change
-- **`src/hooks/useMessages.ts`** — add last_message field to Chat, batch-optimize fetchChats, add createChat
-- **`src/pages/MessagesPage.tsx`** — fix input ml, remove duplicate ref, remove useChats import, use last_message for previews
+## Files to Edit
+- `src/components/ProfileHoverCard.tsx` — fix tap-outside dismiss
+- `src/pages/MessagesPage.tsx` — fix input alignment + border box on mobile
 
