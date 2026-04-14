@@ -74,10 +74,13 @@ export const ProfileHoverCard = ({ userId, children, disabled }: ProfileHoverCar
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent 
-          className="p-0 border-none bg-transparent shadow-none max-w-fit w-auto flex items-center justify-center"
+          className="p-0 border-none bg-transparent shadow-none max-w-fit w-auto flex items-center justify-center pointer-events-none"
           hideCloseButton
+          onInteractOutside={() => setOpen(false)}
         >
-          <MiniProfilePopup userId={userId} onClose={() => setOpen(false)} />
+          <div className="pointer-events-auto">
+            <MiniProfilePopup userId={userId} onClose={() => setOpen(false)} />
+          </div>
         </DialogContent>
       </Dialog>
     </>
