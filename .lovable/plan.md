@@ -1,30 +1,33 @@
 
 
-# Fix Mobile Messaging Issues
+# Fix Chat Scroll + Google Messages-Style Layout
 
-## 3 Problems to Fix
+## Problems
 
-### 1. Text Input Bar Not Aligned on Mobile
-Line 810: The input section uses `fixed inset-x-0 bottom-0` with `md:ml-[320px]`. On mobile, `fixed inset-x-0` stretches full width which is correct, but the input bar's form has `rounded-full` on line 886 which may cause visual misalignment. The real issue is the input container lacks left/right padding consistency on mobile. Will ensure the fixed input bar spans correctly without sidebar offset on mobile.
+### 1. Can't scroll messages
+The input bar (line 810) uses `fixed` positioning, which removes it from the flex flow. The messages area gets `flex-1 overflow-y-auto` but the fixed input overlaps it. The `pb-[50px]` padding isn't enough to compensate, and on some devices the flex container doesn't distribute height correctly.
 
-### 2. Popup Not Dismissing on Outside Tap
-The `ProfileHoverCard` uses a Radix `Dialog` with `DialogContent` set to `bg-transparent shadow-none max-w-fit`. The problem: Radix Dialog content receives pointer events across its full bounding box. Since the content has `max-w-fit`, tapping outside the visible `MiniProfilePopup` card but inside the dialog content area doesn't trigger the overlay dismiss. Fix: add `onInteractOutside` handler to close, and ensure the DialogContent doesn't consume clicks on transparent areas by using `pointer-events-none` on the wrapper with `pointer-events-auto` on the inner card.
+### 2. Chat styling doesn't match Google Messages look
+The reference image shows: clean dark background, simple gray bubbles (received) and light blue bubbles (sent), centered date separators, and a bottom input bar with `+`, text field, emoji, image, and mic icons all in one row.
 
-### 3. Random Border Box at Bottom of Messages Page
-The `Card` on line 403 has `border-0 md:border` — this should be working. The likely culprit is the chat area wrapper `div` on line 1001 that closes, or some inner element producing a visible border on mobile. Looking at the structure: on mobile when no chat is selected, the chat list shows and the right panel is hidden. But if the `Card` still has residual border styles from `bg-gradient-to-br` or child elements, it could create a visible box. Will audit and ensure no child borders leak on mobile.
+## Plan
 
-## Changes
+### Fix 1: Input bar — change from `fixed` to flow-based positioning
+- Change the input container (line 810) from `fixed left-0 right-0 bottom-0` to a non-fixed layout that sits naturally at the bottom of the flex column
+- Use `sticky bottom-0` or just let it be a normal flex child (the parent flex-col already pushes it to the bottom)
+- Remove the `pb-[50px]` hack on the messages container since the input will no longer overlay
+- This fixes scrolling because the messages area can now properly fill available space with `flex-1 overflow-y-auto`
 
-### File: `src/components/ProfileHoverCard.tsx`
-- Add `onInteractOutside` to `DialogContent` to call `setOpen(false)` — ensures tapping the overlay always dismisses
-- Set `DialogContent` to `pointer-events-none` wrapper, with `MiniProfilePopup` wrapped in a `pointer-events-auto` div so only the visible card captures events
+### Fix 2: Google Messages-style chat bubbles
+- Adjust bubble colors: received = `bg-[#303134]` dark / `bg-gray-100` light, sent = `bg-[#004a77]` dark / `bg-[#d3e3fd]` light (Google Messages palette)
+- Add date separator dividers between message groups (centered text with horizontal lines)
+- Clean up the input bar to match: single-row layout with `+`, input field, emoji, image, mic icons — already close but remove the nested rounded-full form wrapper
 
-### File: `src/pages/MessagesPage.tsx`
-- **Input bar alignment**: Change the fixed input container (line 810) from `fixed inset-x-0 bottom-0` to use proper mobile-scoped styling. Remove `md:auto md:auto` (duplicated/meaningless). Ensure the input section uses `left-0 right-0 bottom-0` on mobile and respects the sidebar offset only on `md:` screens
-- **Border box**: Add `shadow-none` to the Card on mobile and ensure no gradient border leaks. Check the inner flex container for any border-bottom on mobile
-- Remove any remaining visual artifacts from the card edges on small screens
+### Fix 3: Proper flex layout for the chat view
+- Ensure the chat area container (line 603) has `h-full` or `flex-1` with `overflow-hidden`
+- The inner structure: header (auto) → messages (flex-1 overflow-y-auto) → input (auto) — standard chat layout pattern
 
 ## Files to Edit
-- `src/components/ProfileHoverCard.tsx` — fix tap-outside dismiss
-- `src/pages/MessagesPage.tsx` — fix input alignment + border box on mobile
+- **`src/pages/MessagesPage.tsx`** — fix input positioning from fixed to flow-based, fix flex layout for scroll, add date separators, adjust bubble styling references
+- **`src/components/EnhancedMessageBubble.tsx`** — update bubble colors to Google Messages palette
 
