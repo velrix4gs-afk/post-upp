@@ -156,12 +156,8 @@ export const useMessages = (chatId?: string) => {
         }, async (payload) => {
           const newMessage = payload.new as any;
           
-          // Fetch sender profile for the new message
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, display_name, avatar_url')
-            .eq('id', newMessage.sender_id)
-            .single();
+          // Use cached profile for fast real-time updates
+          const profile = await getCachedProfile(newMessage.sender_id);
           
           const messageWithProfile: Message = {
             ...newMessage,
@@ -227,12 +223,8 @@ export const useMessages = (chatId?: string) => {
         }, async (payload) => {
           const updatedMessage = payload.new as any;
           
-          // Fetch sender profile for updated message
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, display_name, avatar_url')
-            .eq('id', updatedMessage.sender_id)
-            .single();
+          // Use cached profile for fast real-time updates
+          const profile = await getCachedProfile(updatedMessage.sender_id);
           
           const messageWithProfile: Message = {
             ...updatedMessage,
