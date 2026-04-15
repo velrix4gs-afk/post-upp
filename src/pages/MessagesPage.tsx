@@ -238,51 +238,64 @@ const MessagesPage = () => {
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!messageText.trim() && !selectedImage || !selectedChatId) return;
+    if ((!messageText.trim() && !selectedImage) || !selectedChatId) return;
+
+    // Capture values and clear UI immediately for snappy feel
+    const currentText = messageText;
+    const currentImage = selectedImage;
+    const currentIsVideo = isVideo;
+    const currentReplyingTo = replyingTo;
+    const currentEditingId = editingMessageId;
+
+    setMessageText('');
+    setSelectedImage(null);
+    setImagePreview(null);
+    setIsVideo(false);
+    setReplyingTo(null);
+    setEditingMessageId(null);
 
     try {
       // Handle edit
-      if (editingMessageId) {
-        await editMessage(editingMessageId, messageText);
-        setEditingMessageId(null);
-        setMessageText('');
+      if (currentEditingId) {
+        await editMessage(currentEditingId, currentText);
         return;
       }
 
       // Handle new message
       let mediaUrl = null;
       let mediaType = null;
-      if (selectedImage) {
-        const fileExt = selectedImage.name.split('.').pop();
+      if (currentImage) {
+        const fileExt = currentImage.name.split('.').pop();
         const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage.
-        from('messages').
-        upload(fileName, selectedImage);
+        const { error: uploadError } = await supabase.storage
+          .from('messages')
+          .upload(fileName, currentImage);
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage.
-        from('messages').
-        getPublicUrl(fileName);
+        const { data: { publicUrl } } = supabase.storage
+          .from('messages')
+          .getPublicUrl(fileName);
 
         mediaUrl = publicUrl;
-        mediaType = isVideo ? `video/${fileExt}` : `image/${fileExt}`;
+        mediaType = currentIsVideo ? `video/${fileExt}` : `image/${fileExt}`;
       }
 
       await sendMessage(
-        messageText.trim() || (isVideo ? '🎥 Video' : '📷 Photo'),
-        replyingTo?.id,
+        currentText.trim() || (currentIsVideo ? '🎥 Video' : '📷 Photo'),
+        currentReplyingTo?.id,
         mediaUrl || undefined,
         mediaType || undefined
       );
-
-      setMessageText('');
-      setSelectedImage(null);
-      setImagePreview(null);
-      setIsVideo(false);
-      setReplyingTo(null);
     } catch (error) {
+      // Restore text on failure so user doesn't lose their message
+      setMessageText(currentText);
+      if (currentImage) {
+        setSelectedImage(currentImage);
+        setIsVideo(currentIsVideo);
+      }
+      if (currentReplyingTo) setReplyingTo(currentReplyingTo);
       toast({
         title: 'Error',
         description: 'Failed to send message',
@@ -614,7 +627,7 @@ const MessagesPage = () => {
             <>
                 {/* Chat Header */}
                 <div
-                className="p-2 border-b border-border/50 flex items-center justify-between bg-card/80 backdrop-blur-sm sticky top-0 z-10 cursor-pointer hover:bg-card/90 transition-colors"
+                className="px-3 py-2.5 flex items-center justify-between bg-card sticky top-0 z-10 cursor-pointer transition-colors"
                 onClick={() => {
                   if (selectedChat?.is_group) {
                     setShowGroupInfo(true);
@@ -727,7 +740,7 @@ const MessagesPage = () => {
                 {/* Messages Area */}
                 <div
                  ref={messagesContainerRef}
-                 className="flex-1 min-h-0 overflow-y-auto px-4 py-3 pb-4 bg-background"
+                 className="flex-1 min-h-0 overflow-y-auto px-3 py-2 bg-background"
                 style={chatSettings?.wallpaper_url ? {
                   backgroundImage: `url(${chatSettings.wallpaper_url})`,
                   backgroundSize: 'cover',
@@ -809,8 +822,8 @@ const MessagesPage = () => {
                   </div>
                 </div>
 
-                {/* Input Section - Fixed at bottom */}
-                <div className="bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-10 flex-shrink-0">
+                {/* Input Section */}
+                <div className="bg-card pb-[env(safe-area-inset-bottom)] z-10 flex-shrink-0">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
@@ -886,14 +899,14 @@ const MessagesPage = () => {
 
                 <>
                       {/* Message Input */}
-                      <form onSubmit={handleSendMessage} className="p-3">
-                        <div className="flex items-end gap-2">
+                      <form onSubmit={handleSendMessage} className="px-2 py-2">
+                        <div className="flex items-center gap-1.5">
                           {/* Attachments Menu Button */}
                           <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        className="h-10 w-10 rounded-full hover:bg-primary/10 flex-shrink-0"
+                        className="h-9 w-9 rounded-full hover:bg-muted flex-shrink-0"
                         onClick={() => setShowAttachmentsSheet(true)}>
 
                             <Plus className="h-5 w-5" />
@@ -915,15 +928,8 @@ const MessagesPage = () => {
 
                           
                           {/* Input Container */}
-                          <div className="flex-1 flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-full px-4 py-2 border border-border/50 focus-within:border-primary/50 transition-all">
-                            <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 hover:bg-primary/10 flex-shrink-0">
-
-                              <Smile className="h-5 w-5" />
-                            </Button>
+                          <div className="flex-1 flex items-center gap-1 bg-muted/40 rounded-full px-3 py-1 border border-border/30 focus-within:border-primary/40 transition-colors">
+                            <Smile className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                             
                             <Input
                           ref={messageInputRef}
@@ -932,8 +938,8 @@ const MessagesPage = () => {
                             setMessageText(e.target.value);
                             handleTyping();
                           }}
-                          placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
-                          className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-0"
+                          placeholder={editingMessageId ? "Edit message..." : "Message"}
+                          className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-1 text-sm"
                           disabled={isRecordingVoice}
                           onKeyPress={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -947,11 +953,11 @@ const MessagesPage = () => {
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 hover:bg-primary/10 flex-shrink-0"
+                          className="h-7 w-7 hover:bg-transparent flex-shrink-0 text-muted-foreground"
                           onClick={() => fileInputRef.current?.click()}
                           title="Attach image or video">
 
-                              <Paperclip className="h-5 w-5" />
+                              <Paperclip className="h-4 w-4" />
                             </Button>
                           </div>
                           
@@ -960,18 +966,18 @@ const MessagesPage = () => {
                       <Button
                         type="submit"
                         size="icon"
-                        className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all">
+                        className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 flex-shrink-0">
 
-                              <Send className="h-5 w-5" />
+                              <Send className="h-4 w-4" />
                             </Button> :
 
                       <Button
                         type="button"
                         size="icon"
-                        className="h-11 w-11 rounded-full bg-gradient-primary hover:shadow-glow flex-shrink-0 transition-all"
+                        className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 flex-shrink-0"
                         onClick={() => setIsRecordingVoice(true)}>
 
-                              <Mic className="h-5 w-5" />
+                              <Mic className="h-4 w-4" />
                             </Button>
                       }
                         </div>

@@ -5,6 +5,26 @@ import { toast } from './use-toast';
 import { AsyncStorage, CacheHelper } from '@/lib/asyncStorage';
 import { enqueueOfflineAction } from '@/lib/offlineQueue';
 
+// In-memory profile cache to avoid repeated fetches during real-time updates
+const profileCache = new Map<string, { username: string; display_name: string; avatar_url?: string; fetchedAt: number }>();
+const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const getCachedProfile = async (userId: string) => {
+  const cached = profileCache.get(userId);
+  if (cached && Date.now() - cached.fetchedAt < PROFILE_CACHE_TTL) {
+    return { username: cached.username, display_name: cached.display_name, avatar_url: cached.avatar_url };
+  }
+  const { data } = await supabase
+    .from('profiles')
+    .select('username, display_name, avatar_url')
+    .eq('id', userId)
+    .single();
+  if (data) {
+    profileCache.set(userId, { ...data, fetchedAt: Date.now() });
+  }
+  return data;
+};
+
 export interface Message {
   id: string;
   chat_id: string;
@@ -136,12 +156,8 @@ export const useMessages = (chatId?: string) => {
         }, async (payload) => {
           const newMessage = payload.new as any;
           
-          // Fetch sender profile for the new message
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, display_name, avatar_url')
-            .eq('id', newMessage.sender_id)
-            .single();
+          // Use cached profile for fast real-time updates
+          const profile = await getCachedProfile(newMessage.sender_id);
           
           const messageWithProfile: Message = {
             ...newMessage,
@@ -207,12 +223,8 @@ export const useMessages = (chatId?: string) => {
         }, async (payload) => {
           const updatedMessage = payload.new as any;
           
-          // Fetch sender profile for updated message
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, display_name, avatar_url')
-            .eq('id', updatedMessage.sender_id)
-            .single();
+          // Use cached profile for fast real-time updates
+          const profile = await getCachedProfile(updatedMessage.sender_id);
           
           const messageWithProfile: Message = {
             ...updatedMessage,
@@ -361,15 +373,7 @@ export const useMessages = (chatId?: string) => {
       // Fetch sender profiles and reply_to messages
       const messagesWithProfiles: Message[] = await Promise.all(
         (messagesData || []).map(async (msg) => {
-          const { data: senderProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('username, display_name, avatar_url')
-            .eq('id', msg.sender_id)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error(`[useMessages] Error fetching sender profile for ${msg.sender_id}:`, profileError);
-          }
+          const senderProfile = await getCachedProfile(msg.sender_id);
 
           let reply_to_message = undefined;
           if (msg.reply_to) {
@@ -380,11 +384,7 @@ export const useMessages = (chatId?: string) => {
               .maybeSingle();
 
             if (replyMsg) {
-              const { data: replySenderProfile } = await supabase
-                .from('profiles')
-                .select('display_name')
-                .eq('id', msg.sender_id)
-                .maybeSingle();
+              const replySenderProfile = await getCachedProfile(msg.sender_id);
 
               reply_to_message = {
                 id: replyMsg.id,
