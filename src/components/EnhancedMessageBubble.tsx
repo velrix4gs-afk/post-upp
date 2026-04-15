@@ -9,7 +9,7 @@ import {
   Copy, 
   Star, 
   Forward, 
-  CheckCheck, 
+  CheckCheck,
   FileIcon, 
   ZoomIn,
   Pin,
@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { ImageViewer } from "./messaging/ImageViewer";
+import { ReadReceiptIndicator } from "./messaging/ReadReceiptIndicator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -273,25 +274,13 @@ export const EnhancedMessageBubble = ({
                   </p>
                 )}
 
-                {/* Message status for own messages */}
-                {isOwn && (
-                  <div className="flex justify-end items-center gap-1 mt-1">
-                    {status === 'sending' && (
-                      <div className="flex items-center gap-1 text-xs opacity-70">
-                        <div className="h-2 w-2 rounded-full bg-current animate-pulse" />
-                        Sending...
-                      </div>
-                    )}
-                    {status === 'failed' && (
-                      <div className="flex items-center gap-1 text-xs text-destructive">
-                        <span>Failed</span>
-                      </div>
-                    )}
-                    {status === 'read' && <CheckCheck className="h-3 w-3 text-blue-500" />}
-                    {status === 'delivered' && <CheckCheck className="h-3 w-3" />}
-                    {status === 'sent' && <CheckCheck className="h-3 w-3 opacity-50" />}
-                  </div>
-                )}
+                {/* Timestamp and read receipt */}
+                <div className="flex justify-end items-center gap-1 mt-1">
+                  <span className="text-[10px] opacity-60">
+                    {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <ReadReceiptIndicator status={status} isOwn={isOwn} />
+                </div>
               </div>
 
               {/* Reactions display using MessageReactions component */}

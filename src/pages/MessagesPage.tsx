@@ -174,19 +174,22 @@ const MessagesPage = () => {
 
     if (isInitialLoadRef.current) {
       isInitialLoadRef.current = false;
-      // On initial load, find first unread message not sent by current user
-      const firstUnread = messages.find(
-        (m) => m.sender_id !== user?.id && m.status !== 'read'
-      );
-      if (firstUnread) {
-        const el = document.getElementById(`message-${firstUnread.id}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'auto', block: 'center' });
-          return;
+      const container = messagesContainerRef.current;
+      if (container) {
+        // On initial load, find first unread message not sent by current user
+        const firstUnread = messages.find(
+          (m) => m.sender_id !== user?.id && m.status !== 'read'
+        );
+        if (firstUnread) {
+          const el = document.getElementById(`message-${firstUnread.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'auto', block: 'center' });
+            return;
+          }
         }
+        // Fallback: instant scroll to bottom (no visible jump)
+        container.scrollTop = container.scrollHeight;
       }
-      // Fallback: scroll to bottom
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     } else {
       // On new messages, only auto-scroll if near bottom
       const container = messagesContainerRef.current;
@@ -399,10 +402,10 @@ const MessagesPage = () => {
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-background">
       <Navigation />
-      <main className="container mx-auto px-0 md:px-4 flex-1 overflow-hidden">
-        <Card className="h-full flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-0 md:border shadow-none md:shadow-sm bg-gradient-to-br from-background via-background to-primary/5">
+      <main className="container mx-auto px-0 md:px-4 flex-1 min-h-0 overflow-hidden">
+        <Card className="h-full min-h-0 flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-0 md:border shadow-none md:shadow-sm bg-background">
           {/* Chat List Sidebar */}
-          <div className={`${selectedChatId || showAIChat ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-gradient-to-b from-card/50 to-background`}>
+          <div className={`${selectedChatId || showAIChat ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-card`}>
             <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -600,7 +603,7 @@ const MessagesPage = () => {
           {/* NewChatDialog is rendered at bottom of component */}
 
           {/* Chat Area */}
-          <div className={`${selectedChatId || showAIChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col overflow-hidden relative`}>
+          <div className={`${selectedChatId || showAIChat ? 'flex' : 'hidden md:flex'} flex-1 min-h-0 flex-col overflow-hidden relative`}>
             {/* AI Assistant Chat */}
             {showAIChat ?
             <AIAssistantChat
@@ -724,7 +727,7 @@ const MessagesPage = () => {
                 {/* Messages Area */}
                 <div
                  ref={messagesContainerRef}
-                 className="flex-1 overflow-y-auto px-4 py-3 pb-4 bg-gradient-to-br from-background to-muted/20"
+                 className="flex-1 min-h-0 overflow-y-auto px-4 py-3 pb-4 bg-background"
                 style={chatSettings?.wallpaper_url ? {
                   backgroundImage: `url(${chatSettings.wallpaper_url})`,
                   backgroundSize: 'cover',
@@ -807,7 +810,7 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Input Section - Fixed at bottom */}
-                <div className="bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-10 flex-shrink-0 border-t border-border/30">
+                <div className="bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] z-10 flex-shrink-0">
                   {/* Typing Indicator */}
                   {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
 
@@ -883,7 +886,7 @@ const MessagesPage = () => {
 
                 <>
                       {/* Message Input */}
-                      <form onSubmit={handleSendMessage} className="p-3 rounded-full">
+                      <form onSubmit={handleSendMessage} className="p-3">
                         <div className="flex items-end gap-2">
                           {/* Attachments Menu Button */}
                           <Button
