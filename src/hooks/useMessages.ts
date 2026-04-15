@@ -1,9 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from './use-toast';
 import { AsyncStorage, CacheHelper } from '@/lib/asyncStorage';
 import { enqueueOfflineAction } from '@/lib/offlineQueue';
+
+// In-memory profile cache to avoid repeated fetches during real-time updates
+const profileCache = new Map<string, { username: string; display_name: string; avatar_url?: string; fetchedAt: number }>();
+const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const getCachedProfile = async (userId: string) => {
+  const cached = profileCache.get(userId);
+  if (cached && Date.now() - cached.fetchedAt < PROFILE_CACHE_TTL) {
+    return { username: cached.username, display_name: cached.display_name, avatar_url: cached.avatar_url };
+  }
+  const { data } = await supabase
+    .from('profiles')
+    .select('username, display_name, avatar_url')
+    .eq('id', userId)
+    .single();
+  if (data) {
+    profileCache.set(userId, { ...data, fetchedAt: Date.now() });
+  }
+  return data;
+};
 
 export interface Message {
   id: string;
