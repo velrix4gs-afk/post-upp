@@ -152,10 +152,12 @@ export const EnhancedMessageBubble = ({
           isOwn ? "flex-row-reverse" : "flex-row"
         )}
       >
-        <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
-          <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
-          <AvatarFallback className="text-xs">{sender.display_name[0]}</AvatarFallback>
-        </Avatar>
+        {!isOwn && (
+          <Avatar className="h-7 w-7 flex-shrink-0 mt-1">
+            <AvatarImage src={sender.avatar_url} alt={sender.display_name} />
+            <AvatarFallback className="text-xs bg-muted">{sender.display_name[0]}</AvatarFallback>
+          </Avatar>
+        )}
         
         <div className={cn(
           "flex flex-col min-w-0",
@@ -266,10 +268,10 @@ export const EnhancedMessageBubble = ({
                 )}
                 
                 {content && (
-                  <p className="text-xs md:text-sm break-words whitespace-pre-wrap">
+                  <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">
                     {content}
                     {isEdited && (
-                      <span className="text-xs opacity-70 ml-2">(edited)</span>
+                      <span className="text-[11px] opacity-60 ml-1.5">(edited)</span>
                     )}
                   </p>
                 )}
