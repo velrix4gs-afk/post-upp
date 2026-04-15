@@ -373,15 +373,7 @@ export const useMessages = (chatId?: string) => {
       // Fetch sender profiles and reply_to messages
       const messagesWithProfiles: Message[] = await Promise.all(
         (messagesData || []).map(async (msg) => {
-          const { data: senderProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('username, display_name, avatar_url')
-            .eq('id', msg.sender_id)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error(`[useMessages] Error fetching sender profile for ${msg.sender_id}:`, profileError);
-          }
+          const senderProfile = await getCachedProfile(msg.sender_id);
 
           let reply_to_message = undefined;
           if (msg.reply_to) {
@@ -392,11 +384,7 @@ export const useMessages = (chatId?: string) => {
               .maybeSingle();
 
             if (replyMsg) {
-              const { data: replySenderProfile } = await supabase
-                .from('profiles')
-                .select('display_name')
-                .eq('id', msg.sender_id)
-                .maybeSingle();
+              const replySenderProfile = await getCachedProfile(msg.sender_id);
 
               reply_to_message = {
                 id: replyMsg.id,
