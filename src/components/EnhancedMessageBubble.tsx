@@ -9,7 +9,7 @@ import {
   Copy, 
   Star, 
   Forward, 
-  CheckCheck, 
+  CheckCheck,
   FileIcon, 
   ZoomIn,
   Pin,
