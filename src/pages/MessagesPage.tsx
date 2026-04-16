@@ -126,6 +126,34 @@ const MessagesPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const [lastReceivedMessage, setLastReceivedMessage] = useState<string>('');
+  const prevMessageIdsRef = useRef<Set<string>>(new Set());
+  const newMessageIdsRef = useRef<Set<string>>(new Set());
+
+  // Track new messages for animation
+  useEffect(() => {
+    if (!messages || messages.length === 0) {
+      prevMessageIdsRef.current = new Set();
+      newMessageIdsRef.current = new Set();
+      return;
+    }
+    const currentIds = new Set(messages.map(m => m.id));
+    if (prevMessageIdsRef.current.size > 0) {
+      const freshIds = new Set<string>();
+      currentIds.forEach(id => {
+        if (!prevMessageIdsRef.current.has(id)) {
+          freshIds.add(id);
+        }
+      });
+      newMessageIdsRef.current = freshIds;
+      if (freshIds.size > 0) {
+        const timer = setTimeout(() => {
+          newMessageIdsRef.current = new Set();
+        }, 400);
+        return () => clearTimeout(timer);
+      }
+    }
+    prevMessageIdsRef.current = currentIds;
+  }, [messages]);
 
   // Auto-focus input on mount and chat change
   useEffect(() => {
@@ -780,6 +808,7 @@ const MessagesPage = () => {
                     return (
                       <EnhancedMessageBubble
                         key={message.id}
+                        isNew={newMessageIdsRef.current.has(message.id)}
                         id={message.id}
                         content={message.content || ''}
                         sender={{
