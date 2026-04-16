@@ -86,6 +86,7 @@ interface EnhancedMessageBubbleProps {
   };
   timestamp: string;
   isOwn: boolean;
+  isNew?: boolean;
   mediaUrl?: string;
   mediaType?: string;
   isEdited?: boolean;
@@ -113,6 +114,7 @@ export const EnhancedMessageBubble = ({
   sender,
   timestamp,
   isOwn,
+  isNew = false,
   mediaUrl,
   mediaType,
   isEdited = false,
@@ -145,11 +147,13 @@ export const EnhancedMessageBubble = ({
 
   return (
     <>
-      <div 
+       <div 
         id={`message-${id}`}
         className={cn(
           "flex gap-2 group mb-2 relative scroll-mt-20 w-full",
-          isOwn ? "flex-row-reverse" : "flex-row"
+          isOwn ? "flex-row-reverse" : "flex-row",
+          isNew && isOwn && "animate-message-send",
+          isNew && !isOwn && "animate-message-receive"
         )}
       >
         {!isOwn && (

@@ -102,10 +102,43 @@ export default {
             height: "0",
           },
         },
+        "message-send": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(20px) scale(0.96)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0) scale(1)",
+          },
+        },
+        "message-receive": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(15px) scale(0.97)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0) scale(1)",
+          },
+        },
+        "bubble-pop": {
+          "0%": { transform: "scale(0.95)" },
+          "60%": { transform: "scale(1.02)" },
+          "100%": { transform: "scale(1)" },
+        },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "message-send": "message-send 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
+        "message-receive": "message-receive 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
+        "bubble-pop": "bubble-pop 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "fade-up": "fade-up 300ms ease-out forwards",
       },
     },
   },
