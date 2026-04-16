@@ -232,12 +232,12 @@ export const PostCard = ({ post }: PostCardProps) => {
       </Dialog>
 
       <article 
-        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+        className="border-b hover:bg-muted/30 transition-all duration-200 cursor-pointer active:bg-muted/50"
         onClick={handleCardClick}
       >
         <div className="p-4 flex gap-3">
           <Avatar 
-            className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+            className="cursor-pointer avatar-hover flex-shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/profile/${post.author_id}`);

@@ -722,6 +722,143 @@ All colors MUST be HSL.
   }
 }
 
+/* ===== App-wide Animation Utilities ===== */
+
+/* Staggered fade-in for lists (feed posts, chat list, notifications) */
+.animate-stagger > * {
+  opacity: 0;
+  animation: stagger-fade-in 0.4s ease-out forwards;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.animate-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.animate-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.animate-stagger > *:nth-child(8) { animation-delay: 350ms; }
+.animate-stagger > *:nth-child(n+9) { animation-delay: 400ms; }
+
+@keyframes stagger-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Heart pop animation for likes */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.animate-heart-pop {
+  animation: heart-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Bookmark slide animation */
+@keyframes bookmark-slide {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+.animate-bookmark-slide {
+  animation: bookmark-slide 0.3s ease-out;
+}
+
+/* Scale tap for interactive elements */
+.tap-scale {
+  transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.tap-scale:active {
+  transform: scale(0.95);
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: page-slide-in 0.3s ease-out;
+}
+@keyframes page-slide-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Story ring pulse on hover */
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+  50% { box-shadow: 0 0 0 4px hsl(var(--primary) / 0); }
+}
+.story-ring-pulse:hover {
+  animation: ring-pulse 1.5s ease-in-out infinite;
+}
+
+/* Smooth avatar hover */
+.avatar-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.avatar-hover:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.2);
+}
+
+/* Reaction float animation */
+@keyframes reaction-float {
+  0% { opacity: 0; transform: scale(0.5) translateY(8px); }
+  60% { transform: scale(1.15) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-reaction-float {
+  animation: reaction-float 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Notification badge bounce */
+@keyframes badge-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+.animate-badge-bounce {
+  animation: badge-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Smooth collapse/expand for comments */
+.smooth-collapse {
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+  overflow: hidden;
+}
+
+/* Typing dots animation */
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+.typing-dot:nth-child(1) { animation: typing-dot 1.4s infinite 0ms; }
+.typing-dot:nth-child(2) { animation: typing-dot 1.4s infinite 200ms; }
+.typing-dot:nth-child(3) { animation: typing-dot 1.4s infinite 400ms; }
+
+/* Sheet/drawer smooth backdrop */
+[data-state="open"] > [data-radix-dialog-overlay],
+[data-state="open"] > [vaul-overlay] {
+  animation: overlay-fade 0.2s ease-out;
+}
+@keyframes overlay-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Smooth scroll for chat and feed containers */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Image load fade-in */
+.img-fade-in {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.img-fade-in.loaded {
+  opacity: 1;
+}
+
 /* Toast swipe-to-dismiss enhancements */
 [data-sonner-toast] {
   touch-action: pan-y;

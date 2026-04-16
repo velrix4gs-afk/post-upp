@@ -28,14 +28,15 @@ export const ReactionPicker = ({ onReact }: ReactionPickerProps) => {
           <Smile className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="center">
+      <PopoverContent className="w-auto p-2 animate-scale-in" align="center">
         <div className="flex gap-1">
-          {REACTIONS.map((reaction) => (
+          {REACTIONS.map((reaction, i) => (
             <Button
               key={reaction}
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-lg hover:scale-125 transition-transform"
+              className="h-8 w-8 p-0 text-lg hover:scale-125 active:scale-95 transition-all duration-200"
+              style={{ animationDelay: `${i * 40}ms` }}
               onClick={() => handleReaction(reaction)}
             >
               {reaction}
