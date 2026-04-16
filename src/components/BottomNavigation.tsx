@@ -121,9 +121,9 @@ export const BottomNavigation = () => {
                     handleInteraction();
                     item.action?.();
                   }}
-                  className="flex flex-col items-center gap-0.5"
+                  className="flex flex-col items-center gap-0.5 tap-scale"
                 >
-                  <div className="h-10 w-10 rounded-full bg-primary shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200">
+                  <div className="h-10 w-10 rounded-full bg-primary shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all duration-200">
                     <Icon className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
                   </div>
                   <span className="text-[10px] text-muted-foreground">Create</span>
@@ -142,7 +142,7 @@ export const BottomNavigation = () => {
                     navigate(item.path);
                   }
                 }}
-                className="flex flex-col items-center gap-0.5 transition-all duration-200"
+                className="flex flex-col items-center gap-0.5 transition-all duration-200 tap-scale"
               >
                 <div
                   className={cn(
