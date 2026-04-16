@@ -40,9 +40,9 @@ const Stories = () => {
             .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
           `}</style>
           {/* Add Story - Floating circle with + */}
-          <div className="flex-shrink-0 w-[72px] text-center cursor-pointer" onClick={() => navigate('/create/story')}>
+          <div className="flex-shrink-0 w-[72px] text-center cursor-pointer tap-scale" onClick={() => navigate('/create/story')}>
             <div className="relative w-[68px] h-[68px] mx-auto">
-              <div className="w-[68px] h-[68px] rounded-full bg-background border-2 border-dashed border-primary/50 flex items-center justify-center hover:border-primary transition-colors">
+              <div className="w-[68px] h-[68px] rounded-full bg-background border-2 border-dashed border-primary/50 flex items-center justify-center hover:border-primary transition-all duration-300 hover:scale-105">
                 {profile?.avatar_url ? (
                   <Avatar className="w-14 h-14">
                     <AvatarImage src={profile.avatar_url} className="object-cover" />
@@ -63,7 +63,7 @@ const Stories = () => {
           </div>
 
           {/* Story Items - Floating circles */}
-          {stories.map(story => <div key={story.id} className="flex-shrink-0 w-[72px] text-center cursor-pointer snap-start relative group" onClick={() => handleStoryClick(story)}>
+          {stories.map(story => <div key={story.id} className="flex-shrink-0 w-[72px] text-center cursor-pointer snap-start relative group tap-scale" onClick={() => handleStoryClick(story)}>
               <ProfileHoverCard userId={story.user_id}>
                 <div className="w-[68px] h-[68px] mx-auto relative">
                   {/* Gradient ring */}
