@@ -1,24 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
 import { useFriends } from '@/hooks/useFriends';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { usePresence } from '@/hooks/usePresence';
 import { useLastSeen } from '@/hooks/useLastSeen';
-import { useScreenshotDetection } from '@/hooks/useScreenshotDetection';
 import { useChatSettings } from '@/hooks/useChatSettings';
 import { useAdmin } from '@/hooks/useAdmin';
 import Navigation from '@/components/Navigation';
-import { BackNavigation } from '@/components/BackNavigation';
 import { VideoCall } from '@/components/VideoCall';
 import { VoiceCall } from '@/components/VoiceCall';
 import { ChatSettingsDialog } from '@/components/messaging/ChatSettingsDialog';
 import { EnhancedMessageBubble } from '@/components/EnhancedMessageBubble';
-import { MessagingMenu } from '@/components/MessagingMenu';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import { NewChatDialog } from '@/components/NewChatDialog';
 import { GroupChatDialog } from '@/components/messaging/GroupChatDialog';
-import TypingIndicator from '@/components/TypingIndicator';
 import { StarredMessagesDialog } from '@/components/messaging/StarredMessagesDialog';
 import { ForwardMessageDialog } from '@/components/messaging/ForwardMessageDialog';
 import { SearchInChatDialog } from '@/components/messaging/SearchInChatDialog';
@@ -29,30 +25,31 @@ import { ClearChatDialog } from '@/components/messaging/ClearChatDialog';
 import { BlockUserDialog } from '@/components/messaging/BlockUserDialog';
 import { ReportUserDialog } from '@/components/messaging/ReportUserDialog';
 import { AIAssistantChat } from '@/components/AIAssistantChat';
-
 import { LocationShareDialog } from '@/components/messaging/LocationShareDialog';
 import { ContactShareDialog } from '@/components/messaging/ContactShareDialog';
-import { EncryptionBadge } from '@/components/messaging/EncryptionBadge';
-import { FileUpload } from '@/components/messaging/FileUpload';
 import { ChatMenu } from '@/components/ChatMenu';
 import { DisappearingMessagesDialog } from '@/components/messaging/DisappearingMessagesDialog';
 import { ChatAttachmentsSheet } from '@/components/messaging/ChatAttachmentsSheet';
 import { ScheduleMessageDialog } from '@/components/messaging/ScheduleMessageDialog';
-import { Card } from '@/components/ui/card';
+import { ChatListItem } from '@/components/messaging/ChatListItem';
+import { ChatHeader } from '@/components/messaging/ChatHeader';
+import { ChatInput } from '@/components/messaging/ChatInput';
+import { DateSeparator } from '@/components/messaging/DateSeparator';
+import { ScrollToBottomFab } from '@/components/messaging/ScrollToBottomFab';
+import { PinnedMessageBanner } from '@/components/messaging/PinnedMessageBanner';
+import TypingIndicator from '@/components/TypingIndicator';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Send, Paperclip, Smile, Search, Plus, MoreVertical, Phone, Video, Image as ImageIcon, Mic, X, MessageCircle, Star, MapPin, Users as UsersIcon, Sparkles, ArrowLeft, Check, Pin } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { formatDistanceToNow } from 'date-fns';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { ReactionPicker } from '@/components/ReactionPicker';
+import {
+  Search, Plus, MessageCircle, Sparkles, ArrowLeft, X, Users as UsersIcon, Reply,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+
+type FilterTab = 'all' | 'unread' | 'favorites' | 'groups';
 
 const MessagesPage = () => {
   const navigate = useNavigate();
@@ -61,38 +58,32 @@ const MessagesPage = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [showAIChat, setShowAIChat] = useState(false);
   const {
-    chats,
-    messages,
-    chatsLoading,
-    messagesLoading,
-    sendMessage,
-    editMessage,
-    deleteMessage,
-    reactToMessage,
-    unreactToMessage,
-    starMessage,
-    unstarMessage,
-    forwardMessage,
-    markMessageRead,
-    createChat: createChatByUuid,
-    refetchChats,
-    refetchMessages
+    chats, messages, chatsLoading, messagesLoading, sendMessage, editMessage, deleteMessage,
+    reactToMessage, unreactToMessage, starMessage, unstarMessage, forwardMessage,
+    createChat: createChatByUuid, refetchChats, refetchMessages,
   } = useMessages(selectedChatId || undefined);
   const { friends } = useFriends();
   const { handleTyping } = useTypingIndicator(selectedChatId || undefined);
-  const { isUserOnline, updateViewingChat } = usePresence(selectedChatId || undefined);
+  const { isUserOnline } = usePresence(selectedChatId || undefined);
   const selectedChat = chats.find((c) => c.id === selectedChatId);
   const otherParticipant = selectedChat?.participants.find((p) => p.user_id !== user?.id);
   const { formatLastSeen, isOnline } = useLastSeen(otherParticipant?.user_id);
+  const { settings: chatSettings } = useChatSettings(selectedChatId || undefined);
 
+  // Input/state
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [newChatSearch, setNewChatSearch] = useState('');
+  const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isVideo, setIsVideo] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
+  const [pinnedMessageId, setPinnedMessageId] = useState<string | null>(null);
+
+  // Dialogs
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [showGroupChatDialog, setShowGroupChatDialog] = useState(false);
   const [showStarredDialog, setShowStarredDialog] = useState(false);
@@ -104,30 +95,27 @@ const MessagesPage = () => {
   const [showClearChat, setShowClearChat] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
-
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
-  const [showReactionPicker, setShowReactionPicker] = useState(false);
-  const [reactingToMessageId, setReactingToMessageId] = useState<string | null>(null);
-  const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  // deletingMessageId state removed — EnhancedMessageBubble handles its own delete dialog
-  const [encryptionEnabled, setEncryptionEnabled] = useState(true);
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [showDisappearingDialog, setShowDisappearingDialog] = useState(false);
   const [showAttachmentsSheet, setShowAttachmentsSheet] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+
+  // Calls
   const [activeCall, setActiveCall] = useState<'voice' | 'video' | null>(null);
   const [isCallInitiator, setIsCallInitiator] = useState(false);
-  const { settings: chatSettings } = useChatSettings(selectedChatId || undefined);
+
+  // Refs
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const unreadMessageRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const messageInputRef = useRef<HTMLInputElement>(null);
-  const [lastReceivedMessage, setLastReceivedMessage] = useState<string>('');
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageIdsRef = useRef<Set<string>>(new Set());
   const newMessageIdsRef = useRef<Set<string>>(new Set());
+  const isInitialLoadRef = useRef(true);
+  const [showScrollFab, setShowScrollFab] = useState(false);
+  const [pinnedChatIds, setPinnedChatIds] = useState<string[]>([]);
 
   // Track new messages for animation
   useEffect(() => {
@@ -136,78 +124,48 @@ const MessagesPage = () => {
       newMessageIdsRef.current = new Set();
       return;
     }
-    const currentIds = new Set(messages.map(m => m.id));
+    const currentIds = new Set(messages.map((m) => m.id));
     if (prevMessageIdsRef.current.size > 0) {
       const freshIds = new Set<string>();
-      currentIds.forEach(id => {
-        if (!prevMessageIdsRef.current.has(id)) {
-          freshIds.add(id);
-        }
+      currentIds.forEach((id) => {
+        if (!prevMessageIdsRef.current.has(id)) freshIds.add(id);
       });
       newMessageIdsRef.current = freshIds;
       if (freshIds.size > 0) {
-        const timer = setTimeout(() => {
+        const t = setTimeout(() => {
           newMessageIdsRef.current = new Set();
         }, 400);
-        return () => clearTimeout(timer);
+        return () => clearTimeout(t);
       }
     }
     prevMessageIdsRef.current = currentIds;
   }, [messages]);
 
-  // Auto-focus input on mount and chat change
-  useEffect(() => {
-    if (selectedChatId && messageInputRef.current) {
-      setTimeout(() => {
-        messageInputRef.current?.focus();
-      }, 100);
-    }
-  }, [selectedChatId]);
-
-  // Track last received message for smart replies
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg.sender_id !== user?.id && lastMsg.content) {
-        setLastReceivedMessage(lastMsg.content);
-      }
-    }
-  }, [messages, user?.id]);
-
+  // Initial fetch & notifications
   useEffect(() => {
     if (user) {
       refetchChats();
-
-      // Request notification permission
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
       }
     }
   }, [user, refetchChats]);
 
-  // Handle chat_id from URL query params
+  // Handle chat_id from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const chatIdFromUrl = params.get('chat');
-    if (chatIdFromUrl) {
-      setSelectedChatId(chatIdFromUrl);
-    }
+    if (chatIdFromUrl) setSelectedChatId(chatIdFromUrl);
   }, []);
 
-  const isInitialLoadRef = useRef(true);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-
+  // Auto-scroll behavior
   useEffect(() => {
     if (!messages.length) return;
-
     if (isInitialLoadRef.current) {
       isInitialLoadRef.current = false;
       const container = messagesContainerRef.current;
       if (container) {
-        // On initial load, find first unread message not sent by current user
-        const firstUnread = messages.find(
-          (m) => m.sender_id !== user?.id && m.status !== 'read'
-        );
+        const firstUnread = messages.find((m) => m.sender_id !== user?.id && m.status !== 'read');
         if (firstUnread) {
           const el = document.getElementById(`message-${firstUnread.id}`);
           if (el) {
@@ -215,14 +173,13 @@ const MessagesPage = () => {
             return;
           }
         }
-        // Fallback: instant scroll to bottom (no visible jump)
         container.scrollTop = container.scrollHeight;
       }
     } else {
-      // On new messages, only auto-scroll if near bottom
       const container = messagesContainerRef.current;
       if (container) {
-        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+        const isNearBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight < 200;
         if (isNearBottom) {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
@@ -230,45 +187,62 @@ const MessagesPage = () => {
     }
   }, [messages, user?.id]);
 
-  // Reset initial load flag when chat changes
   useEffect(() => {
     isInitialLoadRef.current = true;
+    setPinnedMessageId(null);
   }, [selectedChatId]);
+
+  // Track scroll for scroll-to-bottom FAB
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const onScroll = () => {
+      const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      setShowScrollFab(distFromBottom > 300);
+    };
+    container.addEventListener('scroll', onScroll);
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [selectedChatId]);
+
+  // Pinned chats
+  useEffect(() => {
+    if (!user) return;
+    const fetchPinned = async () => {
+      const { data } = await supabase
+        .from('chat_settings')
+        .select('chat_id')
+        .eq('user_id', user.id)
+        .eq('is_pinned', true);
+      if (data) setPinnedChatIds(data.map((d) => d.chat_id));
+    };
+    fetchPinned();
+  }, [user, selectedChatId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Check file size (max 100MB for videos, 10MB for images)
-      const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        toast({
-          title: 'File too large',
-          description: `${file.type.startsWith('video/') ? 'Videos' : 'Images'} must be less than ${maxSize / (1024 * 1024)}MB`,
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      setSelectedImage(file);
-      setIsVideo(file.type.startsWith('video/'));
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: 'File too large',
+        description: `${file.type.startsWith('video/') ? 'Videos' : 'Images'} must be less than ${maxSize / (1024 * 1024)}MB`,
+        variant: 'destructive',
+      });
+      return;
     }
+    setSelectedImage(file);
+    setIsVideo(file.type.startsWith('video/'));
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
   };
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const handleSendMessage = async () => {
     if ((!messageText.trim() && !selectedImage) || !selectedChatId) return;
-
-    // Capture values and clear UI immediately for snappy feel
     const currentText = messageText;
     const currentImage = selectedImage;
     const currentIsVideo = isVideo;
@@ -283,52 +257,35 @@ const MessagesPage = () => {
     setEditingMessageId(null);
 
     try {
-      // Handle edit
       if (currentEditingId) {
         await editMessage(currentEditingId, currentText);
         return;
       }
-
-      // Handle new message
       let mediaUrl = null;
       let mediaType = null;
       if (currentImage) {
         const fileExt = currentImage.name.split('.').pop();
         const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('messages')
-          .upload(fileName, currentImage);
-
+        const { error: uploadError } = await supabase.storage.from('messages').upload(fileName, currentImage);
         if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('messages')
-          .getPublicUrl(fileName);
-
+        const { data: { publicUrl } } = supabase.storage.from('messages').getPublicUrl(fileName);
         mediaUrl = publicUrl;
         mediaType = currentIsVideo ? `video/${fileExt}` : `image/${fileExt}`;
       }
-
       await sendMessage(
         currentText.trim() || (currentIsVideo ? '🎥 Video' : '📷 Photo'),
         currentReplyingTo?.id,
         mediaUrl || undefined,
         mediaType || undefined
       );
-    } catch (error) {
-      // Restore text on failure so user doesn't lose their message
+    } catch {
       setMessageText(currentText);
       if (currentImage) {
         setSelectedImage(currentImage);
         setIsVideo(currentIsVideo);
       }
       if (currentReplyingTo) setReplyingTo(currentReplyingTo);
-      toast({
-        title: 'Error',
-        description: 'Failed to send message',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Failed to send message', variant: 'destructive' });
     }
   };
 
@@ -337,33 +294,17 @@ const MessagesPage = () => {
     setMessageText(content);
   };
 
-  // handleDeleteMessage removed — deletion handled directly via onDelete prop
-
-  const handleVoiceSend = async (audioBlob: Blob, duration: number) => {
+  const handleVoiceSend = async (audioBlob: Blob) => {
     if (!selectedChatId) return;
-
     try {
       const fileName = `${user?.id}/${Date.now()}.webm`;
-
-      const { error: uploadError } = await supabase.storage.
-      from('messages').
-      upload(fileName, audioBlob);
-
+      const { error: uploadError } = await supabase.storage.from('messages').upload(fileName, audioBlob);
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage.
-      from('messages').
-      getPublicUrl(fileName);
-
+      const { data: { publicUrl } } = supabase.storage.from('messages').getPublicUrl(fileName);
       await sendMessage('🎤 Voice message', undefined, publicUrl, 'audio/webm');
-
       setIsRecordingVoice(false);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to send voice message',
-        variant: 'destructive'
-      });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to send voice message', variant: 'destructive' });
     }
   };
 
@@ -376,676 +317,555 @@ const MessagesPage = () => {
 
   const handleCreateNewChat = async (friendId: string) => {
     try {
-      console.log('[MessagesPage] Creating chat with friend UUID:', friendId);
-
-      // Validate UUID format before calling
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(friendId)) {
-        throw new Error('CHAT_002: Invalid user ID format');
-      }
-
+      if (!uuidRegex.test(friendId)) throw new Error('CHAT_002: Invalid user ID format');
       const chatId = await createChatByUuid(friendId);
-      console.log('[MessagesPage] Chat created with ID:', chatId);
-
       if (chatId) {
         setSelectedChatId(chatId);
         setSearchQuery('');
         setShowNewChatDialog(false);
         await refetchChats();
       } else {
-        throw new Error('CHAT_005: An Error occoured try Again');
+        throw new Error('CHAT_005: An Error occured try Again');
       }
     } catch (error: any) {
       console.error('[MessagesPage] Create new chat error:', error);
-      // Error already shown by useChats, just re-throw
       throw error;
     }
   };
 
-  // Fetch pinned chat IDs
-  const [pinnedChatIds, setPinnedChatIds] = useState<string[]>([]);
-  useEffect(() => {
-    if (!user) return;
-    const fetchPinned = async () => {
-      const { data } = await supabase
-        .from('chat_settings')
-        .select('chat_id')
-        .eq('user_id', user.id)
-        .eq('is_pinned', true);
-      if (data) setPinnedChatIds(data.map((d) => d.chat_id));
-    };
-    fetchPinned();
-  }, [user, selectedChatId]);
+  // Filter + sort chats
+  const filteredChats = useMemo(() => {
+    return chats
+      .filter((chat) => {
+        const otherP = chat.participants.find((p) => p.user_id !== user?.id);
+        const name = chat.name || otherP?.profiles.display_name || '';
+        const matchSearch =
+          !searchQuery ||
+          name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          chat.participants.some((p) =>
+            p.profiles.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        if (!matchSearch) return false;
+        if (filterTab === 'unread') return (chat.unread_count || 0) > 0;
+        if (filterTab === 'groups') return chat.is_group;
+        if (filterTab === 'favorites') return pinnedChatIds.includes(chat.id);
+        return true;
+      })
+      .sort((a, b) => {
+        const aPinned = pinnedChatIds.includes(a.id);
+        const bPinned = pinnedChatIds.includes(b.id);
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+        const aT = new Date(a.last_message_at || a.updated_at || 0).getTime();
+        const bT = new Date(b.last_message_at || b.updated_at || 0).getTime();
+        return bT - aT;
+      });
+  }, [chats, searchQuery, filterTab, pinnedChatIds, user?.id]);
 
-  // Filter chats by name or participant, then sort pinned to top
-  const filteredChats = chats
-    .filter((chat) =>
-      chat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.participants.some((p) =>
-        p.profiles.display_name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    )
-    .sort((a, b) => {
-      const aPinned = pinnedChatIds.includes(a.id);
-      const bPinned = pinnedChatIds.includes(b.id);
-      if (aPinned && !bPinned) return -1;
-      if (!aPinned && bPinned) return 1;
-      return 0;
-    });
+  // Filtered messages by content for in-chat search
+  const filteredMessages =
+    selectedChatId && searchQuery.trim()
+      ? messages.filter((msg) => msg.content?.toLowerCase().includes(searchQuery.toLowerCase()))
+      : messages;
 
-  // Filter messages by content when in a chat
-  const filteredMessages = selectedChatId && searchQuery.trim() ?
-  messages.filter((msg) =>
-  msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) :
-  messages;
+  // Pinned message data
+  const pinnedMessage = pinnedMessageId ? messages.find((m) => m.id === pinnedMessageId) : null;
+
+  // Build message list with date separators & smart grouping
+  const renderedMessages = useMemo(() => {
+    const items: Array<
+      | { type: 'date'; key: string; date: string }
+      | { type: 'message'; key: string; message: any; isFirstOfGroup: boolean; isLastOfGroup: boolean }
+    > = [];
+    let lastDateStr = '';
+    for (let i = 0; i < filteredMessages.length; i++) {
+      const m = filteredMessages[i];
+      const dStr = new Date(m.created_at).toDateString();
+      if (dStr !== lastDateStr) {
+        items.push({ type: 'date', key: `date-${dStr}`, date: m.created_at });
+        lastDateStr = dStr;
+      }
+      const prev = filteredMessages[i - 1];
+      const next = filteredMessages[i + 1];
+      const prevSameSender = prev && prev.sender_id === m.sender_id && new Date(m.created_at).toDateString() === new Date(prev.created_at).toDateString();
+      const nextSameSender = next && next.sender_id === m.sender_id && new Date(m.created_at).toDateString() === new Date(next.created_at).toDateString();
+      items.push({
+        type: 'message',
+        key: m.id,
+        message: m,
+        isFirstOfGroup: !prevSameSender,
+        isLastOfGroup: !nextSameSender,
+      });
+    }
+    return items;
+  }, [filteredMessages]);
+
+  const filterTabs: { id: FilterTab; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'unread', label: 'Unread' },
+    { id: 'favorites', label: 'Favorites' },
+    { id: 'groups', label: 'Groups' },
+  ];
+
+  // ----- LIST VIEW -----
+  const renderListView = () => (
+    <div className="flex flex-col h-full bg-card animate-fade-up">
+      {/* Header */}
+      <div className="px-4 pt-3 pb-2 bg-card sticky top-0 z-10">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/feed'))}
+              className="h-9 w-9 md:hidden tap-scale rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">Chats</h1>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowGroupChatDialog(true)}
+              className="h-9 w-9 rounded-full tap-scale"
+              aria-label="New group"
+            >
+              <UsersIcon className="h-5 w-5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowNewChatDialog(true)}
+              className="h-9 w-9 rounded-full tap-scale"
+              aria-label="New chat"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="relative mb-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search chats…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 rounded-full bg-muted/40 border-border/40"
+          />
+        </div>
+
+        {/* Filter chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+          {filterTabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setFilterTab(t.id)}
+              className={cn(
+                'px-3.5 py-1 rounded-full text-[12.5px] font-medium whitespace-nowrap tap-scale transition-colors',
+                filterTab === t.id
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/50 text-foreground/80 hover:bg-muted'
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* AI Assistant pinned card */}
+      <div
+        onClick={() => {
+          setShowAIChat(true);
+          setSelectedChatId(null);
+        }}
+        className={cn(
+          'flex items-center gap-3 px-3 py-2.5 cursor-pointer tap-scale border-b border-border/30 transition-colors',
+          showAIChat ? 'bg-primary/10' : 'hover:bg-muted/30'
+        )}
+      >
+        <div className="relative flex-shrink-0">
+          <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gradient-primary">
+            <Sparkles className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-success border-2 border-card" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-[15px] leading-tight">
+            {isAdmin ? 'Admin AI Assistant' : 'Post Up AI'}
+            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">AI</span>
+          </p>
+          <p className="text-[13px] text-muted-foreground truncate leading-tight">
+            {isAdmin ? 'Summarize requests & feedback' : 'Your helpful assistant'}
+          </p>
+        </div>
+      </div>
+
+      {/* Chat list */}
+      <div className="flex-1 overflow-y-auto smooth-scroll">
+        {chatsLoading ? (
+          <div className="flex flex-col gap-2 p-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 animate-pulse">
+                <div className="h-12 w-12 rounded-full bg-muted" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-1/3 bg-muted rounded" />
+                  <div className="h-2.5 w-2/3 bg-muted rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredChats.length === 0 ? (
+          <div className="text-center py-16 px-6 text-muted-foreground">
+            {searchQuery ? (
+              <>
+                <Search className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                <p className="text-sm">No results found</p>
+              </>
+            ) : (
+              <>
+                <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                <p className="font-semibold mb-2">No conversations yet</p>
+                <p className="text-sm mb-4">Start chatting by adding friends first</p>
+                <Button onClick={() => navigate('/friends')} className="bg-gradient-primary hover:shadow-glow tap-scale">
+                  Find Friends
+                </Button>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="animate-stagger">
+            {filteredChats.map((chat) => {
+              const otherP = chat.participants.find((p) => p.user_id !== user?.id);
+              const name = chat.name || otherP?.profiles.display_name || 'Unknown';
+              const avatar = chat.avatar_url || otherP?.profiles.avatar_url;
+              const isOnlineUser = otherP ? isUserOnline(otherP.user_id) : false;
+              return (
+                <ChatListItem
+                  key={chat.id}
+                  id={chat.id}
+                  name={name}
+                  avatarUrl={avatar}
+                  lastMessage={chat.last_message}
+                  lastMessageAt={chat.last_message_at || chat.updated_at}
+                  unreadCount={chat.unread_count || 0}
+                  isOnline={isOnlineUser}
+                  isPinned={pinnedChatIds.includes(chat.id)}
+                  isGroup={chat.is_group}
+                  isSelected={selectedChatId === chat.id}
+                  onClick={() => {
+                    setSelectedChatId(chat.id);
+                    setShowAIChat(false);
+                  }}
+                  onArchive={() => toast({ description: 'Archive coming soon' })}
+                  onDelete={() => toast({ description: 'Use chat menu to delete' })}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* FAB - new chat */}
+      <button
+        onClick={() => setShowNewChatDialog(true)}
+        className="md:hidden fixed bottom-24 right-4 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center tap-scale animate-bubble-pop z-30 hover:bg-primary/90"
+        aria-label="New chat"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
+    </div>
+  );
+
+  // ----- CHAT VIEW -----
+  const renderChatView = () => {
+    if (!selectedChat) return null;
+    const otherP = selectedChat.participants.find((p) => p.user_id !== user?.id);
+    const chatName = selectedChat.name || otherP?.profiles.display_name || 'User';
+    const chatAvatar = selectedChat.avatar_url || otherP?.profiles.avatar_url;
+
+    return (
+      <div className="flex flex-col h-full bg-card animate-slide-in-right">
+        <ChatHeader
+          name={chatName}
+          avatarUrl={chatAvatar}
+          isOnline={isOnline}
+          statusText={isOnline ? 'online' : formatLastSeen()}
+          isGroup={selectedChat.is_group}
+          onBack={() => setSelectedChatId(null)}
+          onTitleTap={() => {
+            if (selectedChat.is_group) {
+              setShowGroupInfo(true);
+            } else if (otherP?.user_id) {
+              navigate(`/profile/${otherP.user_id}`);
+            }
+          }}
+          onVoiceCall={() => {
+            setActiveCall('voice');
+            setIsCallInitiator(true);
+            toast({ title: 'Starting voice call…', description: `Calling ${otherP?.profiles.display_name || 'participant'}` });
+          }}
+          onVideoCall={() => {
+            setActiveCall('video');
+            setIsCallInitiator(true);
+            toast({ title: 'Starting video call…', description: `Calling ${otherP?.profiles.display_name || 'participant'}` });
+          }}
+          menu={
+            <ChatMenu
+              chatId={selectedChatId}
+              otherUserId={otherP?.user_id}
+              onViewMedia={() => setShowMediaTab(true)}
+              onSearchInChat={() => setShowSearchDialog(true)}
+              onViewStarred={() => setShowStarredDialog(true)}
+              onWallpaperChange={() => setShowWallpaper(true)}
+              onClearChat={() => setShowClearChat(true)}
+              onBlock={() => setShowBlockDialog(true)}
+              onReport={() => setShowReportDialog(true)}
+              onDisappearingMessages={() => setShowDisappearingDialog(true)}
+            />
+          }
+        />
+
+        {/* Pinned message banner */}
+        {pinnedMessage && (
+          <PinnedMessageBanner
+            content={pinnedMessage.content || (pinnedMessage.media_url ? '📎 Attachment' : '')}
+            senderName={pinnedMessage.sender?.display_name}
+            onTap={() => {
+              const el = document.getElementById(`message-${pinnedMessage.id}`);
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            onUnpin={() => setPinnedMessageId(null)}
+          />
+        )}
+
+        {/* Messages area */}
+        <div
+          ref={messagesContainerRef}
+          className={cn('flex-1 min-h-0 overflow-y-auto px-2 py-2 smooth-scroll relative', !chatSettings?.wallpaper_url && 'chat-wallpaper')}
+          style={
+            chatSettings?.wallpaper_url
+              ? {
+                  backgroundImage: `url(${chatSettings.wallpaper_url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }
+              : undefined
+          }
+        >
+          <div className="max-w-3xl mx-auto">
+            {searchQuery.trim() && filteredMessages.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="font-medium mb-2">No messages found</p>
+              </div>
+            ) : messagesLoading && messages.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground text-sm">Loading messages…</div>
+            ) : (
+              renderedMessages.map((item) => {
+                if (item.type === 'date') {
+                  return <DateSeparator key={item.key} date={item.date} />;
+                }
+                const message = item.message;
+                const isOwn = message.sender_id === user?.id;
+                const senderProfile = selectedChat.participants.find((p) => p.user_id === message.sender_id)?.profiles;
+                const replyToData = message.reply_to
+                  ? (() => {
+                      const replyMsg = messages.find((m) => m.id === message.reply_to);
+                      if (!replyMsg) return undefined;
+                      const rsp = selectedChat.participants.find((p) => p.user_id === replyMsg.sender_id)?.profiles;
+                      return {
+                        id: replyMsg.id,
+                        content: replyMsg.content || '',
+                        sender_name: rsp?.display_name || 'Unknown',
+                        media_url: replyMsg.media_url,
+                        media_type: replyMsg.media_type,
+                      };
+                    })()
+                  : undefined;
+
+                return (
+                  <div key={item.key} className={cn(item.isLastOfGroup ? 'mb-2' : 'mb-0.5')}>
+                    <EnhancedMessageBubble
+                      isNew={newMessageIdsRef.current.has(message.id)}
+                      id={message.id}
+                      content={message.content || ''}
+                      sender={{
+                        username: senderProfile?.username || '',
+                        display_name: senderProfile?.display_name || 'Unknown',
+                        avatar_url: senderProfile?.avatar_url,
+                      }}
+                      timestamp={message.created_at}
+                      isOwn={isOwn}
+                      mediaUrl={message.media_url}
+                      mediaType={message.media_type}
+                      isEdited={message.is_edited}
+                      status={message.status}
+                      isForwarded={message.is_forwarded}
+                      bubbleColor={chatSettings?.theme_color}
+                      replyTo={replyToData}
+                      onEdit={isOwn ? handleEditMessage : undefined}
+                      onDelete={(id, deleteFor) => deleteMessage(id, deleteFor)}
+                      onReply={() => setReplyingTo({ ...message, sender: senderProfile })}
+                      onReact={reactToMessage}
+                      onUnreact={unreactToMessage}
+                      onStar={starMessage}
+                      onUnstar={unstarMessage}
+                      onForward={(id) => {
+                        setForwardingMessageId(id);
+                        setShowForwardDialog(true);
+                      }}
+                      onScrollToMessage={(msgId) => {
+                        const el = document.getElementById(`message-${msgId}`);
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                    />
+                  </div>
+                );
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <ScrollToBottomFab visible={showScrollFab} onClick={scrollToBottom} />
+        </div>
+
+        {/* Input section */}
+        <div className="bg-card flex-shrink-0 border-t border-border/40">
+          {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
+
+          {replyingTo && (
+            <div className="px-3 py-2 flex items-center justify-between bg-muted/50 animate-slide-up">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Reply className="h-4 w-4 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0 border-l-2 border-primary pl-2">
+                  <p className="text-[11px] font-semibold text-primary leading-tight">
+                    {replyingTo.sender?.display_name || 'Reply'}
+                  </p>
+                  <p className="text-xs truncate text-muted-foreground leading-tight">
+                    {replyingTo.content || (replyingTo.media_url ? '📎 Attachment' : '')}
+                  </p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setReplyingTo(null)} className="h-7 w-7 tap-scale">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {imagePreview && (
+            <div className="px-3 py-2 flex items-center gap-3 bg-muted/40 animate-slide-up">
+              {isVideo ? (
+                <video src={imagePreview} className="h-16 w-24 object-cover rounded-lg" />
+              ) : (
+                <img src={imagePreview} alt="Preview" className="h-16 w-16 object-cover rounded-lg" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">{isVideo ? '🎥 Video' : '📷 Image'} ready to send</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setSelectedImage(null);
+                  setImagePreview(null);
+                  setIsVideo(false);
+                }}
+                className="h-7 w-7 tap-scale"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {isRecordingVoice ? (
+            <VoiceRecorder
+              onSend={(audioBlob, duration) => handleVoiceSend(audioBlob)}
+              onCancel={() => setIsRecordingVoice(false)}
+            />
+          ) : (
+            <>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleImageSelect} />
+              <input
+                type="file"
+                ref={cameraInputRef}
+                className="hidden"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageSelect}
+              />
+              <ChatInput
+                value={messageText}
+                onChange={setMessageText}
+                onSend={handleSendMessage}
+                onTyping={handleTyping}
+                onAttachClick={() => setShowAttachmentsSheet(true)}
+                onCameraClick={() => cameraInputRef.current?.click()}
+                onMicClick={() => setIsRecordingVoice(true)}
+                placeholder={editingMessageId ? 'Edit message…' : 'Message'}
+                hasMedia={!!selectedImage}
+                isEditing={!!editingMessageId}
+                onCancelEdit={() => {
+                  setEditingMessageId(null);
+                  setMessageText('');
+                }}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-background">
       <Navigation />
-      <main className="container mx-auto px-0 md:px-4 flex-1 min-h-0 overflow-hidden">
-        <Card className="h-full min-h-0 flex flex-col md:flex-row overflow-hidden rounded-none md:rounded-lg border-0 md:border shadow-none md:shadow-sm bg-background">
-          {/* Chat List Sidebar */}
-          <div className={`${selectedChatId || showAIChat ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 md:border-r border-primary/10 flex-col bg-card`}>
-            <div className="p-3 md:p-4 border-b border-primary/10 space-y-3 bg-gradient-subtle backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (window.history.length > 1) navigate(-1);else
-                      navigate('/feed');
-                    }}
-                    className="h-8 w-8 md:hidden"
-                    aria-label="Go back">
-
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  <h2 className="text-lg md:text-xl font-bold text-foreground">Messages</h2>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setShowNewChatDialog(true)}
-                    className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
-                    title="New Direct Message">
-
-                    <Plus className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setShowGroupChatDialog(true)}
-                    className="h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all duration-300"
-                    title="New Group Chat">
-
-                    <UsersIcon className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={selectedChatId ? "Search in conversation..." : "Search messages..."}
-                  className="pl-9 bg-background/50 border-primary/20 focus:border-primary transition-colors"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)} />
-
-              </div>
-            </div>
-
-            <ScrollArea className="flex-1 overflow-y-auto">
-              <div className="space-y-1">
-                  {/* AI Assistant Chat - Pinned at top */}
-                  <div
-                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
-                  showAIChat ?
-                  'bg-gradient-to-r from-primary/20 to-primary/5 border-primary/30 shadow-md' :
-                  'hover:bg-primary/5 border-transparent hover:border-primary/10'}`
-                  }
-                  onClick={() => {
-                    setShowAIChat(true);
-                    setSelectedChatId(null);
-                  }}>
-
-                    <div className="flex gap-3">
-                      <div className="relative flex-shrink-0">
-                        <div className={`h-12 w-12 rounded-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/60 ring-2 transition-all ${
-                      showAIChat ? 'ring-primary/50' : 'ring-transparent group-hover:ring-primary/20'}`
-                      }>
-                          <Sparkles className="h-6 w-6 text-primary-foreground" />
-                        </div>
-                        <div className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-success rounded-full border-2 border-background" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-0.5">
-                          <div className="min-w-0 flex-1">
-                            <p className={`font-medium truncate text-sm md:text-base transition-colors ${
-                          showAIChat ? 'text-primary' : 'group-hover:text-primary'}`
-                          }>
-                              {isAdmin ? 'Admin AI Assistant' : 'Post Up AI'}
-                              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
-                                AI
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {isAdmin ? 'Summarize requests & feedback' : 'Your helpful assistant'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Separator className="my-2 bg-primary/10" />
-
-                    {/* Existing Chats */}
-                    {filteredChats.length === 0 && searchQuery ?
-                <div className="text-center py-8 px-4 text-muted-foreground">
-                        <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                        <p className="text-sm">No results found</p>
-                      </div> :
-                filteredChats.length === 0 && !searchQuery ?
-                <div className="text-center py-16 px-4 text-muted-foreground">
-                        <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                        <p className="font-semibold mb-2 text-base">No conversations yet</p>
-                        <p className="text-sm mb-4">Start chatting by adding friends first</p>
-                        <Button
-                    onClick={() => navigate('/friends')}
-                    className="bg-gradient-primary hover:shadow-glow">
-
-                          Find Friends
-                        </Button>
-                      </div> :
-
-                filteredChats.map((chat) => {
-                  const otherParticipant = chat.participants.find((p) => p.user_id !== user?.id);
-                  const chatName = chat.name || otherParticipant?.profiles.display_name || 'Unknown';
-                  const chatUsername = otherParticipant?.profiles?.username;
-                  const avatar = chat.avatar_url || otherParticipant?.profiles.avatar_url;
-                  // Use last_message from chat list RPC instead of filtering messages array
-                  const lastMessageContent = chat.last_message;
-                  const lastMessageTime = chat.last_message_at || chat.updated_at ?
-                  formatDistanceToNow(new Date(chat.last_message_at || chat.updated_at), { addSuffix: false }).
-                  replace('about ', '').
-                  replace(' minutes', 'm').
-                  replace(' minute', 'm').
-                  replace(' hours', 'h').
-                  replace(' hour', 'h').
-                  replace(' days', 'd').
-                  replace(' day', 'd').
-                  replace(' weeks', 'w').
-                  replace(' week', 'w').
-                  replace(' months', 'mo').
-                  replace(' month', 'mo').
-                  replace('less than a', '<1') :
-                  '';
-                  const isOnlineUser = otherParticipant ? isUserOnline(otherParticipant.user_id) : false;
-                  // Get last message snippet
-                  const lastMessageSnippet = lastMessageContent ?
-                  lastMessageContent.length > 30 ? lastMessageContent.slice(0, 30) + '...' : lastMessageContent :
-                  'Tap to chat';
-
-                  return (
-                    <div
-                      key={chat.id}
-                      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 group border ${
-                      selectedChatId === chat.id ?
-                      'bg-gradient-primary/10 border-primary/30 shadow-md' :
-                      'hover:bg-primary/5 border-transparent hover:border-primary/10'}`
-                      }
-                      onClick={() => setSelectedChatId(chat.id)}>
-
-                            <div className="flex gap-3">
-                              <div className="relative flex-shrink-0">
-                                <Avatar className={`h-12 w-12 ring-2 transition-all ${
-                          selectedChatId === chat.id ? 'ring-primary/50' : 'ring-border/50 group-hover:ring-primary/20'}`
-                          }>
-                                  <AvatarImage src={avatar} />
-                                  <AvatarFallback className={selectedChatId === chat.id ? "bg-gradient-primary text-white" : "bg-muted"}>{chatName[0]}</AvatarFallback>
-                                </Avatar>
-                                {isOnlineUser &&
-                          <div className="absolute bottom-0 right-0 h-3.5 w-3.5 bg-success rounded-full border-2 border-background" />
-                          }
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2 mb-0.5">
-                                  <p className={`font-semibold truncate text-sm md:text-base transition-colors ${
-                            selectedChatId === chat.id ? 'text-primary' : 'group-hover:text-primary'}`
-                            }>
-                                    {chatName}
-                                  </p>
-                                  {lastMessageTime &&
-                            <span className="text-xs flex-shrink-0 text-muted-foreground">
-                                      {lastMessageTime}
-                                    </span>
-                            }
-                                </div>
-                                 <div className="flex items-center gap-1">
-                                  {pinnedChatIds.includes(chat.id) &&
-                            <Pin className="h-3 w-3 flex-shrink-0 text-primary/60 rotate-45" />
-                            }
-                                  <p className="text-xs md:text-sm text-muted-foreground truncate">
-                                    {chat.is_group ? `${chat.participants.length} members` : lastMessageSnippet}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>);
-
-                })
-                }
-                  </div>
-            </ScrollArea>
+      <main className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full flex flex-row overflow-hidden">
+          {/* List pane */}
+          <div className={cn('w-full md:w-80 lg:w-96 md:border-r border-border/40 flex-shrink-0', (selectedChatId || showAIChat) ? 'hidden md:block' : 'block')}>
+            {renderListView()}
           </div>
 
-          {/* NewChatDialog is rendered at bottom of component */}
-
-          {/* Chat Area */}
-          <div className={`${selectedChatId || showAIChat ? 'flex' : 'hidden md:flex'} flex-1 min-h-0 flex-col overflow-hidden relative`}>
-            {/* AI Assistant Chat */}
-            {showAIChat ?
-            <AIAssistantChat
-              isAdmin={isAdmin}
-              onBack={() => setShowAIChat(false)} /> :
-
-            selectedChat ?
-            <>
-                {/* Chat Header */}
-                <div
-                className="px-3 py-2.5 flex items-center justify-between bg-card sticky top-0 z-10 cursor-pointer transition-colors"
-                onClick={() => {
-                  if (selectedChat?.is_group) {
-                    setShowGroupInfo(true);
-                  } else if (otherParticipant?.user_id) {
-                    navigate(`/profile/${otherParticipant.user_id}`);
-                  }
-                }}>
-
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Button
-                    size="icon"
-                    variant="ghost"
-                    className="md:hidden flex-shrink-0 h-10 w-10 hover:bg-black/5 dark:hover:bg-white/5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedChatId(null);
-                    }}>
-
-                      ←
-                    </Button>
-                    {(() => {
-                    const otherParticipant = selectedChat.participants.find((p) => p.user_id !== user?.id);
-                    const chatName = selectedChat.name || otherParticipant?.profiles.display_name || 'User';
-                    const chatAvatar = selectedChat.avatar_url || otherParticipant?.profiles.avatar_url;
-
-                    return (
-                      <>
-                            <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/20">
-                              <AvatarImage src={chatAvatar} />
-                              <AvatarFallback className="bg-gradient-primary text-white">{chatName[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium truncate text-[15px]">{chatName}</p>
-                              <div className="flex items-center gap-2 text-[13px]">
-                                {isOnline ?
-                            <span className="text-primary">online</span> :
-
-                            <span className="text-muted-foreground">{formatLastSeen()}</span>
-                            }
-                              </div>
-                            </div>
-                        </>);
-
-                  })()}
-                  </div>
-                  <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                    {!selectedChat?.is_group &&
-                  <>
-                        <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-10 w-10 hover:bg-primary/10 hover:text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveCall('voice');
-                        setIsCallInitiator(true);
-                        toast({
-                          title: 'Starting voice call...',
-                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`
-                        });
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                          new Notification('Voice Call', {
-                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                            icon: '/favicon.ico'
-                          });
-                        }
-                      }}>
-
-                          <Phone className="h-5 w-5" />
-                        </Button>
-                        <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-10 w-10 hidden md:flex hover:bg-primary/10 hover:text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveCall('video');
-                        setIsCallInitiator(true);
-                        toast({
-                          title: 'Starting video call...',
-                          description: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`
-                        });
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                          new Notification('Video Call', {
-                            body: `Calling ${otherParticipant?.profiles.display_name || 'participant'}`,
-                            icon: '/favicon.ico'
-                          });
-                        }
-                      }}>
-
-                          <Video className="h-5 w-5" />
-                        </Button>
-                      </>
-                  }
-                    <ChatMenu
-                    chatId={selectedChatId}
-                    otherUserId={otherParticipant?.user_id}
-                    onViewMedia={() => setShowMediaTab(true)}
-                    onSearchInChat={() => setShowSearchDialog(true)}
-                    onViewStarred={() => setShowStarredDialog(true)}
-                    onWallpaperChange={() => setShowWallpaper(true)}
-                    onClearChat={() => setShowClearChat(true)}
-                    onBlock={() => setShowBlockDialog(true)}
-                    onReport={() => setShowReportDialog(true)}
-                    onDisappearingMessages={() => setShowDisappearingDialog(true)} />
-
-                  </div>
-                </div>
-
-                {/* Messages Area */}
-                <div
-                 ref={messagesContainerRef}
-                 className="flex-1 min-h-0 overflow-y-auto px-3 py-2 bg-background"
-                style={chatSettings?.wallpaper_url ? {
-                  backgroundImage: `url(${chatSettings.wallpaper_url})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : {}}>
-
-                  <div className="space-y-2 max-w-4xl mx-auto my-[2px]">
-                    {searchQuery.trim() && filteredMessages.length === 0 ?
-                  <div className="text-center py-12 text-muted-foreground">
-                        <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p className="font-medium mb-2">No messages found</p>
-                        <p className="text-sm">Try a different search term</p>
-                      </div> :
-
-                  filteredMessages.map((message) => {
-                    const isOwn = message.sender_id === user?.id;
-                    const senderProfile = selectedChat?.participants.find((p) => p.user_id === message.sender_id)?.profiles;
-
-                    // Find replied-to message if this is a reply
-                    const replyToData = message.reply_to ?
-                    (() => {
-                      const replyMsg = messages.find((m) => m.id === message.reply_to);
-                      if (replyMsg) {
-                        const replySenderProfile = selectedChat?.participants.find((p) => p.user_id === replyMsg.sender_id)?.profiles;
-                        return {
-                          id: replyMsg.id,
-                          content: replyMsg.content || '',
-                          sender_name: replySenderProfile?.display_name || 'Unknown',
-                          media_url: replyMsg.media_url,
-                          media_type: replyMsg.media_type
-                        };
-                      }
-                      return undefined;
-                    })() :
-                    undefined;
-
-                    return (
-                      <EnhancedMessageBubble
-                        key={message.id}
-                        isNew={newMessageIdsRef.current.has(message.id)}
-                        id={message.id}
-                        content={message.content || ''}
-                        sender={{
-                          username: senderProfile?.username || '',
-                          display_name: senderProfile?.display_name || 'Unknown',
-                          avatar_url: senderProfile?.avatar_url
-                        }}
-                        timestamp={message.created_at}
-                        isOwn={isOwn}
-                        mediaUrl={message.media_url}
-                        mediaType={message.media_type}
-                        isEdited={message.is_edited}
-                        status={message.status}
-                        isForwarded={message.is_forwarded}
-                        bubbleColor={chatSettings?.theme_color}
-                        replyTo={replyToData}
-                        onEdit={isOwn ? handleEditMessage : undefined}
-                        onDelete={(id, deleteFor) => deleteMessage(id, deleteFor)}
-                        onReply={() => setReplyingTo({
-                          ...message,
-                          sender: senderProfile
-                        })}
-                        onReact={reactToMessage}
-                        onUnreact={unreactToMessage}
-                        onStar={starMessage}
-                        onUnstar={unstarMessage}
-                        onForward={(id) => {
-                          setForwardingMessageId(id);
-                          setShowForwardDialog(true);
-                        }}
-                        onScrollToMessage={(msgId) => {
-                          const element = document.getElementById(`message-${msgId}`);
-                          element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }} />);
-
-
-                  })
-                  }
-                    <div ref={messagesEndRef} />
-                  </div>
-                </div>
-
-                {/* Input Section */}
-                <div className="bg-card z-10 flex-shrink-0">
-                  {/* Typing Indicator */}
-                  {selectedChatId && <TypingIndicator chatId={selectedChatId} />}
-
-                  {/* Reply Preview */}
-                  {replyingTo &&
-                <div className="px-4 py-2 flex items-center justify-between bg-muted/50">
-                      <div className="flex-1 min-w-0 border-l-4 border-primary pl-3">
-                        <p className="text-xs font-medium text-primary mb-0.5">
-                          {replyingTo.sender?.display_name}
-                        </p>
-                        <p className="text-sm truncate text-muted-foreground">
-                          {replyingTo.content}
-                        </p>
-                      </div>
-                      <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setReplyingTo(null)}
-                    className="h-8 w-8">
-
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                }
-
-                  {/* Media Preview */}
-                  {imagePreview &&
-                <div className="px-4 py-2 flex items-center gap-3 bg-muted/50">
-                      {isVideo ?
-                  <video
-                    src={imagePreview}
-                    className="h-20 w-32 object-cover rounded-lg"
-                    controls /> :
-
-
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="h-20 w-20 object-cover rounded-lg" />
-
-                  }
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground">
-                          {isVideo ? '🎥 Video' : '📷 Image'} ready to send
-                        </p>
-                      </div>
-                      <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setSelectedImage(null);
-                      setImagePreview(null);
-                      setIsVideo(false);
-                    }}
-                    className="h-8 w-8">
-
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                }
-
-                  {/* Voice Recorder UI */}
-                  {isRecordingVoice ?
-                <div className="p-2">
-                      <VoiceRecorder
-                    onSend={(audioBlob, duration) => {
-                      handleVoiceSend(audioBlob, duration);
-                      setIsRecordingVoice(false);
-                    }}
-                    onCancel={() => setIsRecordingVoice(false)} />
-
-                    </div> :
-
-                <>
-                      {/* Message Input */}
-                      <form onSubmit={handleSendMessage} className="px-2 py-2">
-                        <div className="flex items-center gap-1.5">
-                          {/* Attachments Menu Button */}
-                          <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="h-9 w-9 rounded-full hover:bg-muted flex-shrink-0"
-                        onClick={() => setShowAttachmentsSheet(true)}>
-
-                            <Plus className="h-5 w-5" />
-                          </Button>
-                          <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*,video/*"
-                        onChange={handleImageSelect} />
-
-                          <input
-                        type="file"
-                        ref={cameraInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handleImageSelect} />
-
-                          
-                          {/* Input Container */}
-                          <div className="flex-1 flex items-center gap-1 bg-muted/40 rounded-full px-3 py-1 border border-border/30 focus-within:border-primary/40 transition-colors">
-                            <Smile className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                            
-                            <Input
-                          ref={messageInputRef}
-                          value={messageText}
-                          onChange={(e) => {
-                            setMessageText(e.target.value);
-                            handleTyping();
-                          }}
-                          placeholder={editingMessageId ? "Edit message..." : "Message"}
-                          className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9 px-1 text-sm"
-                          disabled={isRecordingVoice}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }} />
-
-                            
-                            <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 hover:bg-transparent flex-shrink-0 text-muted-foreground"
-                          onClick={() => fileInputRef.current?.click()}
-                          title="Attach image or video">
-
-                              <Paperclip className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          
-                          {/* Send/Voice Button */}
-                          {messageText.trim() || selectedImage ?
-                      <Button
-                        type="submit"
-                        size="icon"
-                        className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 flex-shrink-0">
-
-                              <Send className="h-4 w-4" />
-                            </Button> :
-
-                      <Button
-                        type="button"
-                        size="icon"
-                        className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 flex-shrink-0"
-                        onClick={() => setIsRecordingVoice(true)}>
-
-                              <Mic className="h-4 w-4" />
-                            </Button>
-                      }
-                        </div>
-                      </form>
-                    </>
-                }
-                </div>
-              </> :
-
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center max-w-md px-6 space-y-4 animate-fade-in">
+          {/* Chat pane */}
+          <div className={cn('flex-1 min-h-0 overflow-hidden', (selectedChatId || showAIChat) ? 'block' : 'hidden md:block')}>
+            {showAIChat ? (
+              <AIAssistantChat isAdmin={isAdmin} onBack={() => setShowAIChat(false)} />
+            ) : selectedChat ? (
+              renderChatView()
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground bg-background">
+                <div className="text-center max-w-md px-6 space-y-4 animate-fade-up">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl rounded-full"></div>
+                    <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl rounded-full" />
                     <MessageCircle className="h-20 w-20 mx-auto text-primary relative z-10" />
                   </div>
                   <h3 className="text-xl font-semibold text-foreground">Your Messages</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Send private messages to friends and connect with others in your network
-                  </p>
+                  <p className="text-sm">Send private messages to friends and connect with others</p>
                   <Button
-                  onClick={() => setShowNewChatDialog(true)}
-                  className="mt-4 bg-gradient-primary hover:shadow-glow transition-all duration-300">
-
+                    onClick={() => setShowNewChatDialog(true)}
+                    className="bg-gradient-primary hover:shadow-glow tap-scale"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Start New Chat
                   </Button>
                 </div>
               </div>
-            }
+            )}
           </div>
-        </Card>
+        </div>
       </main>
 
       {/* Dialogs */}
       <NewChatDialog
         open={showNewChatDialog}
         onClose={() => setShowNewChatDialog(false)}
-        onSelectFriend={handleCreateNewChat} />
-
+        onSelectFriend={handleCreateNewChat}
+      />
 
       <GroupChatDialog
         open={showGroupChatDialog}
@@ -1053,14 +873,14 @@ const MessagesPage = () => {
         onGroupCreated={(chatId) => {
           setSelectedChatId(chatId);
           refetchChats();
-        }} />
-
+        }}
+      />
 
       <StarredMessagesDialog
         open={showStarredDialog}
         onClose={() => setShowStarredDialog(false)}
-        chatId={selectedChatId || undefined} />
-
+        chatId={selectedChatId || undefined}
+      />
 
       <ForwardMessageDialog
         open={showForwardDialog}
@@ -1070,153 +890,122 @@ const MessagesPage = () => {
         }}
         onForward={handleForwardMessage}
         chats={chats}
-        currentChatId={selectedChatId || undefined} />
+        currentChatId={selectedChatId || undefined}
+      />
 
+      {showSearchDialog && selectedChatId && (
+        <SearchInChatDialog
+          chatId={selectedChatId}
+          open={showSearchDialog}
+          onOpenChange={setShowSearchDialog}
+          onMessageSelect={(msgId) => {
+            const msgEl = document.getElementById(`message-${msgId}`);
+            msgEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setShowSearchDialog(false);
+          }}
+        />
+      )}
 
-      {/* Redundant delete dialog removed — EnhancedMessageBubble handles delete confirmation */}
+      {showMediaTab && selectedChatId && <ChatMediaTab chatId={selectedChatId} />}
 
-      {/* Additional Dialogs */}
-      {showSearchDialog && selectedChatId &&
-      <SearchInChatDialog
-        chatId={selectedChatId}
-        open={showSearchDialog}
-        onOpenChange={setShowSearchDialog}
-        onMessageSelect={(msgId) => {
-          // Scroll to message
-          const msgEl = document.getElementById(`msg-${msgId}`);
-          msgEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setShowSearchDialog(false);
-        }} />
+      {showGroupInfo && selectedChatId && selectedChat?.is_group && (
+        <GroupInfoDialog chatId={selectedChatId} open={showGroupInfo} onOpenChange={setShowGroupInfo} />
+      )}
 
-      }
+      {showWallpaper && selectedChatId && (
+        <WallpaperDialog chatId={selectedChatId} open={showWallpaper} onOpenChange={setShowWallpaper} />
+      )}
 
-      {showMediaTab && selectedChatId &&
-      <ChatMediaTab
-        chatId={selectedChatId} />
+      {showClearChat && selectedChatId && (
+        <ClearChatDialog
+          chatId={selectedChatId}
+          open={showClearChat}
+          onOpenChange={setShowClearChat}
+          onCleared={() => {
+            refetchMessages();
+            setShowClearChat(false);
+          }}
+        />
+      )}
 
-      }
+      {showBlockDialog && otherParticipant && (
+        <BlockUserDialog
+          userId={otherParticipant.user_id}
+          userName={otherParticipant.profiles.display_name}
+          open={showBlockDialog}
+          onOpenChange={setShowBlockDialog}
+        />
+      )}
 
-      {showGroupInfo && selectedChatId && selectedChat?.is_group &&
-      <GroupInfoDialog
-        chatId={selectedChatId}
-        open={showGroupInfo}
-        onOpenChange={setShowGroupInfo} />
+      {showReportDialog && otherParticipant && (
+        <ReportUserDialog
+          userId={otherParticipant.user_id}
+          userName={otherParticipant.profiles.username || ''}
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
+        />
+      )}
 
-      }
+      {showLocationDialog && (
+        <LocationShareDialog
+          open={showLocationDialog}
+          onOpenChange={setShowLocationDialog}
+          onShare={async (lat, lon, address) => {
+            const locationText = `📍 ${address || `${lat}, ${lon}`}`;
+            await sendMessage(locationText);
+            setShowLocationDialog(false);
+          }}
+        />
+      )}
 
-      {showWallpaper && selectedChatId &&
-      <WallpaperDialog
-        chatId={selectedChatId}
-        open={showWallpaper}
-        onOpenChange={setShowWallpaper} />
+      {showContactDialog && (
+        <ContactShareDialog
+          open={showContactDialog}
+          onOpenChange={setShowContactDialog}
+          onShare={async (contactIds) => {
+            const contactText = `👤 Shared ${contactIds.length} contact${contactIds.length > 1 ? 's' : ''}`;
+            await sendMessage(contactText);
+            setShowContactDialog(false);
+          }}
+        />
+      )}
 
-      }
+      {showChatSettings && selectedChatId && (
+        <ChatSettingsDialog chatId={selectedChatId} open={showChatSettings} onOpenChange={setShowChatSettings} />
+      )}
 
-      {showClearChat && selectedChatId &&
-      <ClearChatDialog
-        chatId={selectedChatId}
-        open={showClearChat}
-        onOpenChange={setShowClearChat}
-        onCleared={() => {
-          refetchMessages();
-          setShowClearChat(false);
-        }} />
+      {showDisappearingDialog && selectedChatId && (
+        <DisappearingMessagesDialog
+          chatId={selectedChatId}
+          isOpen={showDisappearingDialog}
+          onClose={() => setShowDisappearingDialog(false)}
+        />
+      )}
 
-      }
+      {activeCall === 'voice' && selectedChatId && otherParticipant && (
+        <VoiceCall
+          chatId={selectedChatId}
+          isInitiator={isCallInitiator}
+          onEndCall={() => {
+            setActiveCall(null);
+            setIsCallInitiator(false);
+          }}
+          participantName={otherParticipant.profiles.display_name}
+          participantAvatar={otherParticipant.profiles.avatar_url}
+        />
+      )}
 
-      {showBlockDialog && otherParticipant &&
-      <BlockUserDialog
-        userId={otherParticipant.user_id}
-        userName={otherParticipant.profiles.display_name}
-        open={showBlockDialog}
-        onOpenChange={setShowBlockDialog} />
+      {activeCall === 'video' && selectedChatId && (
+        <VideoCall
+          chatId={selectedChatId}
+          isInitiator={isCallInitiator}
+          onEndCall={() => {
+            setActiveCall(null);
+            setIsCallInitiator(false);
+          }}
+        />
+      )}
 
-      }
-
-      {showReportDialog && otherParticipant &&
-      <ReportUserDialog
-        userId={otherParticipant.user_id}
-        userName={otherParticipant.profiles.username || ''}
-        open={showReportDialog}
-        onOpenChange={setShowReportDialog} />
-
-      }
-
-      {showLocationDialog &&
-      <LocationShareDialog
-        open={showLocationDialog}
-        onOpenChange={setShowLocationDialog}
-        onShare={async (lat, lon, address) => {
-          const locationText = `📍 ${address || `${lat}, ${lon}`}`;
-          await sendMessage(locationText);
-          setShowLocationDialog(false);
-        }} />
-
-      }
-
-      {showContactDialog &&
-      <ContactShareDialog
-        open={showContactDialog}
-        onOpenChange={setShowContactDialog}
-        onShare={async (contactIds) => {
-          const contactText = `👤 Shared ${contactIds.length} contact${contactIds.length > 1 ? 's' : ''}`;
-          await sendMessage(contactText);
-          setShowContactDialog(false);
-        }} />
-
-      }
-
-      {showChatSettings && selectedChatId &&
-      <ChatSettingsDialog
-        chatId={selectedChatId}
-        open={showChatSettings}
-        onOpenChange={setShowChatSettings} />
-
-      }
-
-      {showDisappearingDialog && selectedChatId &&
-      <DisappearingMessagesDialog
-        chatId={selectedChatId}
-        isOpen={showDisappearingDialog}
-        onClose={() => setShowDisappearingDialog(false)} />
-
-      }
-
-      {activeCall === 'voice' && selectedChatId && otherParticipant &&
-      <VoiceCall
-        chatId={selectedChatId}
-        isInitiator={isCallInitiator}
-        onEndCall={() => {
-          setActiveCall(null);
-          setIsCallInitiator(false);
-        }}
-        participantName={otherParticipant.profiles.display_name}
-        participantAvatar={otherParticipant.profiles.avatar_url} />
-
-      }
-
-      {activeCall === 'video' && selectedChatId &&
-      <VideoCall
-        chatId={selectedChatId}
-        isInitiator={isCallInitiator}
-        onEndCall={() => {
-          setActiveCall(null);
-          setIsCallInitiator(false);
-        }} />
-
-      }
-
-      {showReactionPicker && reactingToMessageId &&
-      <ReactionPicker
-        onReact={(reaction) => {
-          reactToMessage(reactingToMessageId, reaction);
-          setShowReactionPicker(false);
-          setReactingToMessageId(null);
-        }} />
-
-      }
-
-      {/* Attachments Sheet */}
       <ChatAttachmentsSheet
         open={showAttachmentsSheet}
         onOpenChange={setShowAttachmentsSheet}
@@ -1233,24 +1022,23 @@ const MessagesPage = () => {
           } else {
             toast({ title: 'Type a message first to schedule', variant: 'destructive' });
           }
-        }} />
+        }}
+      />
 
-
-      {/* Schedule Message Dialog */}
-      {showScheduleDialog && selectedChatId &&
-      <ScheduleMessageDialog
-        chatId={selectedChatId}
-        content={messageText}
-        open={showScheduleDialog}
-        onOpenChange={setShowScheduleDialog}
-        onScheduled={() => {
-          setMessageText('');
-          setShowScheduleDialog(false);
-        }} />
-
-      }
-    </div>);
-
+      {showScheduleDialog && selectedChatId && (
+        <ScheduleMessageDialog
+          chatId={selectedChatId}
+          content={messageText}
+          open={showScheduleDialog}
+          onOpenChange={setShowScheduleDialog}
+          onScheduled={() => {
+            setMessageText('');
+            setShowScheduleDialog(false);
+          }}
+        />
+      )}
+    </div>
+  );
 };
 
 export default MessagesPage;
