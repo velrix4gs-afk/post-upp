@@ -859,6 +859,23 @@ All colors MUST be HSL.
   opacity: 1;
 }
 
+/* Chat wallpaper - subtle dot pattern (WhatsApp style) */
+.chat-wallpaper {
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.dark .chat-wallpaper {
+  background-image:
+    radial-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+}
+
+/* In-chat message slide-in for swipe-to-reply */
+.message-swipe {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 /* Toast swipe-to-dismiss enhancements */
 [data-sonner-toast] {
   touch-action: pan-y;
