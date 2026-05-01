@@ -156,7 +156,7 @@ export const ChatListItem = ({
         }}
         className={cn(
           'relative flex items-center gap-3 px-3 py-2.5 cursor-pointer select-none bg-card tap-scale',
-          'border-b border-border/30',
+          'border-b border-border/30 last:border-b-0',
           isSelected && 'bg-primary/10',
           isPinned && 'bg-muted/20'
         )}
