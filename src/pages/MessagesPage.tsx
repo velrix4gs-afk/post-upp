@@ -143,13 +143,10 @@ const MessagesPage = () => {
 
   // Initial fetch & notifications
   useEffect(() => {
-    if (user) {
-      refetchChats();
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
     }
-  }, [user, refetchChats]);
+  }, []);
 
   // Handle chat_id from URL
   useEffect(() => {
